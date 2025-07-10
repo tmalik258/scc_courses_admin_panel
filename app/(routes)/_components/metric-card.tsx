@@ -12,18 +12,17 @@ const MetricCard: React.FC<ClickableMetricCardProps> = ({
   onClick 
 }) => {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
+    <div className="bg-white p-6 rounded-lg shadow-sm cursor-pointer" onClick={onClick}>
       <div className="flex items-center justify-between mb-2">
         {icon}
         <span className="text-sm text-gray-500">{title}</span>
       </div>
       <div className="text-3xl font-bold text-gray-900">{value}</div>
-      <button 
-        onClick={onClick}
-        className="text-blue-500 text-sm mt-2 flex items-center hover:text-blue-700"
+      <div
+        className="text-aqua-mist text-sm mt-2 flex items-center hover:text-aqua-depth"
       >
         View Details →
-      </button>
+      </div>
     </div>
   );
 };

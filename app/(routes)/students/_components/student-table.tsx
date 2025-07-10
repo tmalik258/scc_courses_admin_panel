@@ -15,7 +15,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
 }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="max-w-[calc(100vw-3rem)] sm:max-w-dvh md:max-w-[calc(100vw-19rem)] overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>

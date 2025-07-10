@@ -12,7 +12,7 @@ export const PopularCourseTable: React.FC<PopularCourseTableProps> = ({ courses 
       <div className="p-6 border-b">
         <h2 className="text-xl font-semibold text-gray-900">Popular Course</h2>
       </div>
-      <div className="overflow-x-auto">
+      <div className='w-full max-w-[calc(100vw-3rem)] sm:max-w-dvh md:max-w-[calc(100vw-20rem)] overflow-x-auto'>
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>

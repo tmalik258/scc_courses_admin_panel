@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Breadcrumb } from "@/components/breadcrumb"
 import { useRouter } from "nextjs-toploader/app"
+import Image from "next/image"
 
 interface Course {
   id: string
@@ -19,6 +20,7 @@ interface Course {
   mentor: string
   editedTime: string
   status: "published" | "draft"
+  image: string
 }
 
 const CourseManagementPage: React.FC = () => {
@@ -38,6 +40,7 @@ const CourseManagementPage: React.FC = () => {
       mentor: "Mentor's Name",
       editedTime: "2h ago",
       status: "published",
+      image: "/images/course_placeholder.jpg",
     },
     {
       id: "2",
@@ -47,6 +50,7 @@ const CourseManagementPage: React.FC = () => {
       mentor: "Mentor's Name",
       editedTime: "2h ago",
       status: "published",
+      image: "/images/course_placeholder.jpg",
     },
     {
       id: "3",
@@ -56,6 +60,7 @@ const CourseManagementPage: React.FC = () => {
       mentor: "Mentor's Name",
       editedTime: "2h ago",
       status: "draft",
+      image: "/images/course_placeholder.jpg",
     },
     {
       id: "4",
@@ -65,6 +70,7 @@ const CourseManagementPage: React.FC = () => {
       mentor: "Mentor's Name",
       editedTime: "2h ago",
       status: "published",
+      image: "/images/course_placeholder.jpg",
     },
     {
       id: "5",
@@ -74,6 +80,7 @@ const CourseManagementPage: React.FC = () => {
       mentor: "Mentor's Name",
       editedTime: "2h ago",
       status: "draft",
+      image: "/images/course_placeholder.jpg",
     },
     {
       id: "6",
@@ -83,6 +90,7 @@ const CourseManagementPage: React.FC = () => {
       mentor: "Mentor's Name",
       editedTime: "2h ago",
       status: "published",
+      image: "/images/course_placeholder.jpg",
     },
   ]
 
@@ -211,14 +219,16 @@ const CourseManagementPage: React.FC = () => {
           <Card key={course.id} className="overflow-hidden border-0 shadow-sm">
             <div className="relative">
               {/* Course Image with Gradient Background */}
-              <div className="h-48 bg-gradient-to-br from-indigo-400 via-purple-500 to-indigo-600 flex items-center justify-center relative">
+              <div className="flex items-center justify-center relative">
                 {/* 3D Illustration Placeholder */}
                 <div className="flex items-center justify-center">
-                  <div className="relative">
-                    <div className="w-20 h-16 bg-yellow-400 rounded-lg transform rotate-12 opacity-90"></div>
-                    <div className="absolute -top-2 -right-2 w-12 h-12 bg-green-400 rounded-full"></div>
-                    <div className="absolute -bottom-1 -left-1 w-8 h-8 bg-blue-400 rounded"></div>
-                  </div>
+                  <Image
+                    width={200}
+                    height={200}
+                    src={course.image}
+                    alt={course.title}
+                    className="w-full h-full object-cover rounded-xl p-2"
+                  />
                 </div>
 
                 {/* Category Badge */}

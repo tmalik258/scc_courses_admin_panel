@@ -21,8 +21,8 @@ export const StudentsHeader: React.FC<StudentsHeaderProps> = ({
     <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            All Student ({totalStudents.toLocaleString()})
+          <h1 className="text-xl font-semibold text-gray-900">
+            All Student <span className="text-aqua-mist">({totalStudents.toLocaleString()})</span>
           </h1>
         </div>
         <div className="flex items-center space-x-4">

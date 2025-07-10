@@ -90,28 +90,28 @@ const DashboardPage: React.FC = () => {
           Course Overview
         </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           <MetricCard
             title="Total Students"
             value="1,041"
-            icon={<Users className="w-5 h-5 text-blue-500" />}
+            icon={<Users className="w-5 h-5 text-aqua-mist" />}
             onClick={() => router.push("/students")}
           />
           <MetricCard
             title="Total Courses"
             value="200"
-            icon={<BookOpen className="w-5 h-5 text-blue-500" />}
+            icon={<BookOpen className="w-5 h-5 text-aqua-mist" />}
             onClick={() => router.push("/total-courses")}
           />
           <MetricCard
             title="Purchased Course"
             value="540"
-            icon={<ShoppingCart className="w-5 h-5 text-blue-500" />}
+            icon={<ShoppingCart className="w-5 h-5 text-aqua-mist" />}
           />
           <MetricCard
             title="Total Revenue"
             value="₹100,350"
-            icon={<DollarSign className="w-5 h-5 text-blue-500" />}
+            icon={<DollarSign className="w-5 h-5 text-aqua-mist" />}
           />
         </div>
       </div>
