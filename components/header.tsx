@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -16,19 +16,31 @@ import {
   DollarSign,
   LayoutDashboard,
   Search,
-  Settings,
   Users,
   X,
 } from "lucide-react";
 import { useRouter } from "nextjs-toploader/app";
+import { signout } from "@/lib/auth-actions";
+import { createClient } from "@/utils/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 const Header = () => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const supabase = createClient();
 
-  // Simulating user authentication state
-  // In a real application, you would fetch this from your authentication context or state management
-  const user = null;
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        setUser(user);
+      }
+    };
+    fetchUser();
+  }, [supabase.auth]);
 
   const handleRedirect = (path: string) => {
     router.push(path);
@@ -70,12 +82,6 @@ const Header = () => {
       icon: DollarSign,
       href: "/payment-management",
     },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: Settings,
-      href: "/settings",
-    },
   ];
 
   return (
@@ -113,8 +119,9 @@ const Header = () => {
             >
               <Image
                 src="/logo.png"
-                width={30}
-                height={30}
+                width={150}
+                height={150}
+                decoding="async"
                 className="w-full h-full object-contain"
                 alt="logo"
               />
@@ -135,10 +142,11 @@ const Header = () => {
                   src="/images/profile.jpg"
                   width={30}
                   height={30}
+                  decoding="async"
                   className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-cover object-top"
                   alt="Profile"
                 />
-                <span className="text-gray-700 hidden md:block">Admin</span>
+                <span className="text-gray-700 hidden md:block">{user?.app_metadata?.full_name}</span>
                 <svg
                   className="w-4 h-4 text-gray-400 hidden md:block"
                   fill="none"
@@ -160,7 +168,7 @@ const Header = () => {
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuItem>Billing</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem className="text-red-600" onClick={signout}>
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -203,8 +211,9 @@ const Header = () => {
             <div className="w-14 flex items-center space-x-2">
               <Image
                 src="/logo.png"
-                width={24}
-                height={24}
+                width={150}
+                height={150}
+                decoding="async"
                 className="w-full h-fullobject-contain"
                 alt="logo"
               />
@@ -228,7 +237,7 @@ const Header = () => {
                 <item.icon className="w-5 h-5" />
                 {item.label}
               </div>
-            )) }
+            ))}
 
             {/* Mobile Auth Section */}
             {!user && (

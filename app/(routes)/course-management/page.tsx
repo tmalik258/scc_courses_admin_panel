@@ -225,6 +225,7 @@ const CourseManagementPage: React.FC = () => {
                   <Image
                     width={200}
                     height={200}
+                    decoding="async"
                     src={course.image}
                     alt={course.title}
                     className="w-full h-full object-cover rounded-xl p-2"

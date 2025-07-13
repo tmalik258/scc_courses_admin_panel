@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { login } from "@/lib/auth-actions"
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -45,6 +46,7 @@ export function LoginForm() {
           <Input
             id="email"
             type="email"
+            name="email"
             placeholder="abcd@gmail.com"
             value={formData.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
@@ -62,6 +64,7 @@ export function LoginForm() {
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
+              name="password"
               placeholder="sduejdigs52435"
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
@@ -91,7 +94,7 @@ export function LoginForm() {
         </div>
 
         {/* Login Button */}
-        <Button type="submit" className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm">
+        <Button formAction={login} type="submit" className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm">
           Log in
         </Button>
       </form>

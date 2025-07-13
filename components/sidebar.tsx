@@ -6,7 +6,6 @@ import {
   BookOpen,
   DollarSign,
   LayoutDashboard,
-  Settings,
 } from "lucide-react";
 import { useRouter } from "nextjs-toploader/app";
 import { usePathname } from "next/navigation";
@@ -35,11 +34,6 @@ const Sidebar: React.FC = () => {
       label: "Payment Management",
       href: "/payment-management",
       icon: DollarSign,
-    },
-    {
-      label: "Settings",
-      href: "/settings",
-      icon: Settings,
     },
   ];
 

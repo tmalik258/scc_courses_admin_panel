@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Manrope } from "next/font/google";
 import "./globals.css";
-import NextTopLoader from "nextjs-toploader";
+// import NextTopLoader from "nextjs-toploader";
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -30,7 +30,7 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${manrope.variable} font-dm-sans antialiased`}
       >
-        <NextTopLoader />
+        {/* <NextTopLoader /> */}
         {children}
       </body>
     </html>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { signInWithGoogle, signup } from "@/lib/auth-actions"
 
 export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -25,28 +26,13 @@ export function SignupForm() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!")
-      return
-    }
-    console.log("Signup form submitted:", formData)
-    // Handle signup logic here
-  }
-
-  const handleGoogleSignup = () => {
-    console.log("Google signup clicked")
-    // Handle Google signup logic here
-  }
-
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-2xl font-semibold text-gray-800 mb-2">Sign up</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form className="space-y-4">
         {/* Name Field */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -55,6 +41,7 @@ export function SignupForm() {
           <Input
             id="name"
             type="text"
+            name="name"
             placeholder="Name"
             value={formData.name}
             onChange={(e) => handleInputChange("name", e.target.value)}
@@ -71,6 +58,7 @@ export function SignupForm() {
           <Input
             id="email"
             type="email"
+            name="email"
             placeholder="abcd@gmail.com"
             value={formData.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
@@ -88,6 +76,7 @@ export function SignupForm() {
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
+              name="password"
               placeholder="sduejdigs52435"
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
@@ -114,6 +103,7 @@ export function SignupForm() {
               id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               placeholder="sduejdigs52435"
+              name="confirmPassword"
               value={formData.confirmPassword}
               onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
               className="w-full pr-10"
@@ -139,7 +129,7 @@ export function SignupForm() {
         </div>
 
         {/* Sign up Button */}
-        <Button type="submit" className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3">
+        <Button formAction={signup} type="submit" className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3">
           Sign up
         </Button>
       </form>
@@ -151,7 +141,7 @@ export function SignupForm() {
       <Button
         type="button"
         variant="outline"
-        onClick={handleGoogleSignup}
+        onClick={() => signInWithGoogle()}
         className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 py-3 bg-transparent"
       >
         <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
