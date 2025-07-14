@@ -135,6 +135,7 @@ model Attachment {
   updatedAt DateTime @updatedAt
 
   @@index([courseId])
+  @@map("attachments")
 }
 
 model Section {
@@ -229,6 +230,7 @@ model Purchase {
 
   @@unique([studentId, courseId])
   @@index([courseId])
+  @@map("purchases")
 }
 
 model Invoice {
@@ -261,6 +263,8 @@ model PaypalCustomer {
 
   createdAt 	   DateTime @default(now())
   updatedAt 	   DateTime @updatedAt
+
+  @@map("paypal_customers")
 }
 
 // Enums
