@@ -1410,7 +1410,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
                     gradientUnits="userSpaceOnUse"
                   >
                     <stop stopColor="#EDFAFF" />
-                    <stop offset="1" stopColor="#30384F" stop-opacity="0" />
+                    <stop offset="1" stopColor="#30384F" stopOpacity="0" />
                   </linearGradient>
                   <linearGradient
                     id="paint1_linear_2016_12430"
@@ -1421,7 +1421,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
                     gradientUnits="userSpaceOnUse"
                   >
                     <stop stopColor="#EDFAFF" />
-                    <stop offset="1" stopColor="#30384F" stop-opacity="0" />
+                    <stop offset="1" stopColor="#30384F" stopOpacity="0" />
                   </linearGradient>
                   <linearGradient
                     id="paint2_linear_2016_12430"
@@ -1432,7 +1432,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
                     gradientUnits="userSpaceOnUse"
                   >
                     <stop stopColor="#EDFAFF" />
-                    <stop offset="1" stopColor="#30384F" stop-opacity="0" />
+                    <stop offset="1" stopColor="#30384F" stopOpacity="0" />
                   </linearGradient>
                   <linearGradient
                     id="paint3_linear_2016_12430"
@@ -1443,7 +1443,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
                     gradientUnits="userSpaceOnUse"
                   >
                     <stop stopColor="#EDFAFF" />
-                    <stop offset="1" stopColor="#30384F" stop-opacity="0" />
+                    <stop offset="1" stopColor="#30384F" stopOpacity="0" />
                   </linearGradient>
                   <linearGradient
                     id="paint4_linear_2016_12430"
@@ -1464,7 +1464,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
                     y2="297.356"
                     gradientUnits="userSpaceOnUse"
                   >
-                    <stop stopColor="#30384F" stop-opacity="0" />
+                    <stop stopColor="#30384F" stopOpacity="0" />
                     <stop offset="1" stopColor="#EDFAFF" />
                   </linearGradient>
                   <linearGradient
@@ -1476,7 +1476,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
                     gradientUnits="userSpaceOnUse"
                   >
                     <stop stopColor="#EDFAFF" />
-                    <stop offset="1" stopColor="#30384F" stop-opacity="0" />
+                    <stop offset="1" stopColor="#30384F" stopOpacity="0" />
                   </linearGradient>
                   <linearGradient
                     id="paint7_linear_2016_12430"
@@ -1487,7 +1487,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
                     gradientUnits="userSpaceOnUse"
                   >
                     <stop stopColor="#EDFAFF" />
-                    <stop offset="1" stopColor="#30384F" stop-opacity="0" />
+                    <stop offset="1" stopColor="#30384F" stopOpacity="0" />
                   </linearGradient>
                 </defs>
               </svg>
