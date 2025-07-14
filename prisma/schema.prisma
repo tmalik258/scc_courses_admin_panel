@@ -215,18 +215,17 @@ model Progress {
 }
 
 model Purchase {
-  id        String @id @default(uuid())
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   studentId String @map("student_id") @db.Uuid
   courseId  String @map("course_id") @db.Uuid
-
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  invoice   Invoice?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relationship
   student   Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  invoice   Invoice?
 
   @@unique([studentId, courseId])
   @@index([courseId])
@@ -247,7 +246,7 @@ model Invoice {
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   // Relationships
-  purchase 		Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  purchase 	  	Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
   @@map("invoices")
 }

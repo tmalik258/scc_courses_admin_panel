@@ -7,6 +7,7 @@ CREATE TYPE "EnrollmentStatus" AS ENUM ('ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPE
 -- CreateTable
 CREATE TABLE "profiles" (
     "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
     "email" TEXT,
     "full_name" TEXT,
     "avatar_url" TEXT,
@@ -82,9 +83,9 @@ CREATE TABLE "reviews" (
 -- CreateTable
 CREATE TABLE "Attachment" (
     "id" TEXT NOT NULL,
+    "course_id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "url" TEXT NOT NULL,
-    "courseId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -152,9 +153,9 @@ CREATE TABLE "progress" (
 
 -- CreateTable
 CREATE TABLE "Purchase" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "courseId" TEXT NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "student_id" UUID NOT NULL,
+    "course_id" UUID NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -182,13 +183,16 @@ CREATE TABLE "invoices" (
 -- CreateTable
 CREATE TABLE "PaypalCustomer" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "student_id" UUID NOT NULL,
     "paypalCustomerId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "PaypalCustomer_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "profiles_user_id_key" ON "profiles"("user_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "profiles_email_key" ON "profiles"("email");
@@ -206,7 +210,7 @@ CREATE UNIQUE INDEX "certificates_student_id_course_id_key" ON "certificates"("s
 CREATE UNIQUE INDEX "reviews_course_id_student_id_key" ON "reviews"("course_id", "student_id");
 
 -- CreateIndex
-CREATE INDEX "Attachment_courseId_idx" ON "Attachment"("courseId");
+CREATE INDEX "Attachment_course_id_idx" ON "Attachment"("course_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "enrollments_student_id_course_id_key" ON "enrollments"("student_id", "course_id");
@@ -215,10 +219,10 @@ CREATE UNIQUE INDEX "enrollments_student_id_course_id_key" ON "enrollments"("stu
 CREATE UNIQUE INDEX "progress_student_id_lesson_id_key" ON "progress"("student_id", "lesson_id");
 
 -- CreateIndex
-CREATE INDEX "Purchase_courseId_idx" ON "Purchase"("courseId");
+CREATE INDEX "Purchase_course_id_idx" ON "Purchase"("course_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Purchase_userId_courseId_key" ON "Purchase"("userId", "courseId");
+CREATE UNIQUE INDEX "Purchase_student_id_course_id_key" ON "Purchase"("student_id", "course_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "invoices_purchase_id_key" ON "invoices"("purchase_id");
@@ -227,7 +231,7 @@ CREATE UNIQUE INDEX "invoices_purchase_id_key" ON "invoices"("purchase_id");
 CREATE UNIQUE INDEX "invoices_invoice_number_key" ON "invoices"("invoice_number");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PaypalCustomer_userId_key" ON "PaypalCustomer"("userId");
+CREATE UNIQUE INDEX "PaypalCustomer_student_id_key" ON "PaypalCustomer"("student_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PaypalCustomer_paypalCustomerId_key" ON "PaypalCustomer"("paypalCustomerId");
@@ -251,7 +255,7 @@ ALTER TABLE "reviews" ADD CONSTRAINT "reviews_course_id_fkey" FOREIGN KEY ("cour
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_student_id_fkey" FOREIGN KEY ("student_id") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "courses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_course_id_fkey" FOREIGN KEY ("course_id") REFERENCES "courses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sections" ADD CONSTRAINT "sections_course_id_fkey" FOREIGN KEY ("course_id") REFERENCES "courses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -275,7 +279,13 @@ ALTER TABLE "progress" ADD CONSTRAINT "progress_student_id_fkey" FOREIGN KEY ("s
 ALTER TABLE "progress" ADD CONSTRAINT "progress_lesson_id_fkey" FOREIGN KEY ("lesson_id") REFERENCES "lessons"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "courses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_student_id_fkey" FOREIGN KEY ("student_id") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_course_id_fkey" FOREIGN KEY ("course_id") REFERENCES "courses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "invoices" ADD CONSTRAINT "invoices_purchase_id_fkey" FOREIGN KEY ("purchase_id") REFERENCES "Purchase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PaypalCustomer" ADD CONSTRAINT "PaypalCustomer_student_id_fkey" FOREIGN KEY ("student_id") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
