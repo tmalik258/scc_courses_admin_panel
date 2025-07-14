@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { login } from "@/lib/auth-actions"
+import GoogleSigninButton from "../../_components/google-signin-button"
+import Divider from "@/components/divider"
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -97,6 +99,12 @@ export function LoginForm() {
         <Button formAction={login} type="submit" className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm">
           Log in
         </Button>
+
+        {/* Divider */}
+        <Divider text="atau" />
+
+        {/* Google Sign up */}
+        <GoogleSigninButton />
       </form>
 
       {/* Sign up Link */}
