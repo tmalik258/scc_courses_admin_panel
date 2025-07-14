@@ -27,19 +27,13 @@ export function LoginForm() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Login form submitted:", formData)
-    // Handle login logic here
-  }
-
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2">Log in to your account</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form className="space-y-4">
         {/* Email Field */}
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
