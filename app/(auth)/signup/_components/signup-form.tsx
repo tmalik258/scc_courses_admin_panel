@@ -13,7 +13,7 @@ export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
-    name: "",
+    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -41,10 +41,10 @@ export function SignupForm() {
           <Input
             id="name"
             type="text"
-            name="name"
+            name="fullName"
             placeholder="Name"
-            value={formData.name}
-            onChange={(e) => handleInputChange("name", e.target.value)}
+            value={formData.fullName}
+            onChange={(e) => handleInputChange("fullName", e.target.value)}
             className="w-full"
             required
           />
