@@ -1,0 +1,33 @@
+import { PrismaClient } from "@/lib/generated/prisma";
+import { NextResponse } from "next/server";
+
+const prisma = new PrismaClient();
+
+// Create a section inside a course
+export async function POST(
+  req: Request,
+  { params }: { params: { courseId: string } }
+) {
+  const { courseId } = params;
+  const body = await req.json();
+
+  try {
+    const newSection = await prisma.section.create({
+      data: {
+        ...body,
+        courseId,
+      },
+    });
+
+    return NextResponse.json(newSection, { status: 201 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(
+      { error: "Failed to create section" },
+      { status: 500 }
+    );
+  }
+}

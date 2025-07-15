@@ -1,27 +1,44 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useEffect, useCallback, useMemo } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Upload } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { CourseFormData } from "@/types/course"
+import type React from "react";
+import { useEffect, useCallback, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { CourseFormData } from "@/types/course";
 
 interface CourseDetailsStepProps {
-  formData: CourseFormData
-  updateFormData: (data: Partial<CourseFormData>) => void
-  setCanProceed: (canProceed: boolean) => void
+  formData: CourseFormData;
+  updateFormData: (data: Partial<CourseFormData>) => void;
+  setCanProceed: (canProceed: boolean) => void;
 }
 
 const courseDetailsSchema = z.object({
-  title: z.string().min(1, "Course title is required").max(100, "Title must be less than 100 characters"),
+  title: z
+    .string()
+    .min(1, "Course title is required")
+    .max(100, "Title must be less than 100 characters"),
   description: z
     .string()
     .min(100, "Description must be at least 100 characters")
@@ -32,11 +49,15 @@ const courseDetailsSchema = z.object({
     .min(1, "Price is required")
     .regex(/^₹?\d+(\.\d{1,2})?$/, "Please enter a valid price"),
   instructor: z.string().min(1, "Please select an instructor"),
-})
+});
 
-type CourseDetailsFormValues = z.infer<typeof courseDetailsSchema>
+type CourseDetailsFormValues = z.infer<typeof courseDetailsSchema>;
 
-const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateFormData, setCanProceed }) => {
+const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
+  formData,
+  updateFormData,
+  setCanProceed,
+}) => {
   const form = useForm<CourseDetailsFormValues>({
     resolver: zodResolver(courseDetailsSchema),
     defaultValues: {
@@ -47,7 +68,7 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
       instructor: formData.instructor,
     },
     mode: "onChange",
-  })
+  });
 
   const categories = useMemo(
     () => [
@@ -59,59 +80,61 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
       "Design",
       "Marketing",
     ],
-    [],
-  )
+    []
+  );
 
   const instructors = useMemo(
-    () => ["Andrew Johnson", "Sarah Wilson", "Mike Davis", "Lisa Chen", "David Brown", "Emma Taylor"],
-    [],
-  )
+    () => [
+      "Andrew Johnson",
+      "Sarah Wilson",
+      "Mike Davis",
+      "Lisa Chen",
+      "David Brown",
+      "Emma Taylor",
+    ],
+    []
+  );
 
   const handleThumbnailUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       try {
-        const file = event.target.files?.[0]
+        const file = event.target.files?.[0];
         if (file && file.size <= 2 * 1024 * 1024) {
-          updateFormData({ thumbnail: file })
+          updateFormData({ thumbnail: file });
         } else if (file) {
-          alert("File size must be less than 2MB")
+          alert("File size must be less than 2MB");
         }
       } catch (error) {
-        console.error("Error uploading thumbnail:", error)
+        console.error("Error uploading thumbnail:", error);
       }
     },
-    [updateFormData],
-  )
+    [updateFormData]
+  );
 
   // Validate form on mount and when values change
   useEffect(() => {
-    // Validate form on mount
-    form.trigger().then((isValid) => {
-      console.log("Initial form validation:", isValid, form.formState.errors)
-      setCanProceed(isValid)
-    })
+    // Initial update once on mount
+    setCanProceed(form.formState.isValid);
 
     const subscription = form.watch((values) => {
-      // Update formData with current values
-      const safeValues = {
-        title: values.title || "",
-        description: values.description || "",
-        category: values.category || "",
-        price: values.price || "",
-        instructor: values.instructor || "",
-      }
+      // Update formData after short delay to reduce frequency
+      const timeout = setTimeout(() => {
+        updateFormData({
+          title: values.title || "",
+          description: values.description || "",
+          category: values.category || "",
+          price: values.price || "",
+          instructor: values.instructor || "",
+        });
 
-      updateFormData(safeValues)
+        setCanProceed(form.formState.isValid);
+      }, 300);
 
-      // Trigger validation and update canProceed
-      form.trigger().then((isValid) => {
-        console.log("Form validation:", isValid, form.formState.errors)
-        setCanProceed(isValid)
-      })
-    })
+      return () => clearTimeout(timeout);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [form, updateFormData, setCanProceed])
+    return () => subscription.unsubscribe();
+  }, [form, updateFormData, setCanProceed]);
 
   return (
     <Form {...form}>
@@ -157,13 +180,28 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
                       </Select>
 
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           <span className="font-bold">B</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           <span className="italic">I</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           <span className="underline">U</span>
                         </Button>
                       </div>
@@ -171,16 +209,36 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
                       <div className="w-px h-6 bg-gray-300"></div>
 
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           ≡
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           ≡
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           ≡
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           ≡
                         </Button>
                       </div>
@@ -188,16 +246,36 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
                       <div className="w-px h-6 bg-gray-300"></div>
 
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           {"<>"}
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           {'"'}
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           •
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           1.
                         </Button>
                       </div>
@@ -211,7 +289,8 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
                   </div>
                 </FormControl>
                 <FormDescription className="text-red-500">
-                  Min 100 characters and max 1000 characters required ({(field.value || "").length}/1000)
+                  Min 100 characters and max 1000 characters required (
+                  {(field.value || "").length}/1000)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -289,7 +368,9 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
         {/* Right Column - Thumbnail Upload */}
         <div className="lg:col-span-1">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Thumbnail</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Thumbnail
+            </label>
             <Card className="border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors">
               <CardContent className="p-8">
                 <div className="text-center">
@@ -297,7 +378,9 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
                     <Upload className="w-8 h-8 text-gray-400" />
                   </div>
                   <div className="text-gray-600 mb-2">Upload Photo</div>
-                  <div className="text-xs text-red-500">Max file size is 2 Mb</div>
+                  <div className="text-xs text-red-500">
+                    Max file size is 2 Mb
+                  </div>
                   <input
                     type="file"
                     accept="image/*"
@@ -315,13 +398,15 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
               </CardContent>
             </Card>
             {formData.thumbnail && (
-              <div className="mt-2 text-sm text-green-600">File selected: {formData.thumbnail.name}</div>
+              <div className="mt-2 text-sm text-green-600">
+                File selected: {formData.thumbnail.name}
+              </div>
             )}
           </div>
         </div>
       </div>
     </Form>
-  )
-}
+  );
+};
 
-export default CourseDetailsStep
+export default CourseDetailsStep;
