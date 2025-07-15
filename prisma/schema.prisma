@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../lib/generated/prisma"
@@ -28,7 +22,6 @@ model Profile {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Relationships
   instructorCourses Course[]        @relation("CourseInstructor")
   enrollments       Enrollment[]
   progress          Progress[]
@@ -40,18 +33,17 @@ model Profile {
   @@map("profiles")
 }
 
-// Course management
 model Course {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title        String
   description  String?
-  instructorId String   @map("instructor_id") @db.Uuid
-  categoryId   String   @map("category_id") @db.Uuid
-  thumbnailUrl String?  @map("thumbnail_url")
-  price        Decimal? @db.Decimal(10, 2)
-  isPublished  Boolean  @default(false) @map("is_published")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  instructorId String     @map("instructor_id") @db.Uuid
+  categoryId   String     @map("category_id") @db.Uuid
+  thumbnailUrl String?    @map("thumbnail_url")
+  price        Decimal?   @db.Decimal(10, 2)
+  isPublished  Boolean    @default(false) @map("is_published")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
   // Relationships
   instructor   Profile       @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: Cascade)
@@ -63,39 +55,38 @@ model Course {
   reviews      Review[]
   purchase     Purchase[]
   sections     Section[]
+  modules      Module[]
+  resources    Resource[]
 
   @@map("courses")
 }
 
-// Course categories
 model Category {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String   @unique
   slug        String   @unique
   description String?
-  icon        String? // Icon name or URL
-  color       String? // Hex color code
+  icon        String?
+  color       String?
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  courses Course[]
+  courses     Course[]
 
   @@map("categories")
 }
 
-// Course certificates
 model Certificate {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   studentId      String    @map("student_id") @db.Uuid
   courseId       String    @map("course_id") @db.Uuid
   templateUrl    String?   @map("template_url")
   certificateUrl String?   @map("certificate_url")
-  grade          String? // A, B, C, etc.
-  score          Float? // Final score percentage
+  grade          String?
+  score          Float?
   issuedAt       DateTime  @default(now()) @map("issued_at")
   expiresAt      DateTime? @map("expires_at")
 
-  // Relationships
   student Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
@@ -103,36 +94,32 @@ model Certificate {
   @@map("certificates")
 }
 
-// Course reviews and ratings
 model Review {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   courseId  String   @map("course_id") @db.Uuid
   studentId String   @map("student_id") @db.Uuid
-  rating    Int      @db.SmallInt // 1-5 stars
+  rating    Int      @db.SmallInt
   comment   String?
   isPublic  Boolean  @default(true) @map("is_public")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Relationships
-  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  student Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student   Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([courseId, studentId])
   @@map("reviews")
 }
 
 model Attachment {
-  id   String @id @default(uuid())
-  courseId String @map("course_id") @db.Uuid
-  name String
-  url  String @db.Text
-
-  // Relationships
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
+  id        String   @id @default(uuid())
+  courseId  String   @map("course_id") @db.Uuid
+  name      String
+  url       String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
   @@map("attachments")
@@ -147,14 +134,12 @@ model Section {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  // Relationships
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons     Lesson[]
 
   @@map("sections")
 }
 
-// Course lessons/modules
 model Lesson {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sectionId     String   @map("section_id") @db.Uuid
@@ -162,15 +147,14 @@ model Lesson {
   title         String
   content       String?
   videoUrl      String?  @map("video_url")
-  videoDuration Int?     @map("video_duration") // in seconds
-  attachments   String[] // File URLs
+  videoDuration Int?     @map("video_duration")
+  attachments   String[]
   orderIndex    Int      @map("order_index")
   isPublished   Boolean  @default(false) @map("is_published")
-  isFree        Boolean  @default(false) @map("is_free") // Free preview lesson
+  isFree        Boolean  @default(false) @map("is_free")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  // Relationships
   course        Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   section       Section    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   progress      Progress[]
@@ -178,18 +162,16 @@ model Lesson {
   @@map("lessons")
 }
 
-// Student enrollments
 model Enrollment {
   id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   studentId   String           @map("student_id") @db.Uuid
   courseId    String           @map("course_id") @db.Uuid
   status      EnrollmentStatus @default(ACTIVE)
-  progress    Float            @default(0) // Completion percentage
+  progress    Float            @default(0)
   enrolledAt  DateTime         @default(now()) @map("enrolled_at")
   completedAt DateTime?        @map("completed_at")
-  expiresAt   DateTime?        @map("expires_at") // For time-limited courses
+  expiresAt   DateTime?        @map("expires_at")
 
-  // Relationships
   student     Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
@@ -197,17 +179,15 @@ model Enrollment {
   @@map("enrollments")
 }
 
-// Learning progress tracking
 model Progress {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   studentId   String    @map("student_id") @db.Uuid
   lessonId    String    @map("lesson_id") @db.Uuid
   isCompleted Boolean   @default(false) @map("is_completed")
   completedAt DateTime? @map("completed_at")
-  watchTime   Int       @default(0) @map("watch_time") // in seconds
+  watchTime   Int       @default(0) @map("watch_time")
   lastWatched DateTime? @map("last_watched")
 
-  // Relationships
   student     Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   lesson      Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
@@ -216,16 +196,14 @@ model Progress {
 }
 
 model Purchase {
-  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId String @map("student_id") @db.Uuid
-  courseId  String @map("course_id") @db.Uuid
-
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String   @map("student_id") @db.Uuid
+  courseId  String   @map("course_id") @db.Uuid
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relationship
   student   Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   invoice   Invoice?
 
   @@unique([studentId, courseId])
@@ -240,15 +218,14 @@ model Invoice {
   paymentDate   DateTime @map("payment_date")
   paymentMethod String   @map("payment_method")
   totalAmount   Decimal  @map("total_amount") @db.Decimal(10, 2)
-  status        String   @default("SUCCESS") @map("status") // e.g., SUCCESS, PENDING, FAILED
+  status        String   @default("SUCCESS") @map("status")
   category      String?
   courseName    String   @map("course_name")
   studentName   String   @map("student_name")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  // Relationships
-  purchase 	  	Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  purchase      Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
   @@map("invoices")
 }
@@ -257,17 +234,38 @@ model PaypalCustomer {
   id               String @id @default(uuid())
   studentId        String @unique @map("student_id") @db.Uuid
   paypalCustomerId String @unique
-
-  // Relationship
-  student 		   Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  createdAt 	   DateTime @default(now())
-  updatedAt 	   DateTime @updatedAt
+  student          Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@map("paypal_customers")
 }
 
-// Enums
+model Module {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId  String   @db.Uuid
+  title     String
+  course    Course   @relation(fields: [courseId], references: [id])
+  sections  SubSection[]
+}
+
+model SubSection {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleId  String   @db.Uuid
+  name      String
+  reading   String?
+  videoUrl  String?
+  module    Module   @relation(fields: [moduleId], references: [id])
+}
+
+model Resource {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId  String   @db.Uuid
+  title     String
+  url       String
+  course    Course   @relation(fields: [courseId], references: [id])
+}
+
 enum Role {
   STUDENT
   INSTRUCTOR
