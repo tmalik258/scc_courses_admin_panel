@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@/lib/generated/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 interface CourseFormData {
   title: string;
@@ -43,7 +41,7 @@ export async function GET() {
 
     return NextResponse.json(courses);
   } catch (error) {
-    console.error("Error fetching courses:", error);
+    console.error("Error fetching courses:", (error instanceof Error ? error.message : String(error)));
     return NextResponse.json(
       { error: "Failed to fetch courses" },
       { status: 500 }
@@ -73,11 +71,22 @@ export async function POST(req: Request) {
       );
     }
 
+    const instructor_profile = await prisma.profile.findUnique({
+      where: { id: body.instructor, role: "INSTRUCTOR" },
+    });
+
+    if (!instructor_profile) {
+      return NextResponse.json(
+        { error: "Instructor not found." },
+        { status: 404 }
+      );
+    }
+
     const createdCourse = await prisma.course.create({
       data: {
         title,
         description,
-        instructorId: instructor,
+        instructorId: instructor_profile.id,
         categoryId: category,
         price: price ? new Decimal(price) : undefined,
         thumbnailUrl: thumbnail || undefined,
@@ -107,7 +116,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating course:", error);
+    console.error("Error creating course:", (error instanceof Error ? error.message : String(error)));
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
