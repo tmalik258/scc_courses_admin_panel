@@ -1,67 +1,80 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Upload, ArrowUpDown, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Breadcrumb } from "@/components/breadcrumb"
-import type { StudentDetails } from "@/types/student"
+import React, { useState, useEffect } from "react";
+import { Upload, ArrowUpDown, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { useStudentData } from "@/hooks/useStudentData";
+import { useParams } from "next/navigation";
 
 const StudentDetailsPage: React.FC = () => {
-  const [studentData, setStudentData] = useState<StudentDetails>({
-    id: "67775F553",
-    name: "Ahmad Husain",
-    phone: "+1234567890",
-    email: "ahmad@example.com",
-    courses: [
-      {
-        id: "67775F553",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        status: "ongoing",
-      },
-      {
-        id: "67775F553",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        status: "completed",
-      },
-      {
-        id: "67775F553",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        status: "completed",
-      },
-      {
-        id: "67775F553",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        status: "ongoing",
-      },
-    ],
-  })
+  const { id } = useParams<{ id: string }>();
+  const { selectedStudent, selectStudent, handleUpdateStudent, handleDeleteStudent, loading, error } = useStudentData();
+  const [studentData, setStudentData] = useState({
+    id: "",
+    name: "",
+    phone: "",
+    email: "",
+    courses: [] as { id: string; title: string; category: string; status: string }[],
+  });
 
-  const handleSave = () => {
-    console.log("Save student data:", studentData)
-  }
+  useEffect(() => {
+    if (id) {
+      selectStudent(id);
+    }
+  }, [id, selectStudent]);
+
+  useEffect(() => {
+    if (selectedStudent) {
+      setStudentData({
+        id: selectedStudent.id,
+        name: selectedStudent.name || "",
+        phone: selectedStudent.phone || "",
+        email: selectedStudent.email || "",
+        courses: selectedStudent.purchases.map((p) => ({
+          id: p.course.id,
+          title: p.course.title,
+          category: p.course.category,
+          status: p.createdAt ? "purchased" : "ongoing",
+        })),
+      });
+    }
+  }, [selectedStudent]);
+
+  const handleSave = async () => {
+    await handleUpdateStudent(studentData.id, {
+      name: studentData.name,
+      phone: studentData.phone,
+      email: studentData.email,
+    });
+  };
+
+  const handleDelete = async () => {
+    if (confirm("Are you sure you want to delete this student?")) {
+      await handleDeleteStudent(studentData.id);
+      window.history.back();
+    }
+  };
 
   const handleCancel = () => {
-    window.history.back()
-  }
+    window.history.back();
+  };
 
   const breadcrumbItems = [
     { label: "Student Management", href: "/student-management" },
     { label: "Student Details", active: true },
-  ]
+  ];
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <Breadcrumb items={breadcrumbItems} />
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">Student Details</h1>
         <div className="flex gap-3">
@@ -71,23 +84,26 @@ const StudentDetailsPage: React.FC = () => {
           <Button onClick={handleSave} className="bg-sky-500 hover:bg-sky-600 px-6">
             Save Profile
           </Button>
+          <Button
+            onClick={handleDelete}
+            className="bg-red-500 hover:bg-red-600 text-white px-6"
+          >
+            Delete Student
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Form Fields */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Student ID */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
             <Input
               placeholder="Student ID"
               value={studentData.id}
-              onChange={(e) => setStudentData({ ...studentData, id: e.target.value })}
+              disabled
             />
           </div>
 
-          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
             <Input
@@ -97,28 +113,25 @@ const StudentDetailsPage: React.FC = () => {
             />
           </div>
 
-          {/* Phone Number */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
             <Input
-              placeholder="Instructor Role"
+              placeholder="Phone Number"
               value={studentData.phone}
               onChange={(e) => setStudentData({ ...studentData, phone: e.target.value })}
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
             <Input
-              placeholder="Instructor Role"
+              placeholder="Email"
               value={studentData.email}
               onChange={(e) => setStudentData({ ...studentData, email: e.target.value })}
             />
           </div>
         </div>
 
-        {/* Right Column - Profile Upload */}
         <div className="lg:col-span-1">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Profile</label>
@@ -144,9 +157,8 @@ const StudentDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Course Enrolled Section */}
       <div className="mt-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Course Enrolled</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Course Purchased</h2>
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -190,17 +202,17 @@ const StudentDetailsPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
                         className={`${
-                          course.status === "completed"
+                          course.status === "purchased"
                             ? "bg-green-100 text-green-800"
                             : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
                         <div
                           className={`w-2 h-2 rounded-full mr-2 ${
-                            course.status === "completed" ? "bg-green-500" : "bg-yellow-500"
+                            course.status === "purchased" ? "bg-green-500" : "bg-yellow-500"
                           }`}
                         />
-                        {course.status === "completed" ? "Completed" : "Ongoing"}
+                        {course.status}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -216,7 +228,7 @@ const StudentDetailsPage: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default StudentDetailsPage
+export default StudentDetailsPage;

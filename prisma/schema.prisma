@@ -33,9 +33,9 @@ model Profile {
   enrollments       Enrollment[]
   progress          Progress[]
   certificates      Certificate[]
-  Review            Review[]
-  Purchase          Purchase[]
-  PaypalCustomer    PaypalCustomer?
+  reviews            Review[]
+  purchases          Purchase[]
+  paypalCustomer    PaypalCustomer?
 
   @@map("profiles")
 }
@@ -61,7 +61,7 @@ model Course {
   attachments  Attachment[]
   certificates Certificate[]
   reviews      Review[]
-  purchase     Purchase[]
+  purchases     Purchase[]
   sections     Section[]
 
   @@map("courses")
@@ -115,8 +115,8 @@ model Review {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relationships
-  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  student Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student   Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([courseId, studentId])
   @@map("reviews")

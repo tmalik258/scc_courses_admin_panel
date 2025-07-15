@@ -1,62 +1,20 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Plus, Search, Edit, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Breadcrumb } from "@/components/breadcrumb"
-import type { Student } from "@/types/student"
+import React, { useEffect, useState } from "react";
+import { useStudentData } from "@/hooks/useStudentData";
+import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Breadcrumb } from "@/components/breadcrumb";
 
 const StudentManagementPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState("")
+  const { students, refreshStudents, selectStudent, handleDeleteStudent, loading } = useStudentData();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Mock student data
-  const students: Student[] = [
-    {
-      id: "67775F553",
-      profileImage: "/placeholder.svg?height=40&width=40",
-      name: "Ahmad Husain",
-      phone: "+1234567890",
-      email: "ahmad@example.com",
-    },
-    {
-      id: "67775F554",
-      profileImage: "/placeholder.svg?height=40&width=40",
-      name: "Sarah Wilson",
-      phone: "+1234567891",
-      email: "sarah@example.com",
-    },
-    {
-      id: "67775F555",
-      profileImage: "/placeholder.svg?height=40&width=40",
-      name: "Mike Davis",
-      phone: "+1234567892",
-      email: "mike@example.com",
-    },
-    {
-      id: "67775F556",
-      profileImage: "/placeholder.svg?height=40&width=40",
-      name: "Lisa Chen",
-      phone: "+1234567893",
-      email: "lisa@example.com",
-    },
-    {
-      id: "67775F557",
-      profileImage: "/placeholder.svg?height=40&width=40",
-      name: "David Brown",
-      phone: "+1234567894",
-      email: "david@example.com",
-    },
-    {
-      id: "67775F558",
-      profileImage: "/placeholder.svg?height=40&width=40",
-      name: "Emma Taylor",
-      phone: "+1234567895",
-      email: "emma@example.com",
-    },
-  ]
+  useEffect(() => {
+    refreshStudents();
+  }, [refreshStudents]);
 
   const filteredStudents = students.filter(
     (student) =>
@@ -64,27 +22,28 @@ const StudentManagementPage: React.FC = () => {
       student.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.phone.includes(searchQuery),
-  )
+  );
 
   const handleEdit = (studentId: string) => {
-    console.log("Edit student:", studentId)
+    selectStudent(studentId);
     // Navigate to student details page
-  }
+  };
 
   const handleDelete = (studentId: string) => {
-    console.log("Delete student:", studentId)
-  }
+    handleDeleteStudent(studentId);
+  };
 
   const breadcrumbItems = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Student Management", active: true },
-  ]
+  ];
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <Breadcrumb items={breadcrumbItems} />
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
@@ -108,7 +67,6 @@ const StudentManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Student Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -154,12 +112,8 @@ const StudentManagementPage: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={student.profileImage || "/placeholder.svg"} alt={student.name} />
                       <AvatarFallback className="bg-gray-200">
-                        {student.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                        {student.name.split(" ").map((n) => n[0]).join("")}
                       </AvatarFallback>
                     </Avatar>
                   </td>
@@ -204,7 +158,7 @@ const StudentManagementPage: React.FC = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default StudentManagementPage
+export default StudentManagementPage;

@@ -1,84 +1,46 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, Search, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Breadcrumb } from "@/components/breadcrumb"
-import type { Instructor } from "@/types/instructor"
+import { useInstructorData } from "@/hooks/useInstructorData"
 
 const InstructorManagementPage: React.FC = () => {
+  const { instructors, refreshInstructors, selectInstructor, handleDeleteInstructor, loading } = useInstructorData()
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Mock instructor data
-  const instructors: Instructor[] = [
-    {
-      id: "67775F553",
-      profile: "/placeholder.svg?height=40&width=40",
-      name: "Ahmad Husain",
-      role: "Web Developer",
-      company: "Google",
-    },
-    {
-      id: "67775F553",
-      profile: "/placeholder.svg?height=40&width=40",
-      name: "Ahmad Husain",
-      role: "Web Developer",
-      company: "Google",
-    },
-    {
-      id: "67775F553",
-      profile: "/placeholder.svg?height=40&width=40",
-      name: "Ahmad Husain",
-      role: "Web Developer",
-      company: "Google",
-    },
-    {
-      id: "67775F553",
-      profile: "/placeholder.svg?height=40&width=40",
-      name: "Ahmad Husain",
-      role: "Web Developer",
-      company: "Google",
-    },
-    {
-      id: "67775F553",
-      profile: "/placeholder.svg?height=40&width=40",
-      name: "Ahmad Husain",
-      role: "Web Developer",
-      company: "Google",
-    },
-    {
-      id: "67775F553",
-      profile: "/placeholder.svg?height=40&width=40",
-      name: "Ahmad Husain",
-      role: "Web Developer",
-      company: "Google",
-    },
-  ]
+  useEffect(() => {
+    refreshInstructors()
+  }, [refreshInstructors])
 
   const filteredInstructors = instructors.filter(
     (instructor) =>
-      instructor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      instructor.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       instructor.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       instructor.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      instructor.company.toLowerCase().includes(searchQuery.toLowerCase()),
+      instructor.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      instructor.phone?.includes(searchQuery),
   )
 
   const handleEdit = (instructorId: string) => {
-    console.log("Edit instructor:", instructorId)
+    selectInstructor(instructorId)
     // Navigate to instructor details page
   }
 
   const handleDelete = (instructorId: string) => {
-    console.log("Delete instructor:", instructorId)
+    handleDeleteInstructor(instructorId)
   }
 
   const breadcrumbItems = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Instructor Management", active: true },
   ]
+
+  if (loading) return <div>Loading...</div>
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -128,7 +90,7 @@ const InstructorManagementPage: React.FC = () => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center space-x-1">
-                    <span>Name</span>
+                    <span>Full Name</span>
                     <div className="flex flex-col">
                       <button className="text-gray-400 hover:text-gray-600">▲</button>
                       <button className="text-gray-400 hover:text-gray-600">▼</button>
@@ -136,39 +98,38 @@ const InstructorManagementPage: React.FC = () => {
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Company
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bio</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Action
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredInstructors.map((instructor, index) => (
-                <tr key={`${instructor.id}-${index}`} className="hover:bg-gray-50">
+              {filteredInstructors.map((instructor) => (
+                <tr key={instructor.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{instructor.id}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={instructor.profile || "/placeholder.svg"} alt={instructor.name} />
+                      <AvatarImage src={instructor.avatarUrl || "/placeholder.svg"} alt={instructor.fullName || "Instructor"} />
                       <AvatarFallback className="bg-gray-200">
-                        {instructor.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                        {instructor.fullName?.split(" ").map((n) => n[0]).join("") || "I"}
                       </AvatarFallback>
                     </Avatar>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{instructor.name}</div>
+                    <div className="text-sm font-medium text-gray-900">{instructor.fullName || "N/A"}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{instructor.role}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{instructor.company}</div>
+                    <div className="text-sm text-gray-900">{instructor.bio || "N/A"}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{instructor.phone || "N/A"}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex space-x-2">
