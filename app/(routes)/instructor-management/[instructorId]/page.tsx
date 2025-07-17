@@ -1,62 +1,70 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Upload, ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Breadcrumb } from "@/components/breadcrumb"
-import type { InstructorDetails } from "@/types/instructor"
+import { useInstructorData } from "@/hooks/useInstructorData"
+import { useParams } from "next/navigation"
+import { Instructor } from "@/types/instructor"
 
 const InstructorDetailsPage: React.FC = () => {
-  const [instructorData, setInstructorData] = useState<InstructorDetails>({
-    id: "67775F553",
-    name: "Ahmad Husain",
-    role: "Web Developer",
-    company: "Google",
-    courses: [
-      {
-        id: "67775F553",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        totalLessons: 25,
-      },
-      {
-        id: "67775F563",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        totalLessons: 25,
-      },
-      {
-        id: "67775F573",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        totalLessons: 25,
-      },
-      {
-        id: "67775F583",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        totalLessons: 25,
-      },
-      {
-        id: "67775F593",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        totalLessons: 25,
-      },
-      {
-        id: "67775F603",
-        title: "Zapier 101: Automate Tasks Without Code",
-        category: "Make Automations",
-        totalLessons: 25,
-      },
-    ],
+  const { instructorId } = useParams<{ instructorId: string }>()
+  const { selectedInstructor, selectInstructor, handleUpdateInstructor, handleDeleteInstructor, loading, error } = useInstructorData()
+  const [instructorData, setInstructorData] = useState<Instructor>({
+    id: "",
+    fullName: "",
+    role: "",
+    bio: "",
+    phone: "",
+    avatarUrl: "",
+    courses: [],
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   })
 
-  const handleSave = () => {
-    console.log("Save instructor data:", instructorData)
+  useEffect(() => {
+    if (instructorId) {
+      selectInstructor(instructorId as string)
+    }
+  }, [instructorId, selectInstructor])
+
+  useEffect(() => {
+    if (selectedInstructor) {
+      setInstructorData({
+        id: selectedInstructor.id,
+        fullName: selectedInstructor.fullName || "",
+        role: selectedInstructor.role || "",
+        bio: selectedInstructor.bio || "",
+        phone: selectedInstructor.phone || "",
+        avatarUrl: selectedInstructor.avatarUrl || "",
+        courses: selectedInstructor.courses || [],
+        isActive: selectedInstructor.isActive,
+        createdAt: selectedInstructor.createdAt,
+        updatedAt: selectedInstructor.updatedAt,
+      })
+    }
+  }, [selectedInstructor])
+
+  const handleSave = async () => {
+    await handleUpdateInstructor(instructorData.id, {
+      fullName: instructorData.fullName,
+      role: instructorData.role, // Should remain "INSTRUCTOR"
+      bio: instructorData.bio,
+      phone: instructorData.phone,
+      avatarUrl: instructorData.avatarUrl,
+    })
+  }
+
+  const handleDelete = async () => {
+    if (confirm("Are you sure you want to delete this instructor?")) {
+      await handleDeleteInstructor(instructorData.id)
+      window.history.back()
+    }
   }
 
   const handleCancel = () => {
@@ -67,6 +75,9 @@ const InstructorDetailsPage: React.FC = () => {
     { label: "Instructor Management", href: "/instructor-management" },
     { label: "Instructor Details", active: true },
   ]
+
+  if (loading) return <div>Loading...</div>
+  if (error) return <div>Error: {error}</div>
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -82,6 +93,12 @@ const InstructorDetailsPage: React.FC = () => {
           <Button onClick={handleSave} className="bg-sky-500 hover:bg-sky-600 px-6">
             Save Profile
           </Button>
+          <Button
+            onClick={handleDelete}
+            className="bg-red-500 hover:bg-red-600 text-white px-6"
+          >
+            Delete Instructor
+          </Button>
         </div>
       </div>
 
@@ -94,17 +111,17 @@ const InstructorDetailsPage: React.FC = () => {
             <Input
               placeholder="Instructor ID"
               value={instructorData.id}
-              onChange={(e) => setInstructorData({ ...instructorData, id: e.target.value })}
+              disabled
             />
           </div>
 
-          {/* Name */}
+          {/* Full Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
             <Input
-              placeholder="Instructor Name"
-              value={instructorData.name}
-              onChange={(e) => setInstructorData({ ...instructorData, name: e.target.value })}
+              placeholder="Instructor Full Name"
+              value={instructorData.fullName ?? ""}
+              onChange={(e) => setInstructorData({ ...instructorData, fullName: e.target.value })}
             />
           </div>
 
@@ -114,17 +131,27 @@ const InstructorDetailsPage: React.FC = () => {
             <Input
               placeholder="Instructor Role"
               value={instructorData.role}
-              onChange={(e) => setInstructorData({ ...instructorData, role: e.target.value })}
+              disabled // Role should be immutable or managed separately
             />
           </div>
 
-          {/* Company */}
+          {/* Bio */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
             <Input
-              placeholder="Instructor Role"
-              value={instructorData.company}
-              onChange={(e) => setInstructorData({ ...instructorData, company: e.target.value })}
+              placeholder="Bio"
+              value={instructorData.bio ?? ""}
+              onChange={(e) => setInstructorData({ ...instructorData, bio: e.target.value })}
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+            <Input
+              placeholder="Phone Number"
+              value={instructorData.phone ?? ""}
+              onChange={(e) => setInstructorData({ ...instructorData, phone: e.target.value })}
             />
           </div>
         </div>
