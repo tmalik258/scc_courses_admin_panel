@@ -23,7 +23,6 @@ interface CourseFormData {
   }[];
 }
 
-// ✅ Moved this inside GET handler
 export async function GET() {
   try {
     const courses = await prisma.course.findMany({
@@ -41,7 +40,10 @@ export async function GET() {
 
     return NextResponse.json(courses);
   } catch (error) {
-    console.error("Error fetching courses:", (error instanceof Error ? error.message : String(error)));
+    console.error(
+      "Error fetching courses:",
+      error instanceof Error ? error.message : String(error)
+    );
     return NextResponse.json(
       { error: "Failed to fetch courses" },
       { status: 500 }
@@ -116,7 +118,10 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating course:", (error instanceof Error ? error.message : String(error)));
+    console.error(
+      "Error creating course:",
+      error instanceof Error ? error.message : String(error)
+    );
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
