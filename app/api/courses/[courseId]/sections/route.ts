@@ -1,7 +1,5 @@
-import { PrismaClient } from "@/lib/generated/prisma";
+import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
 
 // Create a section inside a course
 export async function POST(

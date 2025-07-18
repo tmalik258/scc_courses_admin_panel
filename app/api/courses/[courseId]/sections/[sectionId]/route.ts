@@ -1,7 +1,5 @@
-import { PrismaClient } from "@/lib/generated/prisma";
+import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
 
 // UPDATE a section
 export async function PUT(
