@@ -23,7 +23,6 @@ model Profile {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   instructorCourses Course[]        @relation("CourseInstructor")
-  enrollments       Enrollment[]
   progress          Progress[]
   certificates      Certificate[]
   reviews            Review[]
@@ -49,7 +48,6 @@ model Course {
   instructor   Profile       @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: Cascade)
   category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   lessons      Lesson[]
-  enrollments  Enrollment[]
   attachments  Attachment[]
   certificates Certificate[]
   reviews      Review[]
@@ -161,23 +159,6 @@ model Lesson {
   progress      Progress[]
 
   @@map("lessons")
-}
-
-model Enrollment {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId   String           @map("student_id") @db.Uuid
-  courseId    String           @map("course_id") @db.Uuid
-  status      EnrollmentStatus @default(ACTIVE)
-  progress    Float            @default(0)
-  enrolledAt  DateTime         @default(now()) @map("enrolled_at")
-  completedAt DateTime?        @map("completed_at")
-  expiresAt   DateTime?        @map("expires_at")
-
-  student     Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@unique([studentId, courseId])
-  @@map("enrollments")
 }
 
 model Progress {

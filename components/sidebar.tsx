@@ -31,6 +31,11 @@ const Sidebar: React.FC = () => {
       icon: Users,
     },
     {
+      label: "Student Management",
+      href: "/student-management",
+      icon: Users,
+    },
+    {
       label: "Payment Management",
       href: "/payment-management",
       icon: DollarSign,

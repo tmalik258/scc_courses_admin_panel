@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Plus, Search, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,12 +10,8 @@ import { Breadcrumb } from "@/components/breadcrumb"
 import { useInstructorData } from "@/hooks/useInstructorData"
 
 const InstructorManagementPage: React.FC = () => {
-  const { instructors, refreshInstructors, selectInstructor, handleDeleteInstructor, loading } = useInstructorData()
+  const { instructors, selectInstructor, handleDeleteInstructor, loading } = useInstructorData()
   const [searchQuery, setSearchQuery] = useState("")
-
-  useEffect(() => {
-    refreshInstructors()
-  }, [refreshInstructors])
 
   const filteredInstructors = instructors.filter(
     (instructor) =>

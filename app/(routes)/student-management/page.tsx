@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useStudentData } from "@/hooks/useStudentData";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,19 +9,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Breadcrumb } from "@/components/breadcrumb";
 
 const StudentManagementPage: React.FC = () => {
-  const { students, refreshStudents, selectStudent, handleDeleteStudent, loading } = useStudentData();
+  const { students, selectStudent, handleDeleteStudent, loading } = useStudentData();
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    refreshStudents();
-  }, [refreshStudents]);
 
   const filteredStudents = students.filter(
     (student) =>
-      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.phone.includes(searchQuery),
+      student.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.phone?.includes(searchQuery),
   );
 
   const handleEdit = (studentId: string) => {
@@ -113,7 +109,7 @@ const StudentManagementPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-gray-200">
-                        {student.name.split(" ").map((n) => n[0]).join("")}
+                        {student.name?.split(" ").map((n) => n[0]).join("")}
                       </AvatarFallback>
                     </Avatar>
                   </td>
