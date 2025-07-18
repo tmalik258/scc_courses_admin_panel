@@ -1,127 +1,90 @@
+// app/api/payments/route.ts
 import { NextResponse } from "next/server";
-import { z, ZodError } from "zod";
-import { v4 as uuidv4 } from "uuid";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 
-console.log("[PAYMENT_ROUTE] Route handler loaded");
+// Define the shape of the payment response
+interface Payment {
+  id: string;
+  purchase_id: string;
+  invoice_number: string;
+  payment_date: string;
+  payment_method: string;
+  total_amount: number;
+  status: string;
+  course_name: string;
+  student_name: string;
+  purchases: {
+    profiles: {
+      id: string;
+      full_name: string | null;
+      email: string | null;
+    } | null;
+    courses: {
+      id: string;
+      title: string;
+      price: number | null;
+    } | null;
+  } | null;
+}
 
-const paymentSchema = z.object({
-  studentId: z.string().uuid(),
-  courseId: z.string().uuid(),
-  paymentMethod: z.string(),
-  totalAmount: z.number(),
-  courseName: z.string(),
-  studentName: z.string(),
-  category: z.string().optional(),
-});
-
-export async function POST(req: Request) {
-  console.log("[PAYMENT_POST] Handler invoked");
+export async function GET(request: Request) {
   try {
-    const body = await req.json();
-    console.log("[PAYMENT_POST] Request body:", body);
-    const parsedBody = paymentSchema.parse(body);
-    console.log("[PAYMENT_POST] Parsed body:", parsedBody);
-    const {
-      studentId,
-      courseId,
-      paymentMethod,
-      totalAmount,
-      courseName,
-      studentName,
-      category,
-    } = parsedBody;
+    const { searchParams } = new URL(request.url);
+    const studentId = searchParams.get("studentId");
+    const courseId = searchParams.get("courseId");
+    const status = searchParams.get("status");
+    const paymentMethod = searchParams.get("paymentMethod");
 
-    console.log("[PAYMENT_POST] Checking for existing purchase:", {
-      studentId,
-      courseId,
-    });
-    const existingPurchase = await db.purchase.findUnique({
-      where: {
-        studentId_courseId: { studentId, courseId },
-      },
-    });
-    console.log("[PAYMENT_POST] Existing purchase result:", existingPurchase);
+    // Build the query
+    let query = supabase.from("invoices").select(`
+        *,
+        purchases!invoices_purchase_id_fkey (
+          *,
+          profiles!purchases_student_id_fkey (
+            id,
+            full_name,
+            email
+          ),
+          courses!purchases_course_id_fkey (
+            id,
+            title,
+            price
+          )
+        )
+      `);
 
-    if (existingPurchase) {
+    // Apply filters
+    if (studentId) query = query.ilike("student_name", `%${studentId}%`);
+    if (courseId) query = query.eq("purchases.course_id", courseId);
+    if (status) query = query.eq("status", status);
+    if (paymentMethod) query = query.eq("payment_method", paymentMethod);
+
+    // Order by payment_date (descending)
+    query = query.order("payment_date", { ascending: false });
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Supabase query error:", error);
       return NextResponse.json(
-        { error: "This student has already purchased this course." },
-        { status: 400 }
+        { success: false, error: error.message },
+        { status: 500 }
       );
     }
 
-    console.log("[PAYMENT_POST] Creating new purchase:", {
-      studentId,
-      courseId,
-    });
-    const newPurchase = await db.purchase.create({
-      data: { studentId, courseId },
-    });
-    console.log("[PAYMENT_POST] New purchase created:", newPurchase);
-
-    const invoiceNumber = `INV-${new Date()
-      .toISOString()
-      .slice(0, 10)
-      .replace(/-/g, "")}-${uuidv4().slice(0, 6).toUpperCase()}`;
-    console.log("[PAYMENT_POST] Generated invoice number:", invoiceNumber);
-
-    console.log("[PAYMENT_POST] Creating invoice:", {
-      purchaseId: newPurchase.id,
-      invoiceNumber,
-      paymentMethod,
-      totalAmount,
-      courseName,
-      studentName,
-      category,
-    });
-    const invoice = await db.invoice.create({
-      data: {
-        purchaseId: newPurchase.id,
-        invoiceNumber,
-        paymentDate: new Date(),
-        paymentMethod,
-        totalAmount,
-        courseName,
-        studentName,
-        category,
-      },
-    });
-    console.log("[PAYMENT_POST] Invoice created:", invoice);
+    // Type the response data
+    const payments: Payment[] = data || [];
 
     return NextResponse.json({
-      message: "Payment and invoice created successfully",
-      invoice,
+      success: true,
+      data: payments,
+      count: payments.length,
     });
-  } catch (error) {
-    console.error("[PAYMENT_POST_ERROR]", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-      body: await req.json().catch(() => "Failed to parse body"),
-    });
-
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: error.errors.map((e) => ({
-            path: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 }
-      );
-    }
-
+  } catch (err) {
+    console.error("Server error in /api/payments:", err);
     return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
-}
-
-export async function GET() {
-  return NextResponse.json({ message: "Payment API" });
 }
