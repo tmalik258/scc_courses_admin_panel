@@ -9,6 +9,7 @@ export interface CourseData {
 }
 
 export interface RecentCourse {
+  courseId: string;
   title: string;
   timeAgo: string;
 }
