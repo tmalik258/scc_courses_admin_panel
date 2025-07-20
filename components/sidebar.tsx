@@ -56,7 +56,7 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-64 bg-white shadow-sm min-h-screen min-w-fit max-md:hidden">
+    <aside className="w-64 bg-white shadow-sm min-h-[calc(100vh-5.1rem)] min-w-fit max-md:hidden">
       <nav className="p-4">
         <ul className="space-y-2">
           {routes.map((route) => (

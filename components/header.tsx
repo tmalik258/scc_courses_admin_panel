@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "nextjs-toploader/app";
-import { signout } from "@/lib/auth-actions";
+import { signout } from "@/actions/auth";
 import { createClient } from "@/utils/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -139,7 +139,7 @@ const Header = () => {
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center space-x-2 focus:outline-none">
                 <Image
-                  src="/images/profile.jpg"
+                  src={ user?.app_metadata?.avatar_url || "/images/profile.jpg"}
                   width={30}
                   height={30}
                   decoding="async"

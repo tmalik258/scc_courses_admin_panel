@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
                   data.user.email?.split("@")[0] ??
                   "Unknown User",
                 avatarUrl: data.user.user_metadata?.picture ?? null,
-                role: "STUDENT",
+                role: "ADMIN",
                 isActive: true,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),

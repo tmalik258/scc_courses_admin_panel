@@ -14,9 +14,11 @@ interface Purchase {
 
 interface Student {
   id: string;
-  name: string;
-  phone: string;
-  email: string;
+  fullName?: string
+  phone?: string
+  email?: string
+  avatarUrl?: string
+  bio?: string
   purchases: Purchase[];
 }
 
@@ -66,7 +68,7 @@ export function useStudentData() {
     }
   };
 
-  const handleUpdateStudent = async (studentId: string, data: { name?: string; phone?: string; email?: string }) => {
+  const handleUpdateStudent = async (studentId: string, data: { fullName?: string; phone?: string; email?: string }) => {
     setLoading(true);
     try {
       const updatedStudent = await updateStudent(studentId, data);

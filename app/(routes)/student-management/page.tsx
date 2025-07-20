@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { LumaSpin } from "@/components/luma-spin";
 
 const StudentManagementPage: React.FC = () => {
   const { students, selectStudent, handleDeleteStudent, loading } = useStudentData();
@@ -14,7 +15,7 @@ const StudentManagementPage: React.FC = () => {
 
   const filteredStudents = students.filter(
     (student) =>
-      student.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.phone?.includes(searchQuery),
@@ -34,7 +35,7 @@ const StudentManagementPage: React.FC = () => {
     { label: "Student Management", active: true },
   ];
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center h-full"><LumaSpin /></div>;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -109,12 +110,12 @@ const StudentManagementPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-gray-200">
-                        {student.name?.split(" ").map((n) => n[0]).join("")}
+                        {student.fullName?.split(" ").map((n) => n[0]).join("")}
                       </AvatarFallback>
                     </Avatar>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                    <div className="text-sm font-medium text-gray-900">{student.fullName}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{student.phone}</div>

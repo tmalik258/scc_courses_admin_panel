@@ -53,7 +53,7 @@ export async function signup(formData: FormData) {
       email: data.email,
       fullName: data.fullName,
       avatarUrl: data.avatarUrl,
-      role: 'STUDENT', // Default role, adjust as needed
+      role: 'ADMIN', // Default role, adjust as needed
       isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

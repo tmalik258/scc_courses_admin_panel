@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
-import { login } from "@/lib/auth-actions"
+import { login } from "@/actions/auth"
 import GoogleSigninButton from "../../_components/google-signin-button"
 import Divider from "@/components/divider"
 

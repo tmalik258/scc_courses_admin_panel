@@ -25,8 +25,8 @@ model Profile {
   instructorCourses Course[]        @relation("CourseInstructor")
   progress          Progress[]
   certificates      Certificate[]
-  reviews            Review[]
-  purchases          Purchase[]
+  reviews           Review[]
+  purchases         Purchase[]
   paypalCustomer    PaypalCustomer?
 
   @@map("profiles")
@@ -47,12 +47,10 @@ model Course {
   // Relationships
   instructor   Profile       @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: Cascade)
   category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  lessons      Lesson[]
-  attachments  Attachment[]
+  sections     Section[]
   certificates Certificate[]
   reviews      Review[]
-  purchases     Purchase[]
-  sections     Section[]
+  purchases    Purchase[]
   modules      Module[]
   resources    Resource[]
 
@@ -110,70 +108,19 @@ model Review {
   @@map("reviews")
 }
 
-model Attachment {
-  id        String   @id @default(uuid())
-  courseId  String   @map("course_id") @db.Uuid
-  name      String
-  url       String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@index([courseId])
-  @@map("attachments")
-}
-
-model Section {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  courseId    String   @map("course_id") @db.Uuid
-  title       String
-  orderIndex  Int      @map("order_index")
-  isPublished Boolean  @default(false) @map("is_published")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lessons     Lesson[]
-
-  @@map("sections")
-}
-
-model Lesson {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sectionId     String   @map("section_id") @db.Uuid
-  courseId      String   @map("course_id") @db.Uuid
-  title         String
-  content       String?
-  videoUrl      String?  @map("video_url")
-  videoDuration Int?     @map("video_duration")
-  attachments   String[]
-  orderIndex    Int      @map("order_index")
-  isPublished   Boolean  @default(false) @map("is_published")
-  isFree        Boolean  @default(false) @map("is_free")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  course        Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  section       Section    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  progress      Progress[]
-
-  @@map("lessons")
-}
-
 model Progress {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   studentId   String    @map("student_id") @db.Uuid
-  lessonId    String    @map("lesson_id") @db.Uuid
+  sectionId    String    @map("section_id") @db.Uuid
   isCompleted Boolean   @default(false) @map("is_completed")
   completedAt DateTime? @map("completed_at")
   watchTime   Int       @default(0) @map("watch_time")
   lastWatched DateTime? @map("last_watched")
 
   student     Profile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  lesson      Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  section      Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
-  @@unique([studentId, lessonId])
+  @@unique([studentId, sectionId])
   @@map("progress")
 }
 
@@ -228,16 +175,25 @@ model Module {
   courseId  String   @db.Uuid
   title     String
   course    Course   @relation(fields: [courseId], references: [id])
-  sections  SubSection[]
+  sections  Section[]
 }
 
-model SubSection {
+model Section {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId  String   @map("course_id") @db.Uuid
   moduleId  String   @db.Uuid
-  name      String
+  title     String
   reading   String?
   videoUrl  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relationships
   module    Module   @relation(fields: [moduleId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+  progress  Progress[]
+
+  @@map("sections")
 }
 
 model Resource {
@@ -245,7 +201,14 @@ model Resource {
   courseId  String   @db.Uuid
   title     String
   url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
   course    Course   @relation(fields: [courseId], references: [id])
+
+  @@index([courseId])
+  @@map("resources")
 }
 
 enum Role {
