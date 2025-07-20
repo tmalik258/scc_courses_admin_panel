@@ -10,6 +10,7 @@ import { Breadcrumb } from "@/components/breadcrumb"
 import { useInstructorData } from "@/hooks/useInstructorData"
 import { useParams } from "next/navigation"
 import { Instructor } from "@/types/instructor"
+import { LumaSpin } from "@/components/luma-spin"
 
 const InstructorDetailsPage: React.FC = () => {
   const { instructorId } = useParams<{ instructorId: string }>()
@@ -76,7 +77,7 @@ const InstructorDetailsPage: React.FC = () => {
     { label: "Instructor Details", active: true },
   ]
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <div className="flex items-center justify-center h-full"><LumaSpin /></div>;
   if (error) return <div>Error: {error}</div>
 
   return (

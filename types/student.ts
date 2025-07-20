@@ -1,9 +1,10 @@
 export interface Student {
   id: string
-  name: string
-  phone: string
-  email: string
-  profileImage?: string
+  fullName?: string
+  phone?: string
+  email?: string
+  avatarUrl?: string
+  bio?: string
 }
 
 export interface StudentDetails extends Student {

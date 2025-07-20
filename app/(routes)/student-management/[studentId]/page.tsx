@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useStudentData } from "@/hooks/useStudentData";
 import { useParams } from "next/navigation";
+import { LumaSpin } from "@/components/luma-spin";
 
 const StudentDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { selectedStudent, selectStudent, handleUpdateStudent, handleDeleteStudent, loading, error } = useStudentData();
   const [studentData, setStudentData] = useState({
     id: "",
-    name: "",
+    fullName: "",
     phone: "",
     email: "",
     courses: [] as { id: string; title: string; category: string; status: string }[],
@@ -31,7 +32,7 @@ const StudentDetailsPage: React.FC = () => {
     if (selectedStudent) {
       setStudentData({
         id: selectedStudent.id,
-        name: selectedStudent.name || "",
+        fullName: selectedStudent.fullName || "",
         phone: selectedStudent.phone || "",
         email: selectedStudent.email || "",
         courses: selectedStudent.purchases.map((p) => ({
@@ -46,7 +47,7 @@ const StudentDetailsPage: React.FC = () => {
 
   const handleSave = async () => {
     await handleUpdateStudent(studentData.id, {
-      name: studentData.name,
+      fullName: studentData.fullName,
       phone: studentData.phone,
       email: studentData.email,
     });
@@ -68,7 +69,7 @@ const StudentDetailsPage: React.FC = () => {
     { label: "Student Details", active: true },
   ];
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center h-full"><LumaSpin /></div>;;
   if (error) return <div>Error: {error}</div>;
 
   return (
@@ -108,8 +109,8 @@ const StudentDetailsPage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
             <Input
               placeholder="Student Name"
-              value={studentData.name}
-              onChange={(e) => setStudentData({ ...studentData, name: e.target.value })}
+              value={studentData.fullName}
+              onChange={(e) => setStudentData({ ...studentData, fullName: e.target.value })}
             />
           </div>
 

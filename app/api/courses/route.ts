@@ -27,18 +27,32 @@ export async function GET() {
   try {
     const courses = await prisma.course.findMany({
       include: {
-        instructor: true,
-        category: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          }
+        },
         modules: {
           include: {
             sections: true,
           },
         },
+        instructor: {
+          select: {
+            id: true,
+            fullName: true,
+          },
+        },
         resources: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
       },
     });
 
-    return NextResponse.json(courses);
+    return NextResponse.json({courses}, { status: 200 });
   } catch (error) {
     console.error(
       "Error fetching courses:",

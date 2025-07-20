@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Breadcrumb } from "@/components/breadcrumb"
 import { useInstructorData } from "@/hooks/useInstructorData"
+import { LumaSpin } from "@/components/luma-spin"
 
 const InstructorManagementPage: React.FC = () => {
   const { instructors, selectInstructor, handleDeleteInstructor, loading } = useInstructorData()
@@ -36,7 +37,7 @@ const InstructorManagementPage: React.FC = () => {
     { label: "Instructor Management", active: true },
   ]
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <div className="flex items-center justify-center h-full"><LumaSpin /></div>;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -109,7 +110,7 @@ const InstructorManagementPage: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={instructor.avatarUrl || "/placeholder.svg"} alt={instructor.fullName || "Instructor"} />
+                      <AvatarImage src={instructor.avatarUrl || "/images/instructor_placeholder.jpg"} alt={instructor.fullName || "Instructor"} />
                       <AvatarFallback className="bg-gray-200">
                         {instructor.fullName?.split(" ").map((n) => n[0]).join("") || "I"}
                       </AvatarFallback>

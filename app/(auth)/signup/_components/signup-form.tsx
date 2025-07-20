@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { signup } from "@/lib/auth-actions";
+import { signup } from "@/actions/auth";
 import GoogleSigninButton from "../../_components/google-signin-button";
 import Divider from "@/components/divider";
 

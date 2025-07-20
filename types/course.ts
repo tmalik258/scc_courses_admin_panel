@@ -1,3 +1,5 @@
+import { Course as PrismaCourse } from '@/lib/generated/prisma';
+
 export interface Course {
   id: string
   name: string
@@ -27,4 +29,18 @@ export interface CourseFormData {
     title: string
     url: string
   }>
+}
+
+export interface CourseWithRelations extends PrismaCourse {
+  category: { name: string; color: string | null };
+  instructor: { id: string; fullName: string | null };
+  modules: { id: string; title: string; sections: { id: string; name: string; reading?: string | null;
+  videoUrl?: string | null; }[] }[];
+  resources: { id: string; title: string; url: string }[];
+}
+
+export interface CourseData {
+  courses: CourseWithRelations[];
+  loading: boolean;
+  error: Error | null;
 }
