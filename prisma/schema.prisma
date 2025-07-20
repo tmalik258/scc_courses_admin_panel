@@ -42,14 +42,13 @@ model Course {
   isPublished  Boolean       @default(false) @map("is_published")
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
-  attachments  Attachments[]
+  resources    Resources[]
   certificates Certificate[]
   category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   instructor   Profile       @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: Cascade)
-  lessons      Lessons[]
   purchases    Purchase[]
   reviews      Review[]
-  sections     Section[]
+  modules      Module[]
 
   @@map("courses")
 }
@@ -160,12 +159,11 @@ model PaypalCustomer {
   @@map("paypal_customers")
 }
 
-model Section {
+model Module {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   courseId     String    @map("course_id") @db.Uuid
   title        String
   order_index  Int
-  is_published Boolean   @default(false)
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   lessons      Lessons[]
@@ -174,7 +172,7 @@ model Section {
   @@map("sections")
 }
 
-model Attachments {
+model Resources {
   id        String   @id
   course_id String   @db.Uuid
   name      String
@@ -194,15 +192,11 @@ model Lessons {
   title          String
   content        String?
   video_url      String?
-  video_duration Int?
-  attachments    String[]
   order_index    Int
-  is_published   Boolean    @default(false)
   is_free        Boolean    @default(false)
   created_at     DateTime   @default(now())
   updated_at     DateTime
-  courses        Course     @relation(fields: [course_id], references: [id], onDelete: Cascade)
-  sections       Section    @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  modules        Module    @relation(fields: [section_id], references: [id], onDelete: Cascade)
   progress       Progress[]
 
   @@map("lessons")

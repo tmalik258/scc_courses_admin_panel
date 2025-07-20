@@ -9,15 +9,15 @@ interface CourseFormData {
   price?: string;
   instructor: string;
   thumbnail?: string | null;
-  modules: {
+  sections: {
     title: string;
-    sections: {
+    lessons: {
       name: string;
       reading?: string;
       videoUrl?: string;
     }[];
   }[];
-  resources: {
+  attachments: {
     title: string;
     url: string;
   }[];
@@ -34,9 +34,9 @@ export async function GET() {
             color: true,
           }
         },
-        modules: {
+        sections: {
           include: {
-            sections: true,
+            lessons: true,
           },
         },
         instructor: {
@@ -45,7 +45,7 @@ export async function GET() {
             fullName: true,
           },
         },
-        resources: true,
+        attachments: true,
       },
       orderBy: {
         updatedAt: 'desc',
@@ -76,8 +76,8 @@ export async function POST(req: Request) {
       price,
       instructor,
       thumbnail,
-      modules,
-      resources,
+      sections,
+      attachments: resources,
     } = body;
 
     if (!title || !instructor || !category) {
@@ -106,22 +106,27 @@ export async function POST(req: Request) {
         categoryId: category,
         price: price ? new Decimal(price) : undefined,
         thumbnailUrl: thumbnail || undefined,
-        modules: {
-          create: modules.map((mod) => ({
+        sections: {
+          create: sections.map((mod, index) => ({
             title: mod.title,
-            sections: {
-              create: mod.sections.map((sec) => ({
-                name: sec.name,
-                reading: sec.reading,
-                videoUrl: sec.videoUrl,
+            order_index: index,
+            lessons: {
+              create: mod.lessons.map((les, lessonIndex) => ({
+                title: les.name,
+                content: les.reading,
+                video_url: les.videoUrl,
+                order_index: lessonIndex,
+                updated_at: new Date(),
+                is_free: false,
               })),
             },
           })),
         },
-        resources: {
+        attachments: {
           create: resources.map((res) => ({
-            title: res.title,
+            name: res.title,
             url: res.url,
+            updatedAt: new Date(),
           })),
         },
       },
