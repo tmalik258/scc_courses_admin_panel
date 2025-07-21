@@ -143,7 +143,9 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
-  window.clearResourcesStepStorage = clearLocalStorage;
+  if (typeof window !== "undefined") {
+    window.clearResourcesStepStorage = clearLocalStorage;
+  }
 
   return (
     <div className="space-y-6">

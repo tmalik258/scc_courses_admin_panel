@@ -1,14 +1,15 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useCallback, useMemo } from "react"
-import { Button } from "@/components/ui/button"
-import { Breadcrumb } from "@/components/breadcrumb"
-import CourseDetailsStep from "../_steps/course-details"
-import CourseLessonsStep from "../_steps/course-lessons"
-import ResourcesStep from "../_steps/resources"
-import type { CourseFormData } from "@/types/course"
-import { toast } from "sonner"
+import type React from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/breadcrumb";
+import CourseDetailsStep from "../_steps/course-details";
+import CourseLessonsStep from "../_steps/course-lessons";
+import ResourcesStep from "../_steps/resources";
+import type { CourseFormData } from "@/types/course";
+import { toast } from "sonner";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const INITIAL_FORM_DATA: CourseFormData = {
   title: "",
@@ -20,9 +21,7 @@ const INITIAL_FORM_DATA: CourseFormData = {
   modules: [
     {
       title: "",
-      lessons: [
-        { name: "", reading: "", videoUrl: "" },
-      ],
+      lessons: [{ name: "", reading: "", videoUrl: "" }],
     },
   ],
   resources: [
@@ -31,60 +30,86 @@ const INITIAL_FORM_DATA: CourseFormData = {
       url: "",
     },
   ],
-}
+};
 
 const AddCoursePage: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [canProceed, setCanProceed] = useState(false)
-  const [formData, setFormData] = useState<CourseFormData>(INITIAL_FORM_DATA)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const [currentStep, setCurrentStep] = useState(() => {
+    const step = searchParams.get("step");
+    return step ? parseInt(step, 10) : 1;
+  });
+  const [canProceed, setCanProceed] = useState(false);
+  const [formData, setFormData] = useState<CourseFormData>(INITIAL_FORM_DATA);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const step = searchParams.get("step");
+    const validStep =
+      step && !isNaN(parseInt(step, 10)) ? parseInt(step, 10) : 1;
+    if (validStep >= 1 && validStep <= 3 && validStep !== currentStep) {
+      setCurrentStep(validStep);
+      setCanProceed(true);
+    }
+  }, [searchParams, currentStep]);
 
   const updateFormData = useCallback((data: Partial<CourseFormData>) => {
-    setFormData((prev) => ({ ...prev, ...data }))
-  }, [])
+    setFormData((prev) => ({ ...prev, ...data }));
+  }, []);
 
   const nextStep = useCallback(() => {
     if (currentStep < 3 && canProceed) {
-      setCurrentStep((prev) => prev + 1)
-      setCanProceed(false)
+      const nextStepNumber = currentStep + 1;
+      setCurrentStep(nextStepNumber);
+      setCanProceed(false);
+      router.replace(`${pathname}?step=${nextStepNumber}`);
     }
-  }, [currentStep, canProceed])
+  }, [currentStep, canProceed, router, pathname]);
 
   const prevStep = useCallback(() => {
     if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1)
-      setCanProceed(true)
+      const prevStepNumber = currentStep - 1;
+      setCurrentStep(prevStepNumber);
+      setCanProceed(true);
+      router.replace(`${pathname}?step=${prevStepNumber}`);
     }
-  }, [currentStep])
+  }, [currentStep, pathname, router]);
 
   const handleCancel = useCallback(() => {
     if (typeof window !== "undefined") {
-      window.history.back()
+      localStorage.clear();
+      router.push("/course-management");
     }
-  }, [])
+  }, [router]);
 
   const validateFormData = useCallback(() => {
-    // Validate required fields
-    if (!formData.title || !formData.description || !formData.category || !formData.price || !formData.instructor) {
-      toast.error("Please fill in all required fields")
-      return false
+    if (
+      !formData.title ||
+      !formData.description ||
+      !formData.category ||
+      !formData.price ||
+      !formData.instructor
+    ) {
+      toast.error("Please fill in all required fields");
+      return false;
     }
 
     // Check if thumbnail is uploaded (optional but recommended)
     if (!formData.thumbnailUrl) {
-      console.warn("No thumbnail URL found")
+      console.warn("No thumbnail URL found");
     }
 
-    return true
-  }, [formData])
+    return true;
+  }, [formData]);
 
   const handleSaveAndContinue = useCallback(async () => {
     if (currentStep === 3) {
       if (!validateFormData()) {
-        return
+        return;
       }
 
-      setIsSubmitting(true)
+      setIsSubmitting(true);
 
       try {
         const response = await fetch("/api/courses", {
@@ -93,27 +118,27 @@ const AddCoursePage: React.FC = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(formData),
-        })
+        });
 
-        const result = await response.json()
+        const result = await response.json();
 
         if (response.ok) {
-          toast.success("Course created successfully!")
-          window.location.href = "/course-management"
+          toast.success("Course created successfully!");
+          router.push("/course-management");
         } else {
-          console.error("Server error:", result.error)
-          toast.error(`Failed to create course: ${result.error}`)
+          console.error("Server error:", result.error);
+          toast.error(`Failed to create course: ${result.error}`);
         }
       } catch (err) {
-        console.error("Network or unexpected error:", err)
-        toast.error("Something went wrong while creating the course.")
+        console.error("Network or unexpected error:", err);
+        toast.error("Something went wrong while creating the course.");
       } finally {
-        setIsSubmitting(false)
+        setIsSubmitting(false);
       }
     } else {
-      nextStep()
+      nextStep();
     }
-  }, [currentStep, formData, nextStep, validateFormData])
+  }, [currentStep, formData, nextStep, validateFormData, router]);
 
   const steps = useMemo(
     () => [
@@ -136,45 +161,69 @@ const AddCoursePage: React.FC = () => {
         completed: false,
       },
     ],
-    [currentStep],
-  )
+    [currentStep]
+  );
 
   const breadcrumbItems = useMemo(
     () => [
       { label: "Course Management", href: "/course-management" },
       { label: "Add Course", active: true },
     ],
-    [],
-  )
+    []
+  );
 
   const getStepTitle = useCallback(() => {
     const titles = {
       1: "Course Details",
       2: "Course Lessons",
       3: "Resources File",
-    }
-    return titles[currentStep as keyof typeof titles] || "Create New Course"
-  }, [currentStep])
+    };
+    return titles[currentStep as keyof typeof titles] || "Create New Course";
+  }, [currentStep]);
 
   const getButtonText = useCallback(() => {
     if (currentStep === 3) {
-      return isSubmitting ? "Creating Course..." : "Create Course"
+      return isSubmitting ? "Creating Course..." : "Create Course";
     }
-    return "Save & Continue"
-  }, [currentStep, isSubmitting])
+    return "Save & Continue";
+  }, [currentStep, isSubmitting]);
 
   const renderCurrentStep = useCallback(() => {
     switch (currentStep) {
       case 1:
-        return <CourseDetailsStep formData={formData} updateFormData={updateFormData} setCanProceed={setCanProceed} />
+        return (
+          <CourseDetailsStep
+            formData={formData}
+            updateFormData={updateFormData}
+            setCanProceed={setCanProceed}
+          />
+        );
       case 2:
-        return <CourseLessonsStep formData={formData} updateFormData={updateFormData} setCanProceed={setCanProceed} />
+        return (
+          <CourseLessonsStep
+            formData={formData}
+            updateFormData={updateFormData}
+            setCanProceed={setCanProceed}
+          />
+        );
       case 3:
-        return <ResourcesStep formData={formData} updateFormData={updateFormData} setCanProceed={setCanProceed} />
+        return (
+          <ResourcesStep
+            formData={formData}
+            updateFormData={updateFormData}
+            setCanProceed={setCanProceed}
+          />
+        );
       default:
-        return <CourseDetailsStep formData={formData} updateFormData={updateFormData} setCanProceed={setCanProceed} />
+        return (
+          <CourseDetailsStep
+            formData={formData}
+            updateFormData={updateFormData}
+            setCanProceed={setCanProceed}
+          />
+        );
     }
-  }, [currentStep, formData, updateFormData])
+  }, [currentStep, formData, updateFormData]);
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -182,9 +231,16 @@ const AddCoursePage: React.FC = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Create New Course</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Create New Course
+        </h1>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleCancel} className="px-6 bg-transparent" disabled={isSubmitting}>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="px-6 bg-transparent"
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
           <Button
@@ -207,15 +263,19 @@ const AddCoursePage: React.FC = () => {
                   step.completed
                     ? "bg-green-500 text-white"
                     : step.active
-                      ? "bg-sky-500 text-white"
-                      : "bg-gray-200 text-gray-600"
+                    ? "bg-sky-500 text-white"
+                    : "bg-gray-200 text-gray-600"
                 }`}
               >
                 {step.completed ? "✓" : step.number}
               </div>
               <span
                 className={`ml-3 text-sm font-medium transition-colors duration-300 ${
-                  step.active ? "text-sky-600" : step.completed ? "text-green-600" : "text-gray-500"
+                  step.active
+                    ? "text-sky-600"
+                    : step.completed
+                    ? "text-green-600"
+                    : "text-gray-500"
                 }`}
               >
                 {step.title}
@@ -233,7 +293,9 @@ const AddCoursePage: React.FC = () => {
       </div>
 
       {/* Step Content */}
-      <div className="transition-all duration-500 ease-in-out">{renderCurrentStep()}</div>
+      <div className="transition-all duration-500 ease-in-out">
+        {renderCurrentStep()}
+      </div>
 
       {/* Navigation Footer */}
       <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
@@ -261,11 +323,13 @@ const AddCoursePage: React.FC = () => {
       {process.env.NODE_ENV === "development" && (
         <div className="mt-8 p-4 bg-gray-100 rounded-lg">
           <h3 className="font-semibold mb-2">Debug Info:</h3>
-          <pre className="text-xs overflow-auto">{JSON.stringify(formData, null, 2)}</pre>
+          <pre className="text-xs overflow-auto">
+            {JSON.stringify(formData, null, 2)}
+          </pre>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default AddCoursePage
+export default AddCoursePage;
