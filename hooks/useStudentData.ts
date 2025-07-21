@@ -26,7 +26,7 @@ export function useStudentData() {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const refreshStudents = async () => {
     setLoading(true);
@@ -34,8 +34,12 @@ export function useStudentData() {
       const data = await fetchStudents();
       setStudents(data);
     } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
       console.log(`Error fetching students: ${err}`);
-      setError("Failed to load students");
     } finally {
       setLoading(false);
     }
@@ -47,8 +51,12 @@ export function useStudentData() {
       const data = await fetchStudentById(studentId);
       setSelectedStudent(data);
     } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
       console.log(`Error fetching student: ${err}`);
-      setError("Failed to load student details");
     } finally {
       setLoading(false);
     }
@@ -61,22 +69,30 @@ export function useStudentData() {
       await refreshStudents();
       setSelectedStudent(null);
     } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
       console.log(`Error deleting student: ${err}`);
-      setError("Failed to delete student");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateStudent = async (studentId: string, data: { fullName?: string; phone?: string; email?: string }) => {
+  const handleUpdateStudent = async (studentId: string, data: { fullName?: string; phone?: string; email?: string, avatarUrl?: string }) => {
     setLoading(true);
     try {
       const updatedStudent = await updateStudent(studentId, data);
       setSelectedStudent(updatedStudent);
       await refreshStudents();
     } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
       console.log(`Error updating student: ${err}`);
-      setError("Failed to update student");
     } finally {
       setLoading(false);
     }

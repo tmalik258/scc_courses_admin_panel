@@ -6,7 +6,7 @@ export function useInstructorData() {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const refreshInstructors = async () => {
     setLoading(true);
@@ -14,8 +14,12 @@ export function useInstructorData() {
       const data = await fetchInstructors();
       setInstructors(data);
     } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
       console.log(`Error fetching instructors: ${err}`);
-      setError("Failed to load instructors");
     } finally {
       setLoading(false);
     }
@@ -26,9 +30,14 @@ export function useInstructorData() {
     try {
       const data = await fetchInstructorById(instructorId);
       setSelectedInstructor(data);
+      // console.log("Selected instructor:", data);
     } catch (err) {
       console.log(`Error fetching instructor: ${err}`);
-      setError("Failed to load instructor details");
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
     } finally {
       setLoading(false);
     }
@@ -41,8 +50,12 @@ export function useInstructorData() {
       await refreshInstructors();
       setSelectedInstructor(null);
     } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
       console.log(`Error deleting instructor: ${err}`);
-      setError("Failed to delete instructor");
     } finally {
       setLoading(false);
     }
@@ -58,8 +71,12 @@ export function useInstructorData() {
       setSelectedInstructor(updatedInstructor);
       await refreshInstructors();
     } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
       console.log(`Error updating instructor: ${err}`);
-      setError("Failed to update instructor");
     } finally {
       setLoading(false);
     }

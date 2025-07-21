@@ -1,7 +1,9 @@
+import { Category } from "@/lib/generated/prisma";
+
 export interface Course {
   id: string;
   title: string;
-  category: string;
+  category: Category;
   totalLessons: number;
 }
 
@@ -12,7 +14,7 @@ export interface Instructor {
   bio: string | null;
   phone: string | null;
   avatarUrl: string | null;
-  courses: Course[];
+  instructorCourses: Course[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

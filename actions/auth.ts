@@ -77,6 +77,9 @@ export async function signout() {
     redirect("/error");
   }
 
+  console.log("User signed out");
+
+  revalidatePath('/', 'layout')
   redirect("/");
 }
 

@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { LumaSpin } from "@/components/luma-spin";
+import { useRouter } from "next/navigation";
 
 const StudentManagementPage: React.FC = () => {
-  const { students, selectStudent, handleDeleteStudent, loading } = useStudentData();
+  const { students, handleDeleteStudent, loading } = useStudentData();
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   const filteredStudents = students.filter(
     (student) =>
@@ -22,8 +24,7 @@ const StudentManagementPage: React.FC = () => {
   );
 
   const handleEdit = (studentId: string) => {
-    selectStudent(studentId);
-    // Navigate to student details page
+    router.push(`/student-management/${studentId}`);
   };
 
   const handleDelete = (studentId: string) => {

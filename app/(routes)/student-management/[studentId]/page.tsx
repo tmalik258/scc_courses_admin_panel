@@ -1,67 +1,236 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Upload, ArrowUpDown, Trash2 } from "lucide-react";
+import type React from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ArrowUpDown, CheckCircleIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useStudentData } from "@/hooks/useStudentData";
 import { useParams } from "next/navigation";
 import { LumaSpin } from "@/components/luma-spin";
+import { toast } from "sonner";
+import FileUploadWrapper from "@/components/file-upload-wrapper";
+import { DashedSpinner } from "@/components/dashed-spinner";
+import { FileWithPreview } from "@/hooks/use-file-upload";
+import { uploadImage } from "@/utils/supabase/uploadImage";
+
+// Zod schema for student form validation
+const studentSchema = z.object({
+  id: z.string().min(1, "Student ID is required"),
+  fullName: z
+    .string()
+    .min(1, "Full name is required")
+    .max(100, "Full name must be less than 100 characters"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(/^[+]?[\d\s\-()]+$/, "Please enter a valid phone number"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+  avatarUrl: z
+    .string()
+    .url("Please enter a valid URL")
+    .optional()
+    .or(z.literal("")),
+});
+
+type StudentFormValues = z.infer<typeof studentSchema>;
 
 const StudentDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const { selectedStudent, selectStudent, handleUpdateStudent, handleDeleteStudent, loading, error } = useStudentData();
-  const [studentData, setStudentData] = useState({
-    id: "",
-    fullName: "",
-    phone: "",
-    email: "",
-    courses: [] as { id: string; title: string; category: string; status: string }[],
+  const { studentId } = useParams<{ studentId: string }>();
+  const {
+    selectedStudent,
+    selectStudent,
+    handleUpdateStudent,
+    handleDeleteStudent,
+    loading,
+    error,
+  } = useStudentData();
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [courses, setCourses] = useState<
+    Array<{ id: string; title: string; category: string; status: string }>
+  >([]);
+
+  const form = useForm<StudentFormValues>({
+    resolver: zodResolver(studentSchema),
+    defaultValues: {
+      id: "",
+      fullName: "",
+      phone: "",
+      email: "",
+      avatarUrl: "",
+    },
+    mode: "onChange",
   });
 
   useEffect(() => {
-    if (id) {
-      selectStudent(id);
+    if (studentId && selectStudent && !selectedStudent) {
+      selectStudent(studentId as string);
     }
-  }, [id, selectStudent]);
+  }, [studentId, selectStudent, selectedStudent]);
 
   useEffect(() => {
     if (selectedStudent) {
-      setStudentData({
+      console.log("Selected student courses:", selectedStudent.purchases);
+      form.reset({
         id: selectedStudent.id,
         fullName: selectedStudent.fullName || "",
         phone: selectedStudent.phone || "",
         email: selectedStudent.email || "",
-        courses: selectedStudent.purchases.map((p) => ({
+        avatarUrl: selectedStudent.avatarUrl || "",
+      });
+      setUploadedImageUrl(selectedStudent.avatarUrl || null);
+
+      // Map purchases to courses
+      const studentCourses =
+        selectedStudent.purchases?.map((p) => ({
           id: p.course.id,
           title: p.course.title,
           category: p.course.category,
-          status: p.createdAt ? "purchased" : "ongoing",
-        })),
-      });
+          status: p.createdAt ? "completed" : "ongoing",
+        })) || [];
+      setCourses(studentCourses);
     }
-  }, [selectedStudent]);
+  }, [selectedStudent, form]);
 
-  const handleSave = async () => {
-    await handleUpdateStudent(studentData.id, {
-      fullName: studentData.fullName,
-      phone: studentData.phone,
-      email: studentData.email,
-    });
+  const handleSave = async (data: StudentFormValues) => {
+    try {
+      await handleUpdateStudent(data.id, {
+        fullName: data.fullName,
+        phone: data.phone,
+        email: data.email,
+        avatarUrl: data.avatarUrl || "",
+      });
+      toast.success("Student updated successfully!");
+    } catch (error) {
+      toast.error("Failed to update student. Please try again.");
+      console.error("Update error:", error);
+    }
   };
 
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this student?")) {
-      await handleDeleteStudent(studentData.id);
-      window.history.back();
+      try {
+        await handleDeleteStudent(form.getValues("id"));
+        toast.success("Student deleted successfully!");
+        window.history.back();
+      } catch (error) {
+        toast.error("Failed to delete student. Please try again.");
+        console.error("Delete error:", error);
+      }
     }
   };
 
+  const updateFormData = useCallback(
+    (data: Partial<StudentFormValues>) => {
+      form.reset((prev) => ({ ...prev, ...data }));
+    },
+    [form]
+  );
+
   const handleCancel = () => {
     window.history.back();
+  };
+
+  const handleRemoveCourse = (courseId: string) => {
+    if (
+      confirm("Are you sure you want to remove this course from the student?")
+    ) {
+      setCourses((prev) => prev.filter((course) => course.id !== courseId));
+      toast.success("Course removed successfully!");
+    }
+  };
+
+  // Handle file upload to Supabase
+  const handleFileUpload = useCallback(
+    async (files: FileWithPreview[]) => {
+      if (files.length === 0) return;
+
+      const fileWithPreview = files[0];
+      const file = fileWithPreview.file;
+
+      if (!(file instanceof File)) return;
+
+      setIsUploading(true);
+
+      try {
+        console.log("Starting upload for file:", file.name);
+        const imageUrl = await uploadImage(file);
+
+        if (imageUrl) {
+          console.log("Upload successful, URL:", imageUrl);
+          setUploadedImageUrl(imageUrl);
+
+          // Update form data immediately with the uploaded URL
+          updateFormData({
+            avatarUrl: imageUrl,
+          });
+
+          toast.success("Profile uploaded successfully!");
+        } else {
+          console.error("Upload failed - no URL returned");
+          toast.error("Failed to upload thumbnail. Please try again.");
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast.error("An error occurred while uploading. Please try again.");
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [updateFormData]
+  );
+
+  // Handle file removal
+  const handleFileRemove = useCallback(() => {
+    console.log("Removing thumbnail");
+    setUploadedImageUrl(null);
+    updateFormData({
+      avatarUrl: "",
+    });
+  }, [updateFormData]);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+        return (
+          <Badge className="bg-green-100 text-green-800">
+            <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+            Completed
+          </Badge>
+        );
+      case "ongoing":
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800">
+            <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />
+            Ongoing
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-gray-100 text-gray-800">
+            <div className="w-2 h-2 rounded-full bg-gray-500 mr-2" />
+            {status}
+          </Badge>
+        );
+    }
   };
 
   const breadcrumbItems = [
@@ -69,21 +238,41 @@ const StudentDetailsPage: React.FC = () => {
     { label: "Student Details", active: true },
   ];
 
-  if (loading) return <div className="flex items-center justify-center h-full"><LumaSpin /></div>;;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <LumaSpin />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <Breadcrumb items={breadcrumbItems} />
 
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Student Details</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Student Details
+        </h1>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleCancel} className="px-6 bg-transparent">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="px-6 bg-transparent"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} className="bg-sky-500 hover:bg-sky-600 px-6">
-            Save Profile
+          <Button
+            onClick={form.handleSubmit(handleSave)}
+            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50"
+          >
+            {form.formState.isSubmitting ? "Saving..." : "Save Profile"}
           </Button>
           <Button
             onClick={handleDelete}
@@ -94,72 +283,127 @@ const StudentDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
-            <Input
-              placeholder="Student ID"
-              value={studentData.id}
-              disabled
-            />
-          </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSave)} className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Form Fields */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Student ID */}
+              <FormField
+                control={form.control}
+                name="id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Student ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Student ID" {...field} disabled />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-            <Input
-              placeholder="Student Name"
-              value={studentData.fullName}
-              onChange={(e) => setStudentData({ ...studentData, fullName: e.target.value })}
-            />
-          </div>
+              {/* Full Name */}
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Student Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-            <Input
-              placeholder="Phone Number"
-              value={studentData.phone}
-              onChange={(e) => setStudentData({ ...studentData, phone: e.target.value })}
-            />
-          </div>
+              {/* Phone Number */}
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Phone Number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <Input
-              placeholder="Email"
-              value={studentData.email}
-              onChange={(e) => setStudentData({ ...studentData, email: e.target.value })}
-            />
-          </div>
-        </div>
+              {/* Email */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <div className="lg:col-span-1">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Profile</label>
-            <Card className="border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors">
-              <CardContent className="p-8">
-                <div className="text-center">
-                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <Upload className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <div className="text-gray-600 mb-2">Upload Photo</div>
-                  <div className="text-xs text-red-500">Max file size is 2 Mb</div>
-                  <input type="file" accept="image/*" className="hidden" id="profile-upload" />
-                  <label
-                    htmlFor="profile-upload"
-                    className="mt-4 inline-block cursor-pointer text-sky-500 hover:text-sky-600"
-                  >
-                    Browse Files
-                  </label>
+            {/* Right Column - Profile Upload */}
+            <div className="lg:col-span-1">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Profile
+                </label>
+
+                {/* File Upload Component with custom handlers */}
+                <div className="relative">
+                  <FileUploadWrapper
+                    onFilesAdded={handleFileUpload}
+                    onFileRemove={handleFileRemove}
+                    isUploading={isUploading}
+                    uploadedImageUrl={uploadedImageUrl}
+                    maxSizeMB={2}
+                  />
+
+                  {/* Upload Status Overlay */}
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl z-10">
+                      <div className="flex flex-col items-center gap-2">
+                        <DashedSpinner />
+                        <span className="text-sm text-gray-600">
+                          Uploading...
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
 
+                {/* Success Message */}
+                {uploadedImageUrl && !isUploading && (
+                  <div className="mt-2 text-sm text-green-600 flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4" />
+                    Thumbnail uploaded successfully!
+                  </div>
+                )}
+
+                {/* Debug info - remove in production */}
+                {process.env.NODE_ENV === "development" && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Current URL: {uploadedImageUrl || "None"}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </form>
+      </Form>
+
+      {/* Course Enrolled Section */}
       <div className="mt-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Course Purchased</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          Course Enrolled
+        </h2>
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -189,35 +433,33 @@ const StudentDetailsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {studentData.courses.map((course, index) => (
-                  <tr key={`${course.id}-${index}`} className="hover:bg-gray-50">
+                {courses.map((course, index) => (
+                  <tr
+                    key={`${course.id}-${index}`}
+                    className="hover:bg-gray-50"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{course.id}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{course.title}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {course.title}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{course.category}</div>
+                      <div className="text-sm text-gray-900">
+                        {course.category}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge
-                        className={`${
-                          course.status === "purchased"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                      {getStatusBadge(course.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleRemoveCourse(course.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        title="Remove course"
                       >
-                        <div
-                          className={`w-2 h-2 rounded-full mr-2 ${
-                            course.status === "purchased" ? "bg-green-500" : "bg-yellow-500"
-                          }`}
-                        />
-                        {course.status}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Remove course">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </td>
@@ -227,6 +469,17 @@ const StudentDetailsPage: React.FC = () => {
             </table>
           </div>
         </div>
+
+        {courses.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg mb-2">
+              No courses enrolled
+            </div>
+            <div className="text-gray-400">
+              This student has no courses enrolled yet
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

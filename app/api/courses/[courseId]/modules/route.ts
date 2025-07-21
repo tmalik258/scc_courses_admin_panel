@@ -10,7 +10,7 @@ export async function POST(
   const body = await req.json();
 
   try {
-    const newSection = await prisma.section.create({
+    const newSection = await prisma.module.create({
       data: {
         ...body,
         courseId,

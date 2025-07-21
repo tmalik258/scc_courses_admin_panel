@@ -1,84 +1,203 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Upload, ArrowUpDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Breadcrumb } from "@/components/breadcrumb"
-import { useInstructorData } from "@/hooks/useInstructorData"
-import { useParams } from "next/navigation"
-import { Instructor } from "@/types/instructor"
-import { LumaSpin } from "@/components/luma-spin"
+import type React from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ArrowUpDown, CheckCircleIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { useInstructorData } from "@/hooks/useInstructorData";
+import { useParams } from "next/navigation";
+import { LumaSpin } from "@/components/luma-spin";
+import { toast } from "sonner";
+import FileUploadWrapper from "@/components/file-upload-wrapper";
+import { DashedSpinner } from "@/components/dashed-spinner";
+import { FileWithPreview } from "@/hooks/use-file-upload";
+import { uploadImage } from "@/utils/supabase/uploadImage";
+
+// Zod schema for instructor form validation
+const instructorSchema = z.object({
+  id: z.string().min(1, "Instructor ID is required"),
+  fullName: z
+    .string()
+    .min(1, "Full name is required")
+    .max(100, "Full name must be less than 100 characters"),
+  role: z.string().min(1, "Role is required"),
+  bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
+  phone: z
+    .string()
+    .regex(/^[+]?[\d\s\-()]+$/, "Please enter a valid phone number")
+    .optional(),
+  avatarUrl: z
+    .string()
+    .url("Please enter a valid URL")
+    .optional()
+    .or(z.literal("")),
+});
+
+type InstructorFormValues = z.infer<typeof instructorSchema>;
 
 const InstructorDetailsPage: React.FC = () => {
-  const { instructorId } = useParams<{ instructorId: string }>()
-  const { selectedInstructor, selectInstructor, handleUpdateInstructor, handleDeleteInstructor, loading, error } = useInstructorData()
-  const [instructorData, setInstructorData] = useState<Instructor>({
-    id: "",
-    fullName: "",
-    role: "",
-    bio: "",
-    phone: "",
-    avatarUrl: "",
-    courses: [],
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  })
+  const { instructorId } = useParams<{ instructorId: string }>();
+  const {
+    selectedInstructor,
+    selectInstructor,
+    handleUpdateInstructor,
+    handleDeleteInstructor,
+    loading,
+    error,
+  } = useInstructorData();
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+
+  const form = useForm<InstructorFormValues>({
+    resolver: zodResolver(instructorSchema),
+    defaultValues: {
+      id: "",
+      fullName: "",
+      role: "",
+      bio: "",
+      phone: "",
+      avatarUrl: "",
+    },
+    mode: "onChange",
+  });
 
   useEffect(() => {
-    if (instructorId) {
-      selectInstructor(instructorId as string)
+    if (instructorId && selectInstructor && !selectedInstructor) {
+      selectInstructor(instructorId as string);
     }
-  }, [instructorId, selectInstructor])
+  }, [instructorId, selectInstructor, selectedInstructor]);
 
   useEffect(() => {
     if (selectedInstructor) {
-      setInstructorData({
+      console.log("Selected instructor courses:", selectedInstructor.instructorCourses);
+      form.reset({
         id: selectedInstructor.id,
         fullName: selectedInstructor.fullName || "",
         role: selectedInstructor.role || "",
         bio: selectedInstructor.bio || "",
         phone: selectedInstructor.phone || "",
         avatarUrl: selectedInstructor.avatarUrl || "",
-        courses: selectedInstructor.courses || [],
-        isActive: selectedInstructor.isActive,
-        createdAt: selectedInstructor.createdAt,
-        updatedAt: selectedInstructor.updatedAt,
-      })
+      });
+      setUploadedImageUrl(selectedInstructor.avatarUrl || null);
     }
-  }, [selectedInstructor])
+  }, [selectedInstructor, form]);
 
-  const handleSave = async () => {
-    await handleUpdateInstructor(instructorData.id, {
-      fullName: instructorData.fullName,
-      role: instructorData.role, // Should remain "INSTRUCTOR"
-      bio: instructorData.bio,
-      phone: instructorData.phone,
-      avatarUrl: instructorData.avatarUrl,
-    })
-  }
+  const handleSave = async (data: InstructorFormValues) => {
+    try {
+      await handleUpdateInstructor(data.id, {
+        fullName: data.fullName,
+        role: data.role,
+        bio: data.bio || "",
+        phone: data.phone || "",
+        avatarUrl: data.avatarUrl || "",
+      });
+      toast.success("Instructor updated successfully!");
+    } catch (error) {
+      toast.error("Failed to update instructor. Please try again.");
+      console.error("Update error:", error);
+    }
+  };
 
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this instructor?")) {
-      await handleDeleteInstructor(instructorData.id)
-      window.history.back()
+      try {
+        await handleDeleteInstructor(form.getValues("id"));
+        toast.success("Instructor deleted successfully!");
+        window.history.back();
+      } catch (error) {
+        toast.error("Failed to delete instructor. Please try again.");
+        console.error("Delete error:", error);
+      }
     }
-  }
+  };
+
+  const updateFormData = useCallback((data: Partial<InstructorFormValues>) => {
+    form.reset((prev) => ({ ...prev, ...data }));
+  }, [form]);
 
   const handleCancel = () => {
-    window.history.back()
-  }
+    window.history.back();
+  };
+
+  // Handle file upload to Supabase
+  const handleFileUpload = useCallback(
+    async (files: FileWithPreview[]) => {
+      if (files.length === 0) return;
+
+      const fileWithPreview = files[0];
+      const file = fileWithPreview.file;
+
+      if (!(file instanceof File)) return;
+
+      setIsUploading(true);
+
+      try {
+        console.log("Starting upload for file:", file.name);
+        const imageUrl = await uploadImage(file);
+
+        if (imageUrl) {
+          console.log("Upload successful, URL:", imageUrl);
+          setUploadedImageUrl(imageUrl);
+
+          // Update form data immediately with the uploaded URL
+          updateFormData({
+            avatarUrl: imageUrl,
+          });
+
+          toast.success("Thumbnail uploaded successfully!");
+        } else {
+          console.error("Upload failed - no URL returned");
+          toast.error("Failed to upload thumbnail. Please try again.");
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast.error("An error occurred while uploading. Please try again.");
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [updateFormData]
+  );
+
+  // Handle file removal
+  const handleFileRemove = useCallback(() => {
+    console.log("Removing thumbnail");
+    setUploadedImageUrl(null);
+    updateFormData({
+      avatarUrl: "",
+    });
+  }, [updateFormData]);
 
   const breadcrumbItems = [
     { label: "Instructor Management", href: "/instructor-management" },
     { label: "Instructor Details", active: true },
-  ]
+  ];
 
-  if (loading) return <div className="flex items-center justify-center h-full"><LumaSpin /></div>;
-  if (error) return <div>Error: {error}</div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <LumaSpin />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -86,13 +205,23 @@ const InstructorDetailsPage: React.FC = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Instructor Details</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Instructor Details
+        </h1>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleCancel} className="px-6 bg-transparent">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="px-6 bg-transparent"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} className="bg-sky-500 hover:bg-sky-600 px-6">
-            Save Profile
+          <Button
+            onClick={form.handleSubmit(handleSave)}
+            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50"
+          >
+            {form.formState.isSubmitting ? "Saving..." : "Save Profile"}
           </Button>
           <Button
             onClick={handleDelete}
@@ -103,89 +232,146 @@ const InstructorDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Form Fields */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Instructor ID */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Instructor ID</label>
-            <Input
-              placeholder="Instructor ID"
-              value={instructorData.id}
-              disabled
-            />
-          </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSave)} className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Form Fields */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Instructor ID */}
+              <FormField
+                control={form.control}
+                name="id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instructor ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Instructor ID" {...field} disabled />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Full Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-            <Input
-              placeholder="Instructor Full Name"
-              value={instructorData.fullName ?? ""}
-              onChange={(e) => setInstructorData({ ...instructorData, fullName: e.target.value })}
-            />
-          </div>
+              {/* Full Name */}
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Instructor Full Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Role */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-            <Input
-              placeholder="Instructor Role"
-              value={instructorData.role}
-              disabled // Role should be immutable or managed separately
-            />
-          </div>
+              {/* Role */}
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Role</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Instructor Role"
+                        {...field}
+                        disabled
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Bio */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-            <Input
-              placeholder="Bio"
-              value={instructorData.bio ?? ""}
-              onChange={(e) => setInstructorData({ ...instructorData, bio: e.target.value })}
-            />
-          </div>
+              {/* Bio */}
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bio</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Bio" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-            <Input
-              placeholder="Phone Number"
-              value={instructorData.phone ?? ""}
-              onChange={(e) => setInstructorData({ ...instructorData, phone: e.target.value })}
-            />
-          </div>
-        </div>
+              {/* Phone */}
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Phone Number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        {/* Right Column - Profile Upload */}
-        <div className="lg:col-span-1">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Profile</label>
-            <Card className="border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors">
-              <CardContent className="p-8">
-                <div className="text-center">
-                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <Upload className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <div className="text-gray-600 mb-2">Upload Photo</div>
-                  <div className="text-xs text-red-500">Max file size is 2 Mb</div>
-                  <input type="file" accept="image/*" className="hidden" id="profile-upload" />
-                  <label
-                    htmlFor="profile-upload"
-                    className="mt-4 inline-block cursor-pointer text-sky-500 hover:text-sky-600"
-                  >
-                    Browse Files
-                  </label>
+            {/* Right Column - Profile Upload */}
+            <div className="lg:col-span-1">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Profile
+                </label>
+
+                {/* File Upload Component with custom handlers */}
+                <div className="relative">
+                  <FileUploadWrapper
+                    onFilesAdded={handleFileUpload}
+                    onFileRemove={handleFileRemove}
+                    isUploading={isUploading}
+                    uploadedImageUrl={uploadedImageUrl}
+                    maxSizeMB={2}
+                  />
+
+                  {/* Upload Status Overlay */}
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl z-10">
+                      <div className="flex flex-col items-center gap-2">
+                        <DashedSpinner />
+                        <span className="text-sm text-gray-600">
+                          Uploading...
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Success Message */}
+                {uploadedImageUrl && !isUploading && (
+                  <div className="mt-2 text-sm text-green-600 flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4" />
+                    Thumbnail uploaded successfully!
+                  </div>
+                )}
+
+                {/* Debug info - remove in production */}
+                {process.env.NODE_ENV === "development" && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Current URL: {uploadedImageUrl || "None"}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </form>
+      </Form>
 
       {/* Course Assigned Section */}
       <div className="mt-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Course Assigned</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          Course Assigned
+        </h2>
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -212,19 +398,25 @@ const InstructorDetailsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {instructorData.courses.map((course) => (
+                {selectedInstructor?.instructorCourses?.map((course) => (
                   <tr key={course.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{course.id}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{course.title}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {course.title}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{course.category}</div>
+                      <div className="text-sm text-gray-900">
+                        {course.category.name}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{course.totalLessons}</div>
+                      <div className="text-sm text-gray-900">
+                        {course.totalLessons}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -232,9 +424,21 @@ const InstructorDetailsPage: React.FC = () => {
             </table>
           </div>
         </div>
+
+        {(!selectedInstructor?.instructorCourses ||
+          selectedInstructor.instructorCourses.length === 0) && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg mb-2">
+              No courses assigned
+            </div>
+            <div className="text-gray-400">
+              This instructor has no courses assigned yet
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default InstructorDetailsPage
+export default InstructorDetailsPage;

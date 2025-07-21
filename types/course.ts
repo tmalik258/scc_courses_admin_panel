@@ -1,4 +1,5 @@
 import { Course as PrismaCourse } from "@/lib/generated/prisma";
+import { z } from "zod"
 
 export interface Course {
   id: string;
@@ -12,24 +13,24 @@ export interface Course {
 
 export interface CourseFormData {
   title: string;
-  description: string;
+  description?: string;
   category: string;
-  price: string;
+  price?: string;
   instructor: string;
-  thumbnail: File | null;
-  modules: Array<{
+  thumbnailUrl?: string | null;
+  sections: {
     title: string;
-    sections: Array<{
+    lessons: {
       name: string;
-      reading: string;
-      videoUrl: string;
-    }>;
-  }>;
-  resources: Array<{
+      reading?: string;
+      videoUrl?: string;
+    }[];
+  }[];
+  resources: {
     title: string;
     url: string;
-  }>;
-}
+  }[];
+} 
 
 export interface CourseWithRelations extends PrismaCourse {
   category: { name: string; color: string | null };
@@ -69,3 +70,25 @@ export interface PopularCourse {
   price: string;
   lessons: number;
 }
+
+
+// create schema
+const sectionSchema = z.object({
+  name: z.string().min(1, "Section name is required"),
+  reading: z
+    .string()
+    .min(100, "Reading content must be at least 100 characters")
+    .max(1000, "Reading content must be less than 1000 characters"),
+  videoUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+})
+
+const moduleSchema = z.object({
+  title: z.string().min(1, "Module title is required"),
+  lessons: z.array(sectionSchema).min(1, "At least one section is required"),
+})
+
+export const courseLessonsSchema = z.object({
+  sections: z.array(moduleSchema).min(1, "At least one module is required"),
+})
+
+export type CourseLessonsFormValues = z.infer<typeof courseLessonsSchema>

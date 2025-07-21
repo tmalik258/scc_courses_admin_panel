@@ -1,18 +1,20 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Plus, Search, Edit, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Breadcrumb } from "@/components/breadcrumb"
-import { useInstructorData } from "@/hooks/useInstructorData"
-import { LumaSpin } from "@/components/luma-spin"
+import type React from "react";
+import { useState } from "react";
+import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { useInstructorData } from "@/hooks/useInstructorData";
+import { LumaSpin } from "@/components/luma-spin";
+import { useRouter } from "next/navigation";
 
 const InstructorManagementPage: React.FC = () => {
-  const { instructors, selectInstructor, handleDeleteInstructor, loading } = useInstructorData()
-  const [searchQuery, setSearchQuery] = useState("")
+  const { instructors, handleDeleteInstructor, loading } = useInstructorData();
+  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   const filteredInstructors = instructors.filter(
     (instructor) =>
@@ -20,34 +22,39 @@ const InstructorManagementPage: React.FC = () => {
       instructor.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       instructor.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
       instructor.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      instructor.phone?.includes(searchQuery),
-  )
+      instructor.phone?.includes(searchQuery)
+  );
 
   const handleEdit = (instructorId: string) => {
-    selectInstructor(instructorId)
-    // Navigate to instructor details page
-  }
+    router.push(`/instructor-management/${instructorId}`);
+  };
 
   const handleDelete = (instructorId: string) => {
-    handleDeleteInstructor(instructorId)
-  }
+    handleDeleteInstructor(instructorId);
+  };
 
   const breadcrumbItems = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Instructor Management", active: true },
-  ]
+  ];
 
-  if (loading) return <div className="flex items-center justify-center h-full"><LumaSpin /></div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-full">
+        <LumaSpin />
+      </div>
+    );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            All Instructor <span className="text-sky-500">({instructors.length})</span>
+            All Instructor{" "}
+            <span className="text-sky-500">({instructors.length})</span>
           </h1>
         </div>
         <div className="flex items-center gap-4">
@@ -77,8 +84,12 @@ const InstructorManagementPage: React.FC = () => {
                   <div className="flex items-center space-x-1">
                     <span>Instructor ID</span>
                     <div className="flex flex-col">
-                      <button className="text-gray-400 hover:text-gray-600">▲</button>
-                      <button className="text-gray-400 hover:text-gray-600">▼</button>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        ▲
+                      </button>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        ▼
+                      </button>
                     </div>
                   </div>
                 </th>
@@ -89,14 +100,24 @@ const InstructorManagementPage: React.FC = () => {
                   <div className="flex items-center space-x-1">
                     <span>Full Name</span>
                     <div className="flex flex-col">
-                      <button className="text-gray-400 hover:text-gray-600">▲</button>
-                      <button className="text-gray-400 hover:text-gray-600">▼</button>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        ▲
+                      </button>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        ▼
+                      </button>
                     </div>
                   </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bio</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Bio
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Phone
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Action
                 </th>
@@ -110,23 +131,40 @@ const InstructorManagementPage: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={instructor.avatarUrl || "/images/instructor_placeholder.jpg"} alt={instructor.fullName || "Instructor"} />
+                      <AvatarImage
+                        src={
+                          instructor.avatarUrl ||
+                          "/images/instructor_placeholder.jpg"
+                        }
+                        alt={instructor.fullName || "Instructor"}
+                      />
                       <AvatarFallback className="bg-gray-200">
-                        {instructor.fullName?.split(" ").map((n) => n[0]).join("") || "I"}
+                        {instructor.fullName
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("") || "I"}
                       </AvatarFallback>
                     </Avatar>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{instructor.fullName || "N/A"}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {instructor.fullName || "N/A"}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{instructor.role}</div>
+                    <div className="text-sm text-gray-900">
+                      {instructor.role}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{instructor.bio || "N/A"}</div>
+                    <div className="text-sm text-gray-900">
+                      {instructor.bio || "N/A"}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{instructor.phone || "N/A"}</div>
+                    <div className="text-sm text-gray-900">
+                      {instructor.phone || "N/A"}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex space-x-2">
@@ -160,7 +198,7 @@ const InstructorManagementPage: React.FC = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default InstructorManagementPage
+export default InstructorManagementPage;

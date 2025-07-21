@@ -4,7 +4,6 @@ export const LumaSpin = () => {
       <span className="absolute rounded-[50px] animate-loaderAnim shadow-[inset_0_0_0_3px] shadow-sky-800 dark:shadow-sky-100" />
       <span className="absolute rounded-[50px] animate-loaderAnim animation-delay shadow-[inset_0_0_0_3px] shadow-sky-800 dark:shadow-sky-100" />
       <style>
-        {" "}
         {`
           @keyframes loaderAnim {
             0% {

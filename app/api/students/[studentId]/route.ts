@@ -3,12 +3,17 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { studentId: string } }
 ) {
   try {
-    const { id } = params;
+    const { studentId } = params;
+
+    if (!studentId) {
+      return NextResponse.json({ error: "Missing student ID" }, { status: 400 });
+    }
+
     const student = await prisma.profile.findUnique({
-      where: { id },
+      where: { id: studentId, role: "STUDENT" },
       include: {
         purchases: {
           include: {
@@ -31,12 +36,17 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { studentId: string } }
 ) {
   try {
-    const { id } = params;
+    const { studentId } = params;
+
+    if (!studentId) {
+      return NextResponse.json({ error: "Missing student ID" }, { status: 400 });
+    }
+
     const student = await prisma.profile.delete({
-      where: { id },
+      where: { id: studentId, role: "STUDENT" },
     });
 
     if (!student) {
@@ -52,19 +62,24 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { studentId: string } }
 ) {
   try {
-    const { id } = params;
+    const { studentId } = params;
     const body = await request.json();
-    const { name, phone, email } = body;
+    const { name, phone, email, avatarUrl } = body;
+
+    if (!studentId) {
+      return NextResponse.json({ error: "Missing student ID" }, { status: 400 });
+    }
 
     const updatedStudent = await prisma.profile.update({
-      where: { id },
+      where: { id: studentId },
       data: {
         fullName: name,
         phone,
         email,
+        avatarUrl,
         updatedAt: new Date(),
       },
     });

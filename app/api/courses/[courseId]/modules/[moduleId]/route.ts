@@ -4,14 +4,14 @@ import { NextResponse } from "next/server";
 // UPDATE a section
 export async function PUT(
   req: Request,
-  { params }: { params: { sectionId: string } }
+  { params }: { params: { courseId: string; moduleId: string } }
 ) {
-  const { sectionId } = params;
+  const { courseId, moduleId } = params;
   const body = await req.json();
 
   try {
-    const updatedSection = await prisma.section.update({
-      where: { id: sectionId },
+    const updatedSection = await prisma.module.update({
+      where: { id: moduleId, courseId },
       data: body,
     });
 
@@ -31,13 +31,13 @@ export async function PUT(
 // DELETE a section
 export async function DELETE(
   _: Request,
-  { params }: { params: { sectionId: string } }
+  { params }: { params: { courseId: string; moduleId: string } }
 ) {
-  const { sectionId } = params;
+  const { courseId, moduleId } = params;
 
   try {
-    await prisma.section.delete({
-      where: { id: sectionId },
+    await prisma.module.delete({
+      where: { id: moduleId, courseId },
     });
 
     return NextResponse.json({ message: "Section deleted" });

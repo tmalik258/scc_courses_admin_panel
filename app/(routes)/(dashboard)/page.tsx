@@ -3,10 +3,10 @@
 import React from "react";
 import { useRouter } from "nextjs-toploader/app";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import StudentGrowthChart from "./_components/student-growth-chart";
-import RecentCoursesList from "./_components/recent-courses-list";
-import { PopularCourseTable } from "./_components/popular-course-table";
-import MetricCard from "./_components/metric-card";
+import StudentGrowthChart from "../_components/student-growth-chart";
+import RecentCoursesList from "../_components/recent-courses-list";
+import { PopularCourseTable } from "../_components/popular-course-table";
+import MetricCard from "../_components/metric-card";
 import { BookOpen, DollarSign, ShoppingCart, Users } from "lucide-react";
 
 const DashboardPage: React.FC = () => {
@@ -52,7 +52,7 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <StudentGrowthChart data={dashboardData.studentGrowth} />
+        <StudentGrowthChart data={dashboardData.studentGrowth.map(({ month, value }) => ({ label: month, value }))} />
         <RecentCoursesList courses={dashboardData.recentCourses} />
       </div>
       <PopularCourseTable courses={dashboardData.popularCourses} />

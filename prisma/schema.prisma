@@ -182,12 +182,12 @@ model Resources {
   courses   Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
 
   @@index([course_id])
-  @@map("attachments")
+  @@map("resources")
 }
 
 model Lessons {
   id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  section_id     String     @db.Uuid
+  module_id     String     @db.Uuid
   course_id      String     @db.Uuid
   title          String
   content        String?
@@ -196,7 +196,7 @@ model Lessons {
   is_free        Boolean    @default(false)
   created_at     DateTime   @default(now())
   updated_at     DateTime
-  modules        Module    @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  modules        Module    @relation(fields: [module_id], references: [id], onDelete: Cascade)
   progress       Progress[]
 
   @@map("lessons")
