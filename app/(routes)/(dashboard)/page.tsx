@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 "use client";
 
 import React from "react";
@@ -9,12 +8,13 @@ import RecentCoursesList from "../_components/recent-courses-list";
 import { PopularCourseTable } from "../_components/popular-course-table";
 import MetricCard from "../_components/metric-card";
 import { BookOpen, DollarSign, ShoppingCart, Users } from "lucide-react";
+import { LumaSpin } from "@/components/luma-spin";
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const { dashboardData, loading, error } = useDashboardData();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center h-full"><LumaSpin /></div>;
   if (error) return <div style={{ color: "red" }}>Error: {error}</div>;
   if (!dashboardData) return <div>No data available</div>;
 
@@ -61,7 +61,7 @@ const DashboardPage: React.FC = () => {
         />
         <RecentCoursesList courses={dashboardData.recentCourses || []} />
       </div>
-      <PopularCourseTable courses={dashboardData.popularCourses} />
+      <PopularCourseTable />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Breadcrumb } from "@/components/breadcrumb";
 import type { TransactionDetails } from "@/types/payment";
 import { useRouter } from "nextjs-toploader/app";
+import { DashedSpinner } from "@/components/dashed-spinner";
 
 const TransactionDetailsPage: React.FC = () => {
   const [transaction, setTransaction] = useState<TransactionDetails | null>(
@@ -26,10 +27,6 @@ const TransactionDetailsPage: React.FC = () => {
       setError(null);
       try {
         const response = await fetch(`/api/payment/${transactionId}`);
-        console.log(
-          "Fetching transaction from:",
-          `/api/payment/${transactionId}`
-        );
         console.log("Response status:", response.status);
         if (!response.ok) {
           throw new Error(
@@ -117,7 +114,7 @@ const TransactionDetailsPage: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto">
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Back Button */}
@@ -134,10 +131,8 @@ const TransactionDetailsPage: React.FC = () => {
 
       {/* Loading State */}
       {loading && (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">
-            Loading transaction details...
-          </div>
+        <div className="flex items-center justify-center h-full">
+          <DashedSpinner size={32} />
         </div>
       )}
 

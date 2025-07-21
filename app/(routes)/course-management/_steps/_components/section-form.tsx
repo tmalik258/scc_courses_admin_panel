@@ -25,7 +25,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
 
     const { fields: sectionFields, append: appendSection } = useFieldArray({
       control: form.control,
-      name: `sections.${moduleIndex}.lessons`,
+      name: `modules.${moduleIndex}.lessons`,
     })
 
     const addSection = useCallback(() => {
@@ -43,7 +43,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
     const handleEditClick = useCallback(
       (e: React.MouseEvent) => {
         e.stopPropagation()
-        const currentTitle = form.getValues(`sections.${moduleIndex}.title`)
+        const currentTitle = form.getValues(`modules.${moduleIndex}.title`)
         setTempTitle(currentTitle || "")
         setIsEditingTitle(true)
       },
@@ -53,7 +53,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
     const handleSaveTitle = useCallback(
       (e: React.MouseEvent) => {
         e.stopPropagation()
-        form.setValue(`sections.${moduleIndex}.title`, tempTitle)
+        form.setValue(`modules.${moduleIndex}.title`, tempTitle)
         setIsEditingTitle(false)
       },
       [form, moduleIndex, tempTitle],
@@ -69,7 +69,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
       (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
           e.preventDefault()
-          form.setValue(`sections.${moduleIndex}.title`, tempTitle)
+          form.setValue(`modules.${moduleIndex}.title`, tempTitle)
           setIsEditingTitle(false)
         } else if (e.key === "Escape") {
           e.preventDefault()
@@ -121,7 +121,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
                 ) : (
                   <FormField
                     control={form.control}
-                    name={`sections.${moduleIndex}.title`}
+                    name={`modules.${moduleIndex}.title`}
                     render={({ field }) => (
                       <span className="font-medium text-gray-900 flex-1">{field.value || "Untitled Module"}</span>
                     )}

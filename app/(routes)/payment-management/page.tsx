@@ -15,8 +15,8 @@ import {
 import { Breadcrumb } from "@/components/breadcrumb";
 import type { Transaction } from "@/types/payment";
 import { useRouter } from "nextjs-toploader/app";
+import { DashedSpinner } from "@/components/dashed-spinner";
 
-// Define the expected shape of the API response
 interface ApiPayment {
   id: string;
   paymentDate: string;
@@ -119,8 +119,8 @@ const PaymentManagementPage: React.FC = () => {
   );
 
   const handleView = (transactionId: string) => {
-    console.log("View transaction:", transactionId);
     router.push(`/payment-management/${transactionId}`);
+    setLoading(true);
   };
 
   const handleDelete = (transactionId: string) => {
@@ -241,8 +241,8 @@ const PaymentManagementPage: React.FC = () => {
 
       {/* Loading and Error States */}
       {loading && (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">Loading transactions...</div>
+        <div className="flex items-center justify-center h-full">
+          <DashedSpinner size={32} />
         </div>
       )}
       {error && (

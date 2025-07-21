@@ -1,76 +1,28 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
-import { Student } from '@/types/student';
-import { Breadcrumb } from '@/components/breadcrumb';
-import { StudentsHeader } from './_components/student-header';
-import { StudentTable } from './_components/student-table';
-import { Pagination } from '@/components/pagination';
+import React, { useState } from "react";
+import { Student } from "@/types/student";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { StudentsHeader } from "./_components/student-header";
+import { StudentTable } from "./_components/student-table";
+import { Pagination } from "@/components/pagination";
+import { useStudentData } from "@/hooks/useStudentData";
+import { useRouter } from "next/navigation";
 
 const StudentsPage: React.FC = () => {
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Mock data - in real app, this would come from API
-  const allStudents: Student[] = [
-    {
-      id: 'STD2025001',
-      name: 'Emma Walker',
-      phone: '+447911123456',
-      email: 'emma.walker@email.com'
-    },
-    {
-      id: 'STD2025002',
-      name: 'Liam Rodriguez',
-      phone: '+525512345678',
-      email: 'liam.rodriguez@email.com'
-    },
-    {
-      id: 'STD2025003',
-      name: 'Sophie Muller',
-      phone: '+4915123456789',
-      email: 'sophie.muller@email.com'
-    },
-    {
-      id: 'STD2025004',
-      name: 'Akira Tanaka',
-      phone: '+819012345678',
-      email: 'akira.tanaka@email.com'
-    },
-    {
-      id: 'STD2025005',
-      name: 'Isabella Rossi',
-      phone: '+33612345678',
-      email: 'isabella.rossi@email.com'
-    },
-    {
-      id: 'STD2025006',
-      name: 'Carlos Mendes',
-      phone: '+821012345678',
-      email: 'carlos.mendes@email.com'
-    },
-    {
-      id: 'STD2025007',
-      name: 'Amelia Johnson',
-      phone: '+201001234567',
-      email: 'amelia.johnson@email.com'
-    },
-    {
-      id: 'STD2025008',
-      name: 'Yuna Kim',
-      phone: '+791234567890',
-      email: 'yuna.kim@email.com'
-    }
-  ];
+  const { students } = useStudentData();
+  const router = useRouter();
 
   // Filter students based on search
-  const filteredStudents = allStudents.filter(
-    student =>
-      student.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchValue.toLowerCase()) ||
+  const filteredStudents = students.filter(
+    (student) =>
+      student.fullName?.toLowerCase().includes(searchValue.toLowerCase()) ||
+      student.email?.toLowerCase().includes(searchValue.toLowerCase()) ||
       student.id.toLowerCase().includes(searchValue.toLowerCase()) ||
-      student.phone.includes(searchValue)
+      student.phone?.includes(searchValue)
   );
 
   // Pagination logic
@@ -80,12 +32,11 @@ const StudentsPage: React.FC = () => {
   const currentStudents = filteredStudents.slice(startIndex, endIndex);
 
   const handleEdit = (student: Student) => {
-    console.log('Edit student:', student);
-    // In real app, this would open edit modal or navigate to edit page
+    router.push(`/student-management/${student.id}`);
   };
 
   const handleDelete = (studentId: string) => {
-    console.log('Delete student:', studentId);
+    console.log("Delete student:", studentId);
     // In real app, this would show confirmation dialog and delete student
   };
 
@@ -96,14 +47,14 @@ const StudentsPage: React.FC = () => {
   };
 
   const breadcrumbItems = [
-    { label: 'Dashboard', href: '/' },
-    { label: 'Total Students', active: true }
+    { label: "Dashboard", href: "/" },
+    { label: "Total Students", active: true },
   ];
 
   return (
     <div>
       <Breadcrumb items={breadcrumbItems} />
-      
+
       <StudentsHeader
         totalStudents={1041}
         searchValue={searchValue}

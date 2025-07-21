@@ -24,7 +24,7 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(({ moduleIndex, secti
       {/* Section Name */}
       <FormField
         control={form.control}
-        name={`sections.${moduleIndex}.lessons.${sectionIndex}.name`}
+        name={`modules.${moduleIndex}.lessons.${sectionIndex}.name`}
         render={({ field }) => (
           <FormItem>
             <FormControl>
@@ -40,7 +40,7 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(({ moduleIndex, secti
         <label className="block text-sm font-medium text-gray-700 mb-2">Reading</label>
         <FormField
           control={form.control}
-          name={`sections.${moduleIndex}.lessons.${sectionIndex}.reading`}
+          name={`modules.${moduleIndex}.lessons.${sectionIndex}.reading`}
           render={({ field }) => (
             <FormItem>
               <FormControl>
@@ -125,7 +125,7 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(({ moduleIndex, secti
       {/* Video Learning URL */}
       <FormField
         control={form.control}
-        name={`sections.${moduleIndex}.lessons.${sectionIndex}.videoUrl`}
+        name={`modules.${moduleIndex}.lessons.${sectionIndex}.videoUrl`}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Video Learning URL</FormLabel>

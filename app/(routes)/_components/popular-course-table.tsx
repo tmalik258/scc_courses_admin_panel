@@ -1,4 +1,3 @@
-// app/components/popular-course-table.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";

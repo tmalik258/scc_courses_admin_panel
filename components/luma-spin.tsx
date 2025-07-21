@@ -1,8 +1,8 @@
 export const LumaSpin = () => {
   return (
     <div className="relative w-[65px] aspect-square">
-      <span className="absolute rounded-[50px] animate-loaderAnim shadow-[inset_0_0_0_3px] shadow-sky-800 dark:shadow-sky-100" />
-      <span className="absolute rounded-[50px] animate-loaderAnim animation-delay shadow-[inset_0_0_0_3px] shadow-sky-800 dark:shadow-sky-100" />
+      <span className="absolute rounded-[50px] animate-loaderAnim shadow-[inset_0_0_0_3px] shadow-aqua-mist dark:shadow-sky-100" />
+      <span className="absolute rounded-[50px] animate-loaderAnim animation-delay shadow-[inset_0_0_0_3px] shadow-aqua-mist dark:shadow-sky-100" />
       <style>
         {`
           @keyframes loaderAnim {

@@ -55,13 +55,13 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                   <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                  <div className="text-sm font-medium text-gray-900">{student?.fullName}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{student.phone}</div>
+                  <div className="text-sm text-gray-900">{student?.phone}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{student.email}</div>
+                  <div className="text-sm text-gray-900">{student?.email}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex space-x-2">

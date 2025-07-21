@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       price,
       instructor,
       thumbnailUrl,
-      sections,
+      modules,
       resources,
     } = body;
 
@@ -128,8 +128,8 @@ export async function POST(req: Request) {
     });
 
     // Create modules and lessons
-    if (sections && sections.length > 0) {
-      for (const [index, mod] of sections.entries()) {
+    if (modules && modules.length > 0) {
+      for (const [index, mod] of modules.entries()) {
         const createdModule = await prisma.module.create({
           data: {
             title: mod.title,

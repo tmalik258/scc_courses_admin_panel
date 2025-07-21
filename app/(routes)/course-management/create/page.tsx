@@ -17,16 +17,20 @@ const INITIAL_FORM_DATA: CourseFormData = {
   price: "",
   instructor: "",
   thumbnailUrl: "",
-  sections: [
+  modules: [
     {
       title: "",
       lessons: [
         { name: "", reading: "", videoUrl: "" },
-        { name: "", reading: "", videoUrl: "" },
       ],
     },
   ],
-  resources: [],
+  resources: [
+    {
+      title: "",
+      url: "",
+    },
+  ],
 }
 
 const AddCoursePage: React.FC = () => {
@@ -83,9 +87,6 @@ const AddCoursePage: React.FC = () => {
       setIsSubmitting(true)
 
       try {
-        // Log the form data to debug
-        console.log("Submitting form data:", formData)
-
         const response = await fetch("/api/courses", {
           method: "POST",
           headers: {

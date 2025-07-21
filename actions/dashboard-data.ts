@@ -1,24 +1,5 @@
+import { DashboardData } from "@/types/dashboard";
 import axios from "axios";
-
-export interface DashboardData {
-  data: SetStateAction<DashboardData | null>;
-  data: any;
-  totalStudents: number;
-  totalCourses: number;
-  purchasedCourses: number;
-  totalRevenue: number;
-  studentGrowth: { month: string; value: number }[];
-  recentCourses: { id: string; title: string; timeAgo: string }[]; // added `id` for component key
-  popularCourses: {
-    name: string;
-    category: string;
-    categoryColor: string;
-    instructor: string;
-    sales: number;
-    price: string;
-    lessons: number;
-  }[];
-}
 
 export async function fetchDashboardData(): Promise<DashboardData> {
   try {

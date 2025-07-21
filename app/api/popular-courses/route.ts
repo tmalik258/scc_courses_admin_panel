@@ -35,8 +35,6 @@ export async function GET() {
       },
     });
 
-    console.log("[POPULAR_COURSES] Raw query result:", courses);
-
     const formattedCourses = courses.map((course) => {
       console.log("[POPULAR_COURSES] Processing course:", course);
       return {

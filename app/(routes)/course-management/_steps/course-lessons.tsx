@@ -34,11 +34,11 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
   const [isClient, setIsClient] = useState(false);
 
   // Initialize default sections with a fallback
-  const defaultSectionsRef = useRef<CourseLessonsFormValues["sections"]>(
-    formData.sections?.length
-      ? formData.sections.map((section) => ({
-          title: section.title || "",
-          lessons: (section.lessons || []).map((lesson) => ({
+  const defaultSectionsRef = useRef<CourseLessonsFormValues["modules"]>(
+    formData.modules?.length
+      ? formData.modules.map((_module) => ({
+          title: _module.title || "",
+          lessons: (_module.lessons || []).map((lesson) => ({
             name: lesson.name || "",
             reading: lesson.reading || "",
             videoUrl: lesson.videoUrl || "",
@@ -59,7 +59,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
   const form = useForm<CourseLessonsFormValues>({
     resolver: zodResolver(courseLessonsSchema),
     defaultValues: {
-      sections: defaultSectionsRef.current,
+      modules: defaultSectionsRef.current,
     },
     mode: "onChange",
   });
@@ -70,7 +70,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
     remove: removeModule,
   } = useFieldArray({
     control: form.control,
-    name: "sections",
+    name: "modules",
   });
 
   const toggleModule = useCallback((index: number) => {
@@ -99,35 +99,35 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
           form.reset(parsed);
         } else {
           console.warn("Invalid localStorage data:", validation.error);
-          form.reset({ sections: defaultSectionsRef.current });
+          form.reset({ modules: defaultSectionsRef.current });
         }
       }
     } catch (error) {
       console.error("Error parsing localStorage data:", error);
-      form.reset({ sections: defaultSectionsRef.current });
+      form.reset({ modules: defaultSectionsRef.current });
     }
   }, [form]);
 
-  const watchedSections = useWatch({
+  const watchedModules = useWatch({
     control: form.control,
-    name: "sections",
+    name: "modules",
   });
 
   // Sync form data with localStorage and parent
   useEffect(() => {
     const syncForm = debounce(async () => {
       try {
-        if (!Array.isArray(watchedSections) || !watchedSections.length) {
-          console.warn("No valid sections data to sync");
+        if (!Array.isArray(watchedModules) || !watchedModules.length) {
+          console.warn("No valid modules data to sync");
           setCanProceed(false);
           return;
         }
 
-        const safeModules: CourseLessonsFormValues["sections"] =
-          watchedSections.map((section) => ({
-            title: section?.title || "",
-            lessons: Array.isArray(section?.lessons)
-              ? section.lessons.map((lesson) => ({
+        const safeModules: CourseLessonsFormValues["modules"] =
+          watchedModules.map((_module) => ({
+            title: _module?.title || "",
+            lessons: Array.isArray(_module?.lessons)
+              ? _module.lessons.map((lesson) => ({
                   name: lesson?.name || "",
                   reading: lesson?.reading || "",
                   videoUrl: lesson?.videoUrl || "",
@@ -135,7 +135,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
               : [],
           }));
 
-        const payload = { sections: safeModules };
+        const payload = { modules: safeModules };
 
         // Save to localStorage
         if (typeof window !== "undefined") {
@@ -144,7 +144,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
 
         // Update parent formData only if changed
         const isDifferent =
-          JSON.stringify(formData.sections) !== JSON.stringify(safeModules);
+          JSON.stringify(formData.modules) !== JSON.stringify(safeModules);
         if (isDifferent) {
           updateFormData(payload);
         }
@@ -160,7 +160,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
 
     syncForm();
     return () => syncForm.cancel();
-  }, [watchedSections, formData.sections, form, setCanProceed, updateFormData]);
+  }, [form, setCanProceed, updateFormData, watchedModules, formData.modules]);
 
   if (!isClient) return null;
 

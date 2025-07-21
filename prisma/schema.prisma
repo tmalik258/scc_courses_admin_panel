@@ -169,7 +169,7 @@ model Module {
   lessons      Lessons[]
   course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  @@map("sections")
+  @@map("modules")
 }
 
 model Resources {

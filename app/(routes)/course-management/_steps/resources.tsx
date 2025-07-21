@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { CourseFormData } from "@/types/course";
+import debounce from "lodash.debounce";
 
 interface ResourcesStepProps {
   formData: CourseFormData;
@@ -85,45 +86,63 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({
       try {
         const parsed = JSON.parse(saved);
         if (parsed?.resources) {
-          form.reset(parsed);
-          updateFormData(parsed);
+          form.reset(parsed, { keepDirty: false, keepTouched: false });
         }
       } catch (error) {
         console.error("Failed to parse saved resources:", error);
       }
     }
-  }, [form, updateFormData]);
+  }, [form]);
 
-  // Watch changes and save to localStorage
+  // Debounced function to update localStorage and parent form data
+  const updateStorageAndFormData = useCallback(
+    (values: ResourcesFormValues) => (
+      debounce(() => {
+        const safeResources = (values.resources ?? []).map((r) => ({
+          title: r?.title || "",
+          url: r?.url || "",
+        }));
+
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify({ resources: safeResources })
+        );
+        updateFormData({ resources: safeResources });
+
+        form
+          .trigger()
+          .then(setCanProceed)
+          .catch(() => setCanProceed(false));
+      }, 500), // 500ms debounce delay
+      [form, updateFormData, setCanProceed]
+    ),
+    [form, setCanProceed, updateFormData]
+  );
+
+  // Watch form changes and update storage/formData
   useEffect(() => {
     const subscription = form.watch((values) => {
-      const safeResources = (values.resources ?? []).map((r) => ({
-        title: r?.title || "",
-        url: r?.url || "",
-      }));
-
-      localStorage.setItem(
-        LOCAL_STORAGE_KEY,
-        JSON.stringify({ resources: safeResources })
-      );
-
-      updateFormData({ resources: safeResources });
-
-      form
-        .trigger()
-        .then(setCanProceed)
-        .catch(() => setCanProceed(false));
+      updateStorageAndFormData(values as ResourcesFormValues);
     });
 
     return () => subscription.unsubscribe();
-  }, [form, updateFormData, setCanProceed]);
+  }, [form, updateStorageAndFormData]);
 
-  // Helper to clear localStorage externally (after submit)
+  // Sync form with updated formData prop
+  useEffect(() => {
+    if (
+      JSON.stringify(formData.resources) !==
+      JSON.stringify(form.getValues("resources"))
+    ) {
+      form.reset({ resources: formData.resources }, { keepDirty: false });
+    }
+  }, [form, formData.resources]);
+
+  // Clear localStorage externally
   const clearLocalStorage = () => {
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
-  // OPTIONAL: expose clearLocalStorage globally if needed
   window.clearResourcesStepStorage = clearLocalStorage;
 
   return (

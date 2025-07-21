@@ -18,7 +18,7 @@ export interface CourseFormData {
   price?: string;
   instructor: string;
   thumbnailUrl?: string | null;
-  sections: {
+  modules: {
     title: string;
     lessons: {
       name: string;
@@ -38,7 +38,7 @@ export interface CourseWithRelations extends PrismaCourse {
   modules: {
     id: string;
     title: string;
-    sections: {
+    lessons: {
       id: string;
       name: string;
       reading?: string | null;
@@ -73,7 +73,7 @@ export interface PopularCourse {
 
 
 // create schema
-const sectionSchema = z.object({
+const lessonSchema = z.object({
   name: z.string().min(1, "Section name is required"),
   reading: z
     .string()
@@ -84,11 +84,11 @@ const sectionSchema = z.object({
 
 const moduleSchema = z.object({
   title: z.string().min(1, "Module title is required"),
-  lessons: z.array(sectionSchema).min(1, "At least one section is required"),
+  lessons: z.array(lessonSchema).min(1, "At least one section is required"),
 })
 
 export const courseLessonsSchema = z.object({
-  sections: z.array(moduleSchema).min(1, "At least one module is required"),
+  modules: z.array(moduleSchema).min(1, "At least one module is required"),
 })
 
 export type CourseLessonsFormValues = z.infer<typeof courseLessonsSchema>
