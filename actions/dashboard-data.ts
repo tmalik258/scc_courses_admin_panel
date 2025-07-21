@@ -1,12 +1,14 @@
 import axios from "axios";
 
 export interface DashboardData {
+  data: SetStateAction<DashboardData | null>;
+  data: any;
   totalStudents: number;
   totalCourses: number;
   purchasedCourses: number;
   totalRevenue: number;
   studentGrowth: { month: string; value: number }[];
-  recentCourses: { title: string; timeAgo: string }[];
+  recentCourses: { id: string; title: string; timeAgo: string }[]; // added `id` for component key
   popularCourses: {
     name: string;
     category: string;
@@ -18,12 +20,20 @@ export interface DashboardData {
   }[];
 }
 
-export async function fetchDashboardData() {
+export async function fetchDashboardData(): Promise<DashboardData> {
   try {
     console.log("[DASHBOARD] Fetching dashboard data");
     const res = await axios.get("/api/dashboard");
-    console.log("[DASHBOARD] Fetch dashboard successful:", res.data);
-    return res.data;
+
+    const data = res.data as DashboardData;
+
+    // Optional sanity check
+    if (!data.recentCourses || !Array.isArray(data.recentCourses)) {
+      data.recentCourses = [];
+    }
+
+    console.log("[DASHBOARD] Fetch dashboard successful:", data);
+    return data;
   } catch (error) {
     console.error(
       "[DASHBOARD] Error fetching dashboard data:",

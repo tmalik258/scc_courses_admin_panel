@@ -1,3 +1,4 @@
+// app/components/popular-course-table.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -7,15 +8,32 @@ import { PopularCourse } from "@/types/course";
 export const PopularCourseTable: React.FC = () => {
   const [courses, setCourses] = useState<PopularCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         const res = await fetch("/api/popular-courses");
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          throw new Error(`Response is not JSON: ${text}`);
+        }
         const data = await res.json();
-        setCourses(data); // assuming data is an array of PopularCourse
+        console.log("[PopularCourseTable] Fetched data:", data);
+        if (data.error) {
+          throw new Error(data.details || "API returned an error");
+        }
+        setCourses(data.courses || []); // Set the courses array, fallback to empty array
       } catch (error) {
-        console.error("Failed to load popular courses", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        console.error("Failed to load popular courses:", errorMessage);
+        setError(errorMessage);
+        setCourses([]); // Ensure courses is an array
       } finally {
         setLoading(false);
       }
@@ -31,6 +49,12 @@ export const PopularCourseTable: React.FC = () => {
       </div>
       {loading ? (
         <div className="p-6 text-sm text-gray-500">Loading...</div>
+      ) : error ? (
+        <div className="p-6 text-sm text-red-500">Error: {error}</div>
+      ) : !courses.length ? (
+        <div className="p-6 text-sm text-gray-500">
+          No popular courses available.
+        </div>
       ) : (
         <div className="w-full max-w-[calc(100vw-3rem)] sm:max-w-dvh md:max-w-[calc(100vw-20rem)] overflow-x-auto">
           <table className="w-full">

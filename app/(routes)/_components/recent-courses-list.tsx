@@ -1,45 +1,29 @@
-// components/recent-courses-list.tsx
+// app/_components/recent-courses-list.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Clock } from "lucide-react";
 
-// ✅ Define the correct type here OR make sure it's updated in @/types
 interface RecentCourse {
   id: string;
   title: string;
   timeAgo: string;
 }
 
-const RecentCoursesList: React.FC = () => {
-  const [courses, setCourses] = useState<RecentCourse[]>([]);
-  const [loading, setLoading] = useState(true);
+interface RecentCoursesListProps {
+  courses?: RecentCourse[];
+}
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const res = await fetch("/api/recent-courses");
-        const data = await res.json();
-        setCourses(data.courses); // ✅ Make sure your API returns { courses: [...] }
-      } catch (error) {
-        console.error("Failed to load recent courses", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCourses();
-  }, []);
-
+const RecentCoursesList: React.FC<RecentCoursesListProps> = ({
+  courses = [],
+}) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">
         Recently Viewed Courses
       </h2>
 
-      {loading ? (
-        <p className="text-sm text-gray-500">Loading...</p>
-      ) : courses.length === 0 ? (
+      {courses.length === 0 ? (
         <p className="text-sm text-gray-500">No recent courses found.</p>
       ) : (
         <div className="space-y-4">

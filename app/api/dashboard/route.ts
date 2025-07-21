@@ -1,3 +1,4 @@
+// app/dashboard/route.ts
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -16,25 +17,25 @@ export async function GET() {
         { month: "Jun", value: 500 },
       ],
       recentCourses: [
-        { title: "Intro to React", timeAgo: "2 days ago" },
-        { title: "Advanced CSS", timeAgo: "5 days ago" },
+        { id: "1", title: "Intro to React", timeAgo: "2 days ago" },
+        { id: "2", title: "Advanced CSS", timeAgo: "5 days ago" },
       ],
       popularCourses: [
         {
-          name: "React Masterclass",
+          title: "React Masterclass", // Changed name to title
           category: "Web Development",
           categoryColor: "blue",
           instructor: "John Doe",
-          sales: 120,
+          enrollments: 120, // Changed sales to enrollments
           price: "₹1999",
           lessons: 12,
         },
         {
-          name: "Next.js Complete Guide",
+          title: "Next.js Complete Guide", // Changed name to title
           category: "Web Development",
           categoryColor: "green",
           instructor: "Jane Smith",
-          sales: 90,
+          enrollments: 90, // Changed sales to enrollments
           price: "₹2499",
           lessons: 15,
         },
