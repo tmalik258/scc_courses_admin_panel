@@ -1,17 +1,17 @@
-import { CategoriesResponse } from '@/types/category';
-import axios from 'axios';
+import { CategoriesResponse } from "@/types/category";
+import axios from "axios";
 
 export async function getAllCategories(): Promise<CategoriesResponse> {
   try {
-    const response = await axios.get<CategoriesResponse>('/api/categories');
-    // console.log('Categories:', response.data);
+    const response = await axios.get<CategoriesResponse>("/api/categories");
     return response.data;
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Error fetching categories:', error.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error("Error fetching categories:", err.message);
+      throw new Error("Failed to fetch categories: " + err.message);
     } else {
-      console.error('Error fetching categories:', error);
+      console.error("Unknown error fetching categories:", err);
+      throw new Error("Failed to fetch categories due to unknown error.");
     }
-    throw new Error('Failed to fetch categories', { cause: error });
   }
 }

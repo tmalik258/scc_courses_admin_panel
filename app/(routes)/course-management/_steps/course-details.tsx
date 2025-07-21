@@ -1,34 +1,52 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useEffect, useCallback, useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import type { CourseFormData } from "@/types/course"
-import { useCategoryData } from "@/hooks/useCategoryData"
-import { DashedSpinner } from "@/components/dashed-spinner"
-import { useInstructorData } from "@/hooks/useInstructorData"
-import { uploadImage } from "@/utils/supabase/uploadImage"
-import { CheckCircleIcon } from "lucide-react"
-import { type FileWithPreview } from "@/hooks/use-file-upload"
-import { toast } from "sonner"
-import FileUploadWrapper from "@/components/file-upload-wrapper"
+import type React from "react";
+import { useEffect, useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import type { CourseFormData } from "@/types/course";
+import { useCategoryData } from "@/hooks/useCategoryData";
+import { DashedSpinner } from "@/components/dashed-spinner";
+import { useInstructorData } from "@/hooks/useInstructorData";
+import { uploadImage } from "@/utils/supabase/uploadImage";
+import { CheckCircleIcon } from "lucide-react";
+import { type FileWithPreview } from "@/hooks/use-file-upload";
+import { toast } from "sonner";
+import FileUploadWrapper from "@/components/file-upload-wrapper";
 
+const LOCAL_STORAGE_KEY = "courseDetailsStepData";
 
 interface CourseDetailsStepProps {
-  formData: CourseFormData
-  updateFormData: (data: Partial<CourseFormData>) => void
-  setCanProceed: (canProceed: boolean) => void
+  formData: CourseFormData;
+  updateFormData: (data: Partial<CourseFormData>) => void;
+  setCanProceed: (canProceed: boolean) => void;
 }
 
 const courseDetailsSchema = z.object({
-  title: z.string().min(1, "Course title is required").max(100, "Title must be less than 100 characters"),
+  title: z
+    .string()
+    .min(1, "Course title is required")
+    .max(100, "Title must be less than 100 characters"),
   description: z
     .string()
     .min(100, "Description must be at least 100 characters")
@@ -39,16 +57,30 @@ const courseDetailsSchema = z.object({
     .min(1, "Price is required")
     .regex(/^₹?\d+(\.\d{1,2})?$/, "Please enter a valid price"),
   instructor: z.string().min(1, "Please select an instructor"),
-})
+});
 
-type CourseDetailsFormValues = z.infer<typeof courseDetailsSchema>
+type CourseDetailsFormValues = z.infer<typeof courseDetailsSchema>;
 
-const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateFormData, setCanProceed }) => {
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(formData.thumbnailUrl || null)
+const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
+  formData,
+  updateFormData,
+  setCanProceed,
+}) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(
+    formData.thumbnailUrl || null
+  );
 
-  const { categories, loading: categoryLoading, error: categoryError } = useCategoryData()
-  const { instructors, loading: instructorsLoading, error: instructorsError } = useInstructorData()
+  const {
+    categories,
+    loading: categoryLoading,
+    error: categoryError,
+  } = useCategoryData();
+  const {
+    instructors,
+    loading: instructorsLoading,
+    error: instructorsError,
+  } = useInstructorData();
 
   const form = useForm<CourseDetailsFormValues>({
     resolver: zodResolver(courseDetailsSchema),
@@ -60,88 +92,101 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
       instructor: formData.instructor,
     },
     mode: "onChange",
-  })
+  });
+
+  useEffect(() => {
+    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      form.reset(parsed);
+      updateFormData(parsed);
+    }
+  }, [form, updateFormData]);
 
   // Handle file upload to Supabase
   const handleFileUpload = useCallback(
     async (files: FileWithPreview[]) => {
-      if (files.length === 0) return
+      if (files.length === 0) return;
 
-      const fileWithPreview = files[0]
-      const file = fileWithPreview.file
+      const fileWithPreview = files[0];
+      const file = fileWithPreview.file;
 
-      if (!(file instanceof File)) return
+      if (!(file instanceof File)) return;
 
-      setIsUploading(true)
+      setIsUploading(true);
 
       try {
-        console.log("Starting upload for file:", file.name)
-        const imageUrl = await uploadImage(file)
+        console.log("Starting upload for file:", file.name);
+        const imageUrl = await uploadImage(file);
 
         if (imageUrl) {
-          console.log("Upload successful, URL:", imageUrl)
-          setUploadedImageUrl(imageUrl)
+          console.log("Upload successful, URL:", imageUrl);
+          setUploadedImageUrl(imageUrl);
 
           // Update form data immediately with the uploaded URL
           updateFormData({
             thumbnailUrl: imageUrl,
-          })
+          });
 
-          toast.success("Thumbnail uploaded successfully!")
+          toast.success("Thumbnail uploaded successfully!");
         } else {
-          console.error("Upload failed - no URL returned")
-          toast.error("Failed to upload thumbnail. Please try again.")
+          console.error("Upload failed - no URL returned");
+          toast.error("Failed to upload thumbnail. Please try again.");
         }
       } catch (error) {
-        console.error("Upload error:", error)
-        toast.error("An error occurred while uploading. Please try again.")
+        console.error("Upload error:", error);
+        toast.error("An error occurred while uploading. Please try again.");
       } finally {
-        setIsUploading(false)
+        setIsUploading(false);
       }
     },
-    [updateFormData],
-  )
+    [updateFormData]
+  );
 
   // Handle file removal
   const handleFileRemove = useCallback(() => {
-    console.log("Removing thumbnail")
-    setUploadedImageUrl(null)
+    console.log("Removing thumbnail");
+    setUploadedImageUrl(null);
     updateFormData({
       thumbnailUrl: "",
-    })
-  }, [updateFormData])
+    });
+  }, [updateFormData]);
 
   // Update form data when uploadedImageUrl changes
   useEffect(() => {
     if (uploadedImageUrl && uploadedImageUrl !== formData.thumbnailUrl) {
       updateFormData({
         thumbnailUrl: uploadedImageUrl,
-      })
+      });
     }
-  }, [uploadedImageUrl, formData.thumbnailUrl, updateFormData])
+  }, [uploadedImageUrl, formData.thumbnailUrl, updateFormData]);
 
   // Validate form on mount and when values change
   useEffect(() => {
-    const isFormValid = form.formState.isValid
-    setCanProceed(isFormValid)
+    const isFormValid = form.formState.isValid;
+    setCanProceed(isFormValid);
 
     const subscription = form.watch((values) => {
       const timeout = setTimeout(() => {
-        updateFormData({
+        const newData = {
           title: values.title || "",
           description: values.description || "",
           category: values.category || "",
           price: values.price || "",
           instructor: values.instructor || "",
-        })
-        setCanProceed(form.formState.isValid)
-      }, 300)
+        };
 
-      return () => clearTimeout(timeout)
-    })
+        updateFormData(newData);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
 
-    return () => subscription.unsubscribe()
-  }, [form, updateFormData, setCanProceed])
+        setCanProceed(form.formState.isValid);
+      }, 300);
+
+      return () => clearTimeout(timeout);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, updateFormData, setCanProceed]);
 
   return (
     <Form {...form}>
@@ -186,43 +231,98 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
                         </SelectContent>
                       </Select>
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           <span className="font-bold">B</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           <span className="italic">I</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           <span className="underline">U</span>
                         </Button>
                       </div>
                       <div className="w-px h-6 bg-gray-300"></div>
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           ≡
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           ≡
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           ≡
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           ≡
                         </Button>
                       </div>
                       <div className="w-px h-6 bg-gray-300"></div>
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           {"<>"}
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           {'"'}
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           •
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" type="button">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          type="button"
+                        >
                           1.
                         </Button>
                       </div>
@@ -235,7 +335,8 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
                   </div>
                 </FormControl>
                 <FormDescription className="text-red-500">
-                  Min 100 characters and max 1000 characters required ({(field.value || "").length}/1000)
+                  Min 100 characters and max 1000 characters required (
+                  {(field.value || "").length}/1000)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -331,7 +432,9 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
         {/* Right Column - Thumbnail Upload */}
         <div className="lg:col-span-1">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Thumbnail</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Thumbnail
+            </label>
 
             {/* File Upload Component with custom handlers */}
             <div className="relative">
@@ -364,13 +467,15 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ formData, updateF
 
             {/* Debug info - remove in production */}
             {process.env.NODE_ENV === "development" && (
-              <div className="mt-2 text-xs text-gray-500">Current URL: {uploadedImageUrl || "None"}</div>
+              <div className="mt-2 text-xs text-gray-500">
+                Current URL: {uploadedImageUrl || "None"}
+              </div>
             )}
           </div>
         </div>
       </div>
     </Form>
-  )
-}
+  );
+};
 
-export default CourseDetailsStep
+export default CourseDetailsStep;

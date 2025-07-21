@@ -1,20 +1,24 @@
+// @/types/payment.ts
 export interface Transaction {
-  id: string
-  date: string
-  studentName: string
-  totalPayment: number
-  status: "success" | "failed" | "pending"
+  id: string;
+  date: string;
+  studentName: string;
+  totalPayment: number;
+  status: "success" | "failed" | "pending";
 }
 
 export interface TransactionDetails {
-  id: string
-  paymentDate: string
-  paymentMethod: string
-  totalPayment: number
-  category: string
-  courseName: string
-  studentName: string
-  status: "success" | "failed" | "pending"
+  id: string;
+  invoiceNumber: string; // Added to match Payment and schema.prisma
+  paymentDate: string;
+  paymentMethod: string;
+  totalPayment: number;
+  category?: string;
+  courseName: string;
+  studentName: string;
+  status: "SUCCESS" | "FAILED" | "PENDING";
+  studentEmail: string;
+  courseTitle: string;
 }
 
 export interface Profile {

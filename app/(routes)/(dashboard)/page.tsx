@@ -29,7 +29,11 @@ const DashboardPage: React.FC = () => {
             title="Total Students"
             value={dashboardData.totalStudents.toLocaleString()}
             icon={<Users className="w-5 h-5 text-aqua-mist" />}
+<<<<<<< HEAD
             onClick={() => router.push("/students")}
+=======
+            onClick={() => router.push("/total-students")}
+>>>>>>> ca818f7 (Added real data to payment page and used id for transaction, stored local data while adding courses, fixed the path of total-students in view more in dashboard)
           />
           <MetricCard
             title="Total Courses"
@@ -52,7 +56,16 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<<<<<<< HEAD
         <StudentGrowthChart data={dashboardData.studentGrowth.map(({ month, value }) => ({ label: month, value }))} />
+=======
+        <StudentGrowthChart
+          data={dashboardData.studentGrowth.map(({ month, value }) => ({
+            label: month,
+            value,
+          }))}
+        />
+>>>>>>> ca818f7 (Added real data to payment page and used id for transaction, stored local data while adding courses, fixed the path of total-students in view more in dashboard)
         <RecentCoursesList courses={dashboardData.recentCourses} />
       </div>
       <PopularCourseTable courses={dashboardData.popularCourses} />
