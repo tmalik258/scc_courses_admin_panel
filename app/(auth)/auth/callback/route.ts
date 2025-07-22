@@ -43,7 +43,6 @@ export async function GET(request: NextRequest) {
             console.log("Creating new profile for user:", data.user.id);
             await prisma.profile.create({
               data: {
-                id: crypto.randomUUID(),
                 userId: data.user.id,
                 email: data.user.email ?? null,
                 fullName:

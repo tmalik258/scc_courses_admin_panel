@@ -40,7 +40,7 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(({ moduleIndex, secti
         <label className="block text-sm font-medium text-gray-700 mb-2">Reading</label>
         <FormField
           control={form.control}
-          name={`modules.${moduleIndex}.lessons.${sectionIndex}.reading`}
+          name={`modules.${moduleIndex}.lessons.${sectionIndex}.content`}
           render={({ field }) => (
             <FormItem>
               <FormControl>
@@ -113,7 +113,7 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(({ moduleIndex, secti
                   />
                 </div>
               </FormControl>
-              <FormDescription className="text-red-500">
+              <FormDescription className={field.value.length >= 100 && field.value.length <= 1000 ? "" : "text-red-500"}>
                 Min 100 characters and max 1000 characters required ({(field.value || "").length}/1000)
               </FormDescription>
               <FormMessage />

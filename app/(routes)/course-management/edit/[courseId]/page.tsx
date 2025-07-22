@@ -9,23 +9,29 @@ import CourseLessonsStep from "../../_steps/course-lessons";
 import ResourcesStep from "../../_steps/resources";
 import type { CourseFormData } from "@/types/course";
 import { toast } from "sonner";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { LumaSpin } from "@/components/luma-spin";
 import { useCourseData } from "@/hooks/useCourseData";
+import { DashedSpinner } from "@/components/dashed-spinner";
 
 const LOCAL_STORAGE_KEY = "editCourseFormData";
 
 const INITIAL_FORM_DATA: CourseFormData = {
   title: "",
   description: "",
-  category: "",
+  categoryId: "",
   price: "",
-  instructor: "",
+  instructorId: "",
   thumbnailUrl: "",
   modules: [
     {
       title: "",
-      lessons: [{ name: "", reading: "", videoUrl: "" }],
+      lessons: [{ name: "", videoUrl: "" }],
     },
   ],
   resources: [
@@ -41,7 +47,8 @@ const EditCoursePage: React.FC = () => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { courseId } = useParams<{ courseId: string }>();
-  const { selectCourse, selectedCourse, handleUpdateCourse, loading, error } = useCourseData();
+  const { selectCourse, selectedCourse, handleUpdateCourse, loading, error } =
+    useCourseData();
   const [currentStep, setCurrentStep] = useState(() => {
     const step = searchParams.get("step");
     return step && !isNaN(parseInt(step, 10)) ? parseInt(step, 10) : 1;
@@ -66,22 +73,45 @@ const EditCoursePage: React.FC = () => {
       setFormData({
         title: selectedCourse.title || "",
         description: selectedCourse.description || "",
-        category: selectedCourse.category?.id || "",
+        categoryId: selectedCourse.category?.id || "",
         price: selectedCourse.price?.toString() || "",
-        instructor: selectedCourse.instructor?.id || "",
-        thumbnailUrl: selectedCourse.thumbnailUrl || "",
+        instructorId: selectedCourse.instructor?.id || "",
+        thumbnailUrl: selectedCourse.thumbnailUrl || undefined, // Avoid empty string
+        isPublished: selectedCourse.isPublished || false,
         modules: selectedCourse.modules?.length
           ? selectedCourse.modules.map((module) => ({
+              id: module.id, // Include module ID
               title: module.title || "",
               lessons: module.lessons?.length
                 ? module.lessons.map((lesson) => ({
+                    id: lesson.id, // Include lesson ID
                     name: lesson.name || "",
-                    reading: lesson.reading || "",
-                    videoUrl: lesson.videoUrl || "",
+                    reading: lesson.content || undefined,
+                    videoUrl: lesson.videoUrl || undefined,
                   }))
-                : [{ name: "", reading: "", videoUrl: "" }],
+                : [
+                    {
+                      id: undefined,
+                      name: "",
+                      reading: undefined,
+                      videoUrl: undefined,
+                    },
+                  ],
             }))
-          : [{ title: "", lessons: [{ name: "", reading: "", videoUrl: "" }] }],
+          : [
+              {
+                id: undefined,
+                title: "",
+                lessons: [
+                  {
+                    id: undefined,
+                    name: "",
+                    content: undefined,
+                    videoUrl: undefined,
+                  },
+                ],
+              },
+            ],
         resources: selectedCourse.resources?.length
           ? selectedCourse.resources.map((resource) => ({
               title: resource.title || "",
@@ -116,7 +146,8 @@ const EditCoursePage: React.FC = () => {
   // Sync currentStep with URL query parameter
   useEffect(() => {
     const step = searchParams.get("step");
-    const validStep = step && !isNaN(parseInt(step, 10)) ? parseInt(step, 10) : 1;
+    const validStep =
+      step && !isNaN(parseInt(step, 10)) ? parseInt(step, 10) : 1;
     if (validStep >= 1 && validStep <= 3 && validStep !== currentStep) {
       setCurrentStep(validStep);
       setCanProceed(true);
@@ -163,15 +194,43 @@ const EditCoursePage: React.FC = () => {
     if (
       !formData.title ||
       !formData.description ||
-      !formData.category ||
+      !formData.categoryId ||
       !formData.price ||
-      !formData.instructor
+      !formData.instructorId
     ) {
       toast.error("Please fill in all required fields");
       return false;
     }
     return true;
   }, [formData]);
+
+  const cleanFormData = (data: CourseFormData): CourseFormData => {
+  return {
+    ...data,
+    thumbnailUrl: data.thumbnailUrl || undefined,
+    modules: data.modules
+      .filter((module) => module.title || module.lessons?.length) // Skip empty modules
+      .map((module) => ({
+        id: module.id,
+        title: module.title || undefined,
+        lessons: module.lessons
+          ?.filter((lesson) => lesson.name || lesson.content || lesson.videoUrl) // Skip empty lessons
+          .map((lesson) => ({
+            id: lesson.id,
+            name: lesson.name || undefined,
+            reading: lesson.content || undefined,
+            videoUrl: lesson.videoUrl || undefined,
+          })) || [],
+      })),
+    resources: data.resources
+      .filter((resource) => resource.title || resource.url) // Skip empty resources
+      .map((resource) => ({
+        id: resource.id, // Include resource ID
+        title: resource.title || undefined,
+        url: resource.url || undefined,
+      })),
+  };
+};
 
   const handleSaveAndContinue = useCallback(async () => {
     if (currentStep === 3) {
@@ -182,45 +241,46 @@ const EditCoursePage: React.FC = () => {
       setIsSubmitting(true);
 
       try {
-        if (courseId) {
-          await handleUpdateCourse(courseId, formData);
-          toast.success("Course updated successfully!");
-          localStorage.removeItem(LOCAL_STORAGE_KEY);
-          router.push("/course-management");
-        } else {
-          const response = await fetch("/api/courses", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          });
+        const cleanedData = cleanFormData({ ...formData, isPublished: true });
+        await handleUpdateCourse(courseId, cleanedData);
 
-          const result = await response.json();
-
-          if (response.ok) {
-            toast.success("Course created successfully!");
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-            router.push("/course-management");
-          } else {
-            toast.error(`Failed to create course: ${result.error}`);
-          }
-        }
+        toast.success("Course published successfully!");
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        router.push("/course-management");
       } catch (err) {
-        if (err instanceof Error) {
-          console.error("Error saving course:", err.message);
-          toast.error("Something went wrong while saving the course.");
-        } else {
-          console.error("Unknown error:", err);
-          toast.error("Something went wrong while saving the course.");
-        }
+        console.error("Error publishing course:", err);
+        toast.error("Something went wrong while publishing the course.");
       } finally {
         setIsSubmitting(false);
       }
     } else {
       nextStep();
     }
-  }, [currentStep, formData, nextStep, validateFormData, courseId, handleUpdateCourse, router]);
+  }, [
+    currentStep,
+    validateFormData,
+    handleUpdateCourse,
+    courseId,
+    formData,
+    router,
+    nextStep,
+  ]);
+
+  const handleSaveAsDraft = useCallback(async () => {
+    setIsSubmitting(true);
+    try {
+      const cleanedData = cleanFormData({ ...formData, isPublished: false });
+      await handleUpdateCourse(courseId, cleanedData);
+
+      toast.success("Course saved as draft!");
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      router.push("/course-management");
+    } catch (err) {
+      console.error("Error saving draft:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [handleUpdateCourse, courseId, formData, router]);
 
   const steps = useMemo(
     () => [
@@ -260,14 +320,21 @@ const EditCoursePage: React.FC = () => {
       2: "Course Lessons",
       3: "Resources File",
     };
-    return titles[currentStep as keyof typeof titles] || (courseId ? "Edit Course" : "Create New Course");
+    return (
+      titles[currentStep as keyof typeof titles] ||
+      (courseId ? "Edit Course" : "Create New Course")
+    );
   }, [currentStep, courseId]);
 
   const getButtonText = useCallback(() => {
     if (currentStep === 3) {
-      return isSubmitting ? (courseId ? "Updating Course..." : "Creating Course...") : (courseId ? "Update Course" : "Create Course");
+      return isSubmitting
+        ? courseId
+          ? "Publishing..."
+          : "Publishing..."
+        : "Save & Publish";
     }
-    return "Save & Continue";
+    return isSubmitting ? "Saving..." : "Continue";
   }, [currentStep, isSubmitting, courseId]);
 
   const renderCurrentStep = useCallback(() => {
@@ -307,7 +374,7 @@ const EditCoursePage: React.FC = () => {
     }
   }, [currentStep, formData, updateFormData]);
 
-  if (loading) {
+  if (loading && !isSubmitting) {
     return (
       <div className="flex items-center justify-center h-full">
         <LumaSpin />
@@ -333,11 +400,11 @@ const EditCoursePage: React.FC = () => {
               Cancel
             </Button>
             <Button
-              onClick={handleSaveAndContinue}
-              disabled={!canProceed || isSubmitting || loading}
-              className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleSaveAsDraft}
+              disabled={isSubmitting || loading}
+              className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {getButtonText()}
+              {isSubmitting ? "Saving..." : "Save as Draft"}
             </Button>
           </div>
         </div>
@@ -396,8 +463,9 @@ const EditCoursePage: React.FC = () => {
           <Button
             onClick={handleSaveAndContinue}
             disabled={!canProceed || isSubmitting || loading}
-            className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
+            {isSubmitting || loading ? <DashedSpinner /> : null}
             {getButtonText()}
           </Button>
         </div>

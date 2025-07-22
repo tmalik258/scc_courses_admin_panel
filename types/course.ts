@@ -1,5 +1,5 @@
 import { Course as PrismaCourse } from "@/lib/generated/prisma";
-import { z } from "zod"
+import { z } from "zod";
 
 export interface Course {
   id: string;
@@ -14,23 +14,27 @@ export interface Course {
 export interface CourseFormData {
   title: string;
   description?: string;
-  category: string;
+  categoryId: string;
   price?: string;
-  instructor: string;
+  instructorId: string;
   thumbnailUrl?: string | null;
+  isPublished?: boolean;
   modules: {
-    title: string;
+    id?: string;
+    title?: string; // Allow undefined to match backend schema
     lessons: {
-      name: string;
-      reading?: string;
+      id?: string;
+      name?: string; // Allow undefined to match backend schema
+      content?: string;
       videoUrl?: string;
     }[];
   }[];
   resources: {
-    title: string;
-    url: string;
+    id?: string; // Add optional ID for resources
+    title?: string; // Allow undefined to match backend schema
+    url?: string;
   }[];
-} 
+}
 
 export interface CourseWithRelations extends PrismaCourse {
   category: { id: string; name: string; color: string | null };
@@ -41,7 +45,7 @@ export interface CourseWithRelations extends PrismaCourse {
     lessons: {
       id: string;
       name: string;
-      reading?: string | null;
+      content?: string | null;
       videoUrl?: string | null;
     }[];
   }[];
@@ -71,24 +75,128 @@ export interface PopularCourse {
   lessons: number;
 }
 
-
 // create schema
 const lessonSchema = z.object({
+  id: z.string().uuid().optional(),
   name: z.string().min(1, "Section name is required"),
-  reading: z
+  content: z
     .string()
     .min(100, "Reading content must be at least 100 characters")
     .max(1000, "Reading content must be less than 1000 characters"),
-  videoUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-})
+  videoUrl: z
+    .string()
+    .url("Please enter a valid URL")
+    .optional()
+    .or(z.literal("")),
+});
 
 const moduleSchema = z.object({
+  id: z.string().uuid().optional(),
   title: z.string().min(1, "Module title is required"),
   lessons: z.array(lessonSchema).min(1, "At least one section is required"),
-})
+});
 
 export const courseLessonsSchema = z.object({
   modules: z.array(moduleSchema).min(1, "At least one module is required"),
-})
+});
 
-export type CourseLessonsFormValues = z.infer<typeof courseLessonsSchema>
+export type CourseLessonsFormValues = z.infer<typeof courseLessonsSchema>;
+
+// for api put backend
+export const updateCourseSchema = z.object({
+  title: z.string().min(1, "Course title is required").optional(),
+  description: z.string().optional(),
+  categoryId: z.string().uuid().optional(),
+  price: z.union([z.number(), z.string()]).optional().nullable(),
+  instructorId: z.string().uuid().optional(),
+  thumbnailUrl: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(
+      (val) =>
+        val === undefined ||
+        val === null ||
+        val === "" ||
+        z.string().url().safeParse(val).success,
+      {
+        message: "Invalid URL",
+      }
+    ),
+  isPublished: z.boolean().optional(),
+  modules: z
+    .array(
+      z.object({
+        id: z.string().uuid().optional(), // Optional ID for updates
+        title: z
+          .string()
+          .min(1, "Module title is required")
+          .optional()
+          .nullable()
+          .transform((val) => (val === "" ? undefined : val)), // Convert empty string to undefined
+        lessons: z
+          .array(
+            z.object({
+              id: z.string().uuid().optional(), // Optional ID for updates
+              name: z
+                .string()
+                .min(1, "Lesson name is required")
+                .optional()
+                .nullable()
+                .transform((val) => (val === "" ? undefined : val)), // Convert empty string to undefined
+              content: z
+                .string()
+                .optional()
+                .nullable()
+                .transform((val) => (val === "" ? undefined : val)),
+              videoUrl: z
+                .string()
+                .optional()
+                .nullable()
+                .refine(
+                  (val) =>
+                    val === undefined ||
+                    val === null ||
+                    val === "" ||
+                    z.string().url().safeParse(val).success,
+                  { message: "Invalid URL" }
+                ),
+            })
+          )
+          .optional()
+          .nullable(),
+      })
+    )
+    .optional()
+    .nullable(),
+  resources: z
+    .array(
+      z.object({
+        id: z.string().uuid().optional(), // Add optional ID for resources
+        title: z
+          .string()
+          .min(1, "Resource title is required")
+          .optional()
+          .nullable()
+          .transform((val) => (val === "" ? undefined : val)), // Convert empty string to undefined
+        url: z
+          .string()
+          .optional()
+          .nullable()
+          .refine(
+            (val) =>
+              val === undefined ||
+              val === null ||
+              val === "" ||
+              z.string().url().safeParse(val).success,
+            { message: "Invalid URL" }
+          ),
+      })
+    )
+    .optional()
+    .nullable(),
+});
+
+export interface UpdateData {
+  [key: string]: unknown;
+}

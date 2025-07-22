@@ -86,9 +86,9 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
     defaultValues: {
       title: formData.title,
       description: formData.description,
-      category: formData.category,
+      category: formData.categoryId,
       price: formData.price,
-      instructor: formData.instructor,
+      instructor: formData.instructorId,
     },
     mode: "onChange",
   });
@@ -98,9 +98,9 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
     form.reset({
       title: formData.title,
       description: formData.description,
-      category: formData.category,
+      category: formData.categoryId,
       price: formData.price,
-      instructor: formData.instructor,
+      instructor: formData.instructorId,
     });
   }, [form, formData]);
 
@@ -153,9 +153,9 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
       updateFormData({
         title: values.title,
         description: values.description,
-        category: values.category,
+        categoryId: values.category,
         price: values.price,
-        instructor: values.instructor,
+        instructorId: values.instructor,
       });
       setCanProceed(form.formState.isValid);
     }, 300);
@@ -319,7 +319,7 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
                     />
                   </div>
                 </FormControl>
-                <FormDescription className="text-red-500">
+                <FormDescription className={(field.value.length >= 100) && (field.value.length <= 1000) ? "" : `text-red-500`}>
                   Min 100 characters and max 1000 characters required (
                   {(field.value || "").length}/1000)
                 </FormDescription>
@@ -386,7 +386,7 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
               <FormItem>
                 <FormLabel>Instructor</FormLabel>
                 {instructorsError ? (
-                  <p>{instructorsError.message}</p>
+                  <p className="text-red-500">{instructorsError.message}</p>
                 ) : (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>

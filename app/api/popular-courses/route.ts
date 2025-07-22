@@ -36,7 +36,6 @@ export async function GET() {
     });
 
     const formattedCourses = courses.map((course) => {
-      console.log("[POPULAR_COURSES] Processing course:", course);
       return {
         id: course.id,
         name: course.title,
@@ -54,7 +53,6 @@ export async function GET() {
 
     return NextResponse.json({ courses: formattedCourses });
   } catch (error) {
-    // Type guard to check if error is an instance of Error
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     console.error("[POPULAR_COURSES_ERROR]", error);

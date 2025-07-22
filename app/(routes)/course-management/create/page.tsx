@@ -10,20 +10,21 @@ import ResourcesStep from "../_steps/resources";
 import type { CourseFormData } from "@/types/course";
 import { toast } from "sonner";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { DashedSpinner } from "@/components/dashed-spinner";
 
 const LOCAL_STORAGE_KEY = "addCourseFormData";
 
 const INITIAL_FORM_DATA: CourseFormData = {
   title: "",
   description: "",
-  category: "",
+  categoryId: "",
   price: "",
-  instructor: "",
+  instructorId: "",
   thumbnailUrl: "",
   modules: [
     {
       title: "",
-      lessons: [{ name: "", reading: "", videoUrl: "" }],
+      lessons: [{ name: "", videoUrl: "" }],
     },
   ],
   resources: [
@@ -69,7 +70,8 @@ const AddCoursePage: React.FC = () => {
   // Sync currentStep with URL query parameter
   useEffect(() => {
     const step = searchParams.get("step");
-    const validStep = step && !isNaN(parseInt(step, 10)) ? parseInt(step, 10) : 1;
+    const validStep =
+      step && !isNaN(parseInt(step, 10)) ? parseInt(step, 10) : 1;
     if (validStep >= 1 && validStep <= 3 && validStep !== currentStep) {
       setCurrentStep(validStep);
       setCanProceed(true);
@@ -109,15 +111,44 @@ const AddCoursePage: React.FC = () => {
     if (
       !formData.title ||
       !formData.description ||
-      !formData.category ||
+      !formData.categoryId ||
       !formData.price ||
-      !formData.instructor
+      !formData.instructorId
     ) {
       toast.error("Please fill in all required fields");
       return false;
     }
     return true;
   }, [formData]);
+
+  const handleSaveAsDraft = useCallback(async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/courses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...formData, isPublished: false }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success("Course saved as draft!");
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        router.push("/course-management");
+      } else {
+        console.error("Server error:", result.error);
+        toast.error(`Failed to save draft: ${result.error}`);
+      }
+    } catch (err) {
+      console.error("Network or unexpected error:", err);
+      toast.error("Something went wrong while saving the draft.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [formData, router]);
 
   const handleSaveAndContinue = useCallback(async () => {
     if (currentStep === 3) {
@@ -133,22 +164,22 @@ const AddCoursePage: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ ...formData, isPublished: true }),
         });
 
         const result = await response.json();
 
         if (response.ok) {
-          toast.success("Course created successfully!");
-          localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear localStorage on success
+          toast.success("Course published successfully!");
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
           router.push("/course-management");
         } else {
           console.error("Server error:", result.error);
-          toast.error(`Failed to create course: ${result.error}`);
+          toast.error(`Failed to publish course: ${result.error}`);
         }
       } catch (err) {
         console.error("Network or unexpected error:", err);
-        toast.error("Something went wrong while creating the course.");
+        toast.error("Something went wrong while publishing the course.");
       } finally {
         setIsSubmitting(false);
       }
@@ -200,9 +231,9 @@ const AddCoursePage: React.FC = () => {
 
   const getButtonText = useCallback(() => {
     if (currentStep === 3) {
-      return isSubmitting ? "Creating Course..." : "Create Course";
+      return isSubmitting ? "Publishing..." : "Save & Publish";
     }
-    return "Save & Continue";
+    return isSubmitting ? "Saving..." : "Continue";
   }, [currentStep, isSubmitting]);
 
   const renderCurrentStep = useCallback(() => {
@@ -261,11 +292,11 @@ const AddCoursePage: React.FC = () => {
               Cancel
             </Button>
             <Button
-              onClick={handleSaveAndContinue}
-              disabled={!canProceed || isSubmitting}
-              className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleSaveAsDraft}
+              disabled={isSubmitting}
+              className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {getButtonText()}
+              {isSubmitting ? "Saving..." : "Save as Draft"}
             </Button>
           </div>
         </div>
@@ -327,8 +358,9 @@ const AddCoursePage: React.FC = () => {
           <Button
             onClick={handleSaveAndContinue}
             disabled={!canProceed || isSubmitting}
-            className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
+            {isSubmitting && <DashedSpinner />}
             {getButtonText()}
           </Button>
         </div>

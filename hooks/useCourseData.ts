@@ -67,6 +67,7 @@ export const useCourseData = () => {
         setError(new Error("Unknown error"));
       }
       console.error("Error updating course:", err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -86,6 +87,7 @@ export const useCourseData = () => {
         setError(new Error("Unknown error"));
       }
       console.error("Error deleting course:", err);
+      throw err;
     } finally {
       setLoading(false);
     }

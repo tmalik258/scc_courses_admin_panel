@@ -36,17 +36,27 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
     defaultValues: {
       modules: formData.modules?.length
         ? formData.modules.map((_module) => ({
+            id: _module.id, // Include module ID
             title: _module.title || "",
             lessons: (_module.lessons || []).map((lesson) => ({
+              id: lesson.id, // Include lesson ID
               name: lesson.name || "",
-              reading: lesson.reading || "",
-              videoUrl: lesson.videoUrl || "",
+              content: lesson.content || "",
+              videoUrl: lesson.videoUrl || undefined,
             })),
           }))
         : [
             {
+              id: undefined,
               title: "New Module",
-              lessons: [{ name: "", reading: "", videoUrl: "" }],
+              lessons: [
+                {
+                  id: undefined,
+                  name: "",
+                  content: "",
+                  videoUrl: undefined,
+                },
+              ],
             },
           ],
     },
@@ -74,14 +84,14 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
           title: _module.title || "",
           lessons: (_module.lessons || []).map((lesson) => ({
             name: lesson.name || "",
-            reading: lesson.reading || "",
+            content: lesson.content || "",
             videoUrl: lesson.videoUrl || "",
           })),
         }))
       : [
           {
             title: "New Module",
-            lessons: [{ name: "", reading: "", videoUrl: "" }],
+            lessons: [{ name: "", content: "", videoUrl: "" }],
           },
         ];
 
@@ -101,7 +111,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
   const addNewModule = useCallback(() => {
     appendModule({
       title: "New Module",
-      lessons: [{ name: "", reading: "", videoUrl: "" }],
+      lessons: [{ name: "", content: "", videoUrl: "" }],
     });
   }, [appendModule]);
 
@@ -113,7 +123,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
         title: _module.title || "",
         lessons: _module.lessons.map((lesson) => ({
           name: lesson.name || "",
-          reading: lesson.reading || "",
+          content: lesson.content || "",
           videoUrl: lesson.videoUrl || "",
         })),
       }));

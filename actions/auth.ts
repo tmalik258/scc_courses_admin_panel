@@ -48,7 +48,6 @@ export async function signup(formData: FormData) {
   if (signUpData.user) {
     // Insert user data into the profiles table
     const { error: profileError } = await supabase.from('profiles').insert({
-      id: crypto.randomUUID(), // Generate a new UUID for profile.id
       user_id: signUpData.user.id, // Store the auth.users id in user_id
       email: data.email,
       fullName: data.fullName,

@@ -10,7 +10,7 @@ datasource db {
 }
 
 model Profile {
-  id                String          @id @db.Uuid
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId            String          @unique @map("user_id") @db.Uuid
   email             String?         @unique
   fullName          String?         @map("full_name")
@@ -149,7 +149,7 @@ model Invoice {
 }
 
 model PaypalCustomer {
-  id               String   @id @default(uuid())
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   studentId        String   @unique @map("student_id") @db.Uuid
   paypalCustomerId String   @unique
   createdAt        DateTime @default(now())
@@ -163,7 +163,6 @@ model Module {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   courseId     String    @map("course_id") @db.Uuid
   title        String
-  order_index  Int
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   lessons      Lessons[]
@@ -173,7 +172,7 @@ model Module {
 }
 
 model Resources {
-  id        String   @id
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   course_id String   @db.Uuid
   name      String
   url       String
@@ -187,16 +186,15 @@ model Resources {
 
 model Lessons {
   id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  module_id     String     @db.Uuid
+  module_id      String     @db.Uuid
   course_id      String     @db.Uuid
   title          String
   content        String?
   video_url      String?
-  order_index    Int
   is_free        Boolean    @default(false)
   created_at     DateTime   @default(now())
   updated_at     DateTime
-  modules        Module    @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  modules        Module     @relation(fields: [module_id], references: [id], onDelete: Cascade)
   progress       Progress[]
 
   @@map("lessons")

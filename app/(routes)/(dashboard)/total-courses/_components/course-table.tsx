@@ -58,13 +58,13 @@ export const CourseTable: React.FC<CourseTableProps> = ({ courses, onEdit, onDel
                   <div className="text-sm text-gray-900">{course.instructor?.fullName}</div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                  <div className="text-sm text-gray-900">{course.sales}</div>
+                  <div className="text-sm text-gray-900">{course.title}</div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">₹{course.price?.toString()}</div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                  <div className="text-sm text-gray-900">{course.}</div>
+                  <div className="text-sm text-gray-900">{course.title}</div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                   <div className="flex space-x-1 sm:space-x-2">

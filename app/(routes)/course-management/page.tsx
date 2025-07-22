@@ -219,17 +219,17 @@ const CourseManagementPage: React.FC = () => {
           <Card key={course.id} className="overflow-hidden border-0 shadow-sm">
             <div className="relative">
               {/* Course Image with Gradient Background */}
-              <div className="flex items-center justify-center relative">
+              <div className="flex items-center justify-center relative px-5">
                 <Image
                   width={200}
                   height={200}
                   decoding="async"
                   src={course.thumbnailUrl || "/images/course_placeholder.jpg"}
                   alt={course.title}
-                  className="w-full h-full object-cover rounded-xl p-2"
+                  className="w-full h-56 object-cover rounded-xl"
                 />
                 {/* Category Badge */}
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-2 left-7">
                   <Badge
                     className={`text-xs font-medium px-2 py-1 ${
                       course.category.color || "bg-gray-100 text-gray-700"
@@ -239,7 +239,7 @@ const CourseManagementPage: React.FC = () => {
                   </Badge>
                 </div>
                 {/* Edited Time */}
-                <div className="absolute top-4 right-4 flex items-center text-white text-xs bg-black/20 rounded-full px-2 py-1">
+                <div className="absolute top-2 right-7 flex items-center text-white text-xs bg-black/20 rounded-full px-2 py-1">
                   <Clock className="w-3 h-3 mr-1" />
                   Edited{" "}
                   {formatDistanceToNow(new Date(course.updatedAt), {
@@ -249,13 +249,15 @@ const CourseManagementPage: React.FC = () => {
               </div>
             </div>
 
-            <CardContent className="p-5">
-              <h3 className="font-semibold text-gray-900 mb-2 text-base leading-tight">
-                {course.title}
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                {course.instructor.fullName || "Unknown"}
-              </p>
+            <CardContent className="px-5 flex flex-col justify-between h-full">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2 text-base leading-tight">
+                  {course.title}
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  {course.instructor.fullName || "Unknown"}
+                </p>
+              </div>
 
               <div className="flex gap-2">
                 <Button

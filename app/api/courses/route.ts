@@ -57,16 +57,16 @@ export async function POST(req: Request) {
     const {
       title,
       description,
-      category,
+      categoryId,
       price,
-      instructor,
+      instructorId,
       thumbnailUrl,
       modules,
       resources,
     } = body;
 
     // Validate required fields
-    if (!title || !instructor || !category) {
+    if (!title || !instructorId || !categoryId) {
       return NextResponse.json(
         { error: "Missing required fields: title, instructor, and category are required." },
         { status: 400 }
@@ -74,14 +74,14 @@ export async function POST(req: Request) {
     }
 
     // Validate UUID formats
-    if (!isValidUUID(instructor)) {
+    if (!isValidUUID(instructorId)) {
       return NextResponse.json(
         { error: "Invalid instructor ID format. Must be a valid UUID." },
         { status: 400 }
       );
     }
 
-    if (!isValidUUID(category)) {
+    if (!isValidUUID(categoryId)) {
       return NextResponse.json(
         { error: "Invalid category ID format. Must be a valid UUID." },
         { status: 400 }
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     // Validate instructor exists and has correct role
     const instructor_profile = await prisma.profile.findFirst({
       where: { 
-        id: instructor, 
+        id: instructorId, 
         role: "INSTRUCTOR" 
       },
     });
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
 
     // Validate category exists
     const categoryExists = await prisma.category.findUnique({
-      where: { id: category }
+      where: { id: categoryId }
     });
 
     if (!categoryExists) {
@@ -121,7 +121,7 @@ export async function POST(req: Request) {
         title,
         description: description || null,
         instructorId: instructor_profile.id,
-        categoryId: category,
+        categoryId: categoryExists.id,
         price: price ? new Decimal(price) : null,
         thumbnailUrl: thumbnailUrl || null,
       },
@@ -129,24 +129,22 @@ export async function POST(req: Request) {
 
     // Create modules and lessons
     if (modules && modules.length > 0) {
-      for (const [index, mod] of modules.entries()) {
+      for (const [, mod] of modules.entries()) {
         const createdModule = await prisma.module.create({
           data: {
             title: mod.title,
-            order_index: index,
             courseId: createdCourse.id,
           },
         });
 
         // Create lessons for this module
         if (mod.lessons && mod.lessons.length > 0) {
-          for (const [lessonIndex, les] of mod.lessons.entries()) {
+          for (const [, les] of mod.lessons.entries()) {
             await prisma.lessons.create({
               data: {
                 title: les.name,
                 content: les.reading || null,
                 video_url: les.videoUrl || null,
-                order_index: lessonIndex,
                 updated_at: new Date(),
                 is_free: false,
                 module_id: createdModule.id,
@@ -163,7 +161,6 @@ export async function POST(req: Request) {
       for (const res of resources) {
         await prisma.resources.create({
           data: {
-            id: crypto.randomUUID(),
             name: res.title,
             url: res.url,
             course_id: createdCourse.id,
