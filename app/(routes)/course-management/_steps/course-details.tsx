@@ -33,8 +33,7 @@ import { CheckCircleIcon } from "lucide-react";
 import { type FileWithPreview } from "@/hooks/use-file-upload";
 import { toast } from "sonner";
 import FileUploadWrapper from "@/components/file-upload-wrapper";
-
-const LOCAL_STORAGE_KEY = "courseDetailsStepData";
+import debounce from "lodash.debounce";
 
 interface CourseDetailsStepProps {
   formData: CourseFormData;
@@ -94,14 +93,16 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
     mode: "onChange",
   });
 
+  // Sync form with updated formData prop
   useEffect(() => {
-    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedData) {
-      const parsed = JSON.parse(savedData);
-      form.reset(parsed);
-      updateFormData(parsed);
-    }
-  }, [form, updateFormData]);
+    form.reset({
+      title: formData.title,
+      description: formData.description,
+      category: formData.category,
+      price: formData.price,
+      instructor: formData.instructor,
+    });
+  }, [form, formData]);
 
   // Handle file upload to Supabase
   const handleFileUpload = useCallback(
@@ -122,12 +123,7 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
         if (imageUrl) {
           console.log("Upload successful, URL:", imageUrl);
           setUploadedImageUrl(imageUrl);
-
-          // Update form data immediately with the uploaded URL
-          updateFormData({
-            thumbnailUrl: imageUrl,
-          });
-
+          updateFormData({ thumbnailUrl: imageUrl });
           toast.success("Thumbnail uploaded successfully!");
         } else {
           console.error("Upload failed - no URL returned");
@@ -147,45 +143,34 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
   const handleFileRemove = useCallback(() => {
     console.log("Removing thumbnail");
     setUploadedImageUrl(null);
-    updateFormData({
-      thumbnailUrl: "",
-    });
+    updateFormData({ thumbnailUrl: "" });
   }, [updateFormData]);
 
-  // Update form data when uploadedImageUrl changes
+  // Validate form and update parent formData
   useEffect(() => {
-    if (uploadedImageUrl && uploadedImageUrl !== formData.thumbnailUrl) {
+    const debouncedUpdate = debounce(() => {
+      const values = form.getValues();
       updateFormData({
-        thumbnailUrl: uploadedImageUrl,
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        price: values.price,
+        instructor: values.instructor,
       });
-    }
-  }, [uploadedImageUrl, formData.thumbnailUrl, updateFormData]);
+      setCanProceed(form.formState.isValid);
+    }, 300);
 
-  // Validate form on mount and when values change
-  useEffect(() => {
-    const isFormValid = form.formState.isValid;
-    setCanProceed(isFormValid);
-
-    const subscription = form.watch((values) => {
-      const timeout = setTimeout(() => {
-        const newData = {
-          title: values.title || "",
-          description: values.description || "",
-          category: values.category || "",
-          price: values.price || "",
-          instructor: values.instructor || "",
-        };
-
-        updateFormData(newData);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-
-        setCanProceed(form.formState.isValid);
-      }, 300);
-
-      return () => clearTimeout(timeout);
+    const subscription = form.watch(() => {
+      debouncedUpdate();
     });
 
-    return () => subscription.unsubscribe();
+    // Initial validation
+    form.trigger().then(setCanProceed);
+
+    return () => {
+      subscription.unsubscribe();
+      debouncedUpdate.cancel();
+    };
   }, [form, updateFormData, setCanProceed]);
 
   return (

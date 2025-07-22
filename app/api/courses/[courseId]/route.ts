@@ -4,15 +4,19 @@ import { NextResponse } from "next/server";
 // GET a single course
 export async function GET(
   _: Request,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
-  const { courseId } = params;
+  const { courseId } = await params;
 
   try {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
-        modules: true,
+        modules: {
+          include: {
+            lessons: true,
+          },
+        },
         instructor: true,
         category: true,
       },

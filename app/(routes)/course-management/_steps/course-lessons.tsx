@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import React, { useEffect, useState, useCallback } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import debounce from "lodash.debounce";
 
@@ -14,8 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import ModuleSection from "./_components/section-form";
 import { Plus } from "lucide-react";
-
-const LOCAL_STORAGE_KEY = "courseLessonsStepData";
 
 interface CourseLessonsStepProps {
   formData: CourseFormData;
@@ -33,9 +31,45 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
   }>({ 0: true });
   const [isClient, setIsClient] = useState(false);
 
-  // Initialize default sections with a fallback
-  const defaultSectionsRef = useRef<CourseLessonsFormValues["modules"]>(
-    formData.modules?.length
+  const form = useForm<CourseLessonsFormValues>({
+    resolver: zodResolver(courseLessonsSchema),
+    defaultValues: {
+      modules: formData.modules?.length
+        ? formData.modules.map((_module) => ({
+            title: _module.title || "",
+            lessons: (_module.lessons || []).map((lesson) => ({
+              name: lesson.name || "",
+              reading: lesson.reading || "",
+              videoUrl: lesson.videoUrl || "",
+            })),
+          }))
+        : [
+            {
+              title: "New Module",
+              lessons: [{ name: "", reading: "", videoUrl: "" }],
+            },
+          ],
+    },
+    mode: "onChange",
+  });
+
+  const {
+    fields: moduleFields,
+    append: appendModule,
+    remove: removeModule,
+  } = useFieldArray({
+    control: form.control,
+    name: "modules",
+  });
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Sync form with updated formData prop only if necessary
+  useEffect(() => {
+    const currentFormValues = form.getValues().modules;
+    const incomingModules = formData.modules?.length
       ? formData.modules.map((_module) => ({
           title: _module.title || "",
           lessons: (_module.lessons || []).map((lesson) => ({
@@ -49,29 +83,13 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
             title: "New Module",
             lessons: [{ name: "", reading: "", videoUrl: "" }],
           },
-        ]
-  );
+        ];
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const form = useForm<CourseLessonsFormValues>({
-    resolver: zodResolver(courseLessonsSchema),
-    defaultValues: {
-      modules: defaultSectionsRef.current,
-    },
-    mode: "onChange",
-  });
-
-  const {
-    fields: moduleFields,
-    append: appendModule,
-    remove: removeModule,
-  } = useFieldArray({
-    control: form.control,
-    name: "modules",
-  });
+    // Deep comparison to avoid unnecessary resets
+    if (JSON.stringify(currentFormValues) !== JSON.stringify(incomingModules)) {
+      form.reset({ modules: incomingModules }, { keepDirty: true });
+    }
+  }, [form, formData.modules]);
 
   const toggleModule = useCallback((index: number) => {
     setExpandedModules((prev) => ({
@@ -87,80 +105,39 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
     });
   }, [appendModule]);
 
-  // Load saved data from localStorage
+  // Sync form data with parent
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        const validation = courseLessonsSchema.safeParse(parsed);
-        if (validation.success) {
-          form.reset(parsed);
-        } else {
-          console.warn("Invalid localStorage data:", validation.error);
-          form.reset({ modules: defaultSectionsRef.current });
-        }
+    const debouncedUpdate = debounce(async () => {
+      const values = form.getValues();
+      const safeModules = values.modules.map((_module) => ({
+        title: _module.title || "",
+        lessons: _module.lessons.map((lesson) => ({
+          name: lesson.name || "",
+          reading: lesson.reading || "",
+          videoUrl: lesson.videoUrl || "",
+        })),
+      }));
+
+      // Only update if modules have changed to avoid unnecessary updates
+      if (JSON.stringify(safeModules) !== JSON.stringify(formData.modules)) {
+        updateFormData({ modules: safeModules });
       }
-    } catch (error) {
-      console.error("Error parsing localStorage data:", error);
-      form.reset({ modules: defaultSectionsRef.current });
-    }
-  }, [form]);
-
-  const watchedModules = useWatch({
-    control: form.control,
-    name: "modules",
-  });
-
-  // Sync form data with localStorage and parent
-  useEffect(() => {
-    const syncForm = debounce(async () => {
-      try {
-        if (!Array.isArray(watchedModules) || !watchedModules.length) {
-          console.warn("No valid modules data to sync");
-          setCanProceed(false);
-          return;
-        }
-
-        const safeModules: CourseLessonsFormValues["modules"] =
-          watchedModules.map((_module) => ({
-            title: _module?.title || "",
-            lessons: Array.isArray(_module?.lessons)
-              ? _module.lessons.map((lesson) => ({
-                  name: lesson?.name || "",
-                  reading: lesson?.reading || "",
-                  videoUrl: lesson?.videoUrl || "",
-                }))
-              : [],
-          }));
-
-        const payload = { modules: safeModules };
-
-        // Save to localStorage
-        if (typeof window !== "undefined") {
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
-        }
-
-        // Update parent formData only if changed
-        const isDifferent =
-          JSON.stringify(formData.modules) !== JSON.stringify(safeModules);
-        if (isDifferent) {
-          updateFormData(payload);
-        }
-
-        // Validate form
-        const isValid = await form.trigger();
-        setCanProceed(isValid);
-      } catch (error) {
-        console.error("Error in syncForm:", error);
-        setCanProceed(false);
-      }
+      const isValid = await form.trigger();
+      setCanProceed(isValid);
     }, 400);
 
-    syncForm();
-    return () => syncForm.cancel();
-  }, [form, setCanProceed, updateFormData, watchedModules, formData.modules]);
+    const subscription = form.watch(() => {
+      debouncedUpdate();
+    });
+
+    // Initial validation
+    form.trigger().then(setCanProceed);
+
+    return () => {
+      subscription.unsubscribe();
+      debouncedUpdate.cancel();
+    };
+  }, [form, updateFormData, setCanProceed, formData.modules]);
 
   if (!isClient) return null;
 

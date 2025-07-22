@@ -24,14 +24,6 @@ interface ResourcesStepProps {
   setCanProceed: (canProceed: boolean) => void;
 }
 
-const LOCAL_STORAGE_KEY = "courseResourcesStepData";
-
-declare global {
-  interface Window {
-    clearResourcesStepStorage?: () => void;
-  }
-}
-
 const resourceSchema = z.object({
   title: z.string().min(1, "Resource title is required"),
   url: z.string().url("Please enter a valid URL"),
@@ -66,6 +58,20 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({
     name: "resources",
   });
 
+  // Sync form with updated formData prop only if necessary
+  useEffect(() => {
+    const currentFormValues = form.getValues().resources;
+    const incomingResources =
+      formData.resources.length > 0
+        ? formData.resources
+        : [{ title: "", url: "" }];
+
+    // Deep comparison to avoid unnecessary resets
+    if (JSON.stringify(currentFormValues) !== JSON.stringify(incomingResources)) {
+      form.reset({ resources: incomingResources }, { keepDirty: true });
+    }
+  }, [form, formData.resources]);
+
   const addResource = useCallback(() => {
     append({ title: "", url: "" });
   }, [append]);
@@ -79,73 +85,35 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({
     [remove, fields.length]
   );
 
-  // Load from localStorage on mount
+  // Sync form data with parent
   useEffect(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed?.resources) {
-          form.reset(parsed, { keepDirty: false, keepTouched: false });
-        }
-      } catch (error) {
-        console.error("Failed to parse saved resources:", error);
-      }
-    }
-  }, [form]);
+    const debouncedUpdate = debounce(async () => {
+      const values = form.getValues();
+      const safeResources = values.resources.map((r) => ({
+        title: r.title || "",
+        url: r.url || "",
+      }));
 
-  // Debounced function to update localStorage and parent form data
-  const updateStorageAndFormData = useCallback(
-    (values: ResourcesFormValues) => (
-      debounce(() => {
-        const safeResources = (values.resources ?? []).map((r) => ({
-          title: r?.title || "",
-          url: r?.url || "",
-        }));
-
-        localStorage.setItem(
-          LOCAL_STORAGE_KEY,
-          JSON.stringify({ resources: safeResources })
-        );
+      // Only update if resources have changed to avoid unnecessary updates
+      if (JSON.stringify(safeResources) !== JSON.stringify(formData.resources)) {
         updateFormData({ resources: safeResources });
+      }
+      const isValid = await form.trigger();
+      setCanProceed(isValid);
+    }, 500);
 
-        form
-          .trigger()
-          .then(setCanProceed)
-          .catch(() => setCanProceed(false));
-      }, 500), // 500ms debounce delay
-      [form, updateFormData, setCanProceed]
-    ),
-    [form, setCanProceed, updateFormData]
-  );
-
-  // Watch form changes and update storage/formData
-  useEffect(() => {
-    const subscription = form.watch((values) => {
-      updateStorageAndFormData(values as ResourcesFormValues);
+    const subscription = form.watch(() => {
+      debouncedUpdate();
     });
 
-    return () => subscription.unsubscribe();
-  }, [form, updateStorageAndFormData]);
+    // Initial validation
+    form.trigger().then(setCanProceed);
 
-  // Sync form with updated formData prop
-  useEffect(() => {
-    if (
-      JSON.stringify(formData.resources) !==
-      JSON.stringify(form.getValues("resources"))
-    ) {
-      form.reset({ resources: formData.resources }, { keepDirty: false });
-    }
-  }, [form, formData.resources]);
-
-  // Clear localStorage externally
-  const clearLocalStorage = () => {
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-  };
-
-  if (typeof window !== "undefined") {
-    window.clearResourcesStepStorage = clearLocalStorage;
-  }
+    return () => {
+      subscription.unsubscribe();
+      debouncedUpdate.cancel();
+    };
+  }, [form, updateFormData, setCanProceed, formData.resources]);
 
   return (
     <div className="space-y-6">

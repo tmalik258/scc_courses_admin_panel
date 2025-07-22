@@ -33,7 +33,7 @@ export interface CourseFormData {
 } 
 
 export interface CourseWithRelations extends PrismaCourse {
-  category: { name: string; color: string | null };
+  category: { id: string; name: string; color: string | null };
   instructor: { id: string; fullName: string | null };
   modules: {
     id: string;

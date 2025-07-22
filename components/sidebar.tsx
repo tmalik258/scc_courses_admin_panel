@@ -7,11 +7,9 @@ import {
   DollarSign,
   LayoutDashboard,
 } from "lucide-react";
-import { useRouter } from "nextjs-toploader/app";
 import { usePathname } from "next/navigation";
 
-const Sidebar: React.FC = () => {
-  const router = useRouter();
+const Sidebar = ({ onNavigate }: { onNavigate: (path: string) => void }) => {
   const pathname = usePathname();
 
   const routes = [
@@ -68,7 +66,7 @@ const Sidebar: React.FC = () => {
                     ? "text-aqua-mist bg-blue-50"
                     : "text-gray-600 hover:bg-gray-50"
                 } rounded-lg cursor-pointer`}
-                onClick={() => router.push(route.href)}
+                onClick={() => onNavigate(route.href)}
               >
                 <route.icon className="w-5 h-5" />
                 <span className="font-medium">{route.label}</span>
