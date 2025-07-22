@@ -2,7 +2,15 @@
 
 import type React from "react";
 import { useState, useTransition } from "react";
-import { Plus, Search, Clock, Edit, Trash2, ChevronDown } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Clock,
+  Edit,
+  Trash2,
+  ChevronDown,
+  CircleAlertIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +21,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -58,8 +77,34 @@ const CourseManagementPage: React.FC = () => {
     router.push(`/course-management/edit/${courseId}`);
   };
 
-  const handleDelete = (courseId: string) => {
-    console.log("Delete course:", courseId);
+  const handleDelete = async (courseId: string) => {
+    try {
+      const response = await fetch("/api/courses", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: courseId }),
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error(
+          "Failed to delete course:",
+          errorData.error || "Unknown error"
+        );
+      }
+    } catch (error) {
+      console.error("Unexpected error deleting course:", error);
+    }
+  };
+
+  const handleRedirectToCreate = () => {
+    startTransition(() => {
+      router.push("/course-management/create");
+    });
   };
 
   const breadcrumbItems = [
@@ -83,12 +128,6 @@ const CourseManagementPage: React.FC = () => {
     );
   }
 
-  const handleRedirectToCreate = () => {
-    startTransition(() => {
-      router.push("/course-management/create");
-    });
-  };
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <Breadcrumb items={breadcrumbItems} />
@@ -103,7 +142,11 @@ const CourseManagementPage: React.FC = () => {
           disabled={isPending}
           onClick={handleRedirectToCreate}
         >
-          {isPending ? <DashedSpinner className="mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+          {isPending ? (
+            <DashedSpinner className="mr-2" />
+          ) : (
+            <Plus className="w-4 h-4 mr-2" />
+          )}
           Add Courses
         </Button>
       </div>
@@ -269,15 +312,44 @@ const CourseManagementPage: React.FC = () => {
                   <Edit className="w-4 h-4 mr-1" />
                   Edit
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 text-red-500 border-red-500 hover:bg-red-50 bg-white"
-                  onClick={() => handleDelete(course.id)}
-                >
-                  <Trash2 className="w-4 h-4 mr-1" />
-                  Delete
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-red-500 border-red-500 hover:bg-red-50 bg-white"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <div className="flex flex-col gap-2 max-sm:items-center sm:flex-row sm:gap-4">
+                      <div
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full border"
+                        aria-hidden="true"
+                      >
+                        <CircleAlertIcon className="opacity-80" size={16} />
+                      </div>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this course? All
+                          associated modules, lessons, and resources will be
+                          permanently removed.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                    </div>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(course.id)}
+                      >
+                        Confirm
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>

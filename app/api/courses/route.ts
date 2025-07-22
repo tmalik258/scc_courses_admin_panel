@@ -12,7 +12,7 @@ export async function GET() {
             id: true,
             name: true,
             color: true,
-          }
+          },
         },
         modules: {
           include: {
@@ -28,11 +28,11 @@ export async function GET() {
         resources: true,
       },
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
     });
 
-    return NextResponse.json({courses}, { status: 200 });
+    return NextResponse.json({ courses }, { status: 200 });
   } catch (error) {
     console.error(
       "Error fetching courses:",
@@ -47,7 +47,8 @@ export async function GET() {
 
 // UUID validation helper function
 function isValidUUID(uuid: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 }
 
@@ -68,7 +69,10 @@ export async function POST(req: Request) {
     // Validate required fields
     if (!title || !instructorId || !categoryId) {
       return NextResponse.json(
-        { error: "Missing required fields: title, instructor, and category are required." },
+        {
+          error:
+            "Missing required fields: title, instructor, and category are required.",
+        },
         { status: 400 }
       );
     }
@@ -90,9 +94,9 @@ export async function POST(req: Request) {
 
     // Validate instructor exists and has correct role
     const instructor_profile = await prisma.profile.findFirst({
-      where: { 
-        id: instructorId, 
-        role: "INSTRUCTOR" 
+      where: {
+        id: instructorId,
+        role: "INSTRUCTOR",
       },
     });
 
@@ -105,7 +109,7 @@ export async function POST(req: Request) {
 
     // Validate category exists
     const categoryExists = await prisma.category.findUnique({
-      where: { id: categoryId }
+      where: { id: categoryId },
     });
 
     if (!categoryExists) {
@@ -195,18 +199,18 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error("Error creating course:", error);
-    
+
     // More specific error handling
     if (error instanceof Error) {
       // Check for specific Prisma errors
-      if (error.message.includes('Invalid') && error.message.includes('UUID')) {
+      if (error.message.includes("Invalid") && error.message.includes("UUID")) {
         return NextResponse.json(
           { error: "Invalid UUID format in request data." },
           { status: 400 }
         );
       }
-      
-      if (error.message.includes('Foreign key constraint')) {
+
+      if (error.message.includes("Foreign key constraint")) {
         return NextResponse.json(
           { error: "Invalid reference to instructor or category." },
           { status: 400 }
@@ -216,6 +220,55 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { id } = await req.json();
+
+    // Validate UUID
+    if (!id || !isValidUUID(id)) {
+      return NextResponse.json(
+        { error: "Invalid course ID format. Must be a valid UUID." },
+        { status: 400 }
+      );
+    }
+
+    // Check if course exists
+    const course = await prisma.course.findUnique({
+      where: { id },
+    });
+
+    if (!course) {
+      return NextResponse.json({ error: "Course not found." }, { status: 404 });
+    }
+
+    // Delete associated resources, modules, and lessons
+    await prisma.resources.deleteMany({
+      where: { course_id: id },
+    });
+
+    await prisma.lessons.deleteMany({
+      where: { course_id: id },
+    });
+
+    await prisma.module.deleteMany({
+      where: { courseId: id },
+    });
+
+    // Delete the course
+    await prisma.course.delete({
+      where: { id },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("Error deleting course:", error);
+    return NextResponse.json(
+      { error: "Failed to delete course" },
       { status: 500 }
     );
   }
