@@ -13,6 +13,7 @@ const CoursesPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { courses } = useCourseData();
   const router = useRouter();
 
@@ -20,8 +21,12 @@ const CoursesPage: React.FC = () => {
   const filteredCourses = courses.filter(
     (course) =>
       course.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-      course.category?.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
-      course.instructor?.fullName?.toLowerCase().includes(searchValue.toLowerCase()) ||
+      course.category?.name
+        ?.toLowerCase()
+        .includes(searchValue.toLowerCase()) ||
+      course.instructor?.fullName
+        ?.toLowerCase()
+        .includes(searchValue.toLowerCase()) ||
       course.id.toLowerCase().includes(searchValue.toLowerCase())
   );
 
@@ -35,9 +40,24 @@ const CoursesPage: React.FC = () => {
     router.push(`/course-management/${course.id}`);
   };
 
-  const handleDelete = (courseId: string) => {
-    console.log("Delete course:", courseId);
-    // In real app, this would show confirmation dialog and delete course
+  const handleDelete = async (courseId: string) => {
+    try {
+      const res = await fetch(`/api/courses/${courseId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data?.error || "Failed to delete course.");
+      }
+
+      setErrorMessage(null);
+      router.refresh(); // Reload data after deletion
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error("Failed to delete course:", err.message);
+      setErrorMessage(`Failed to delete course: ${err.message}`);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -61,12 +81,18 @@ const CoursesPage: React.FC = () => {
       <Breadcrumb items={breadcrumbItems} />
 
       <CoursesHeader
-        totalCourses={200}
+        totalCourses={filteredCourses.length}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
         entriesPerPage={entriesPerPage}
         onEntriesChange={setEntriesPerPage}
       />
+
+      {errorMessage && (
+        <div className="text-red-600 bg-red-100 p-3 rounded mb-4">
+          {errorMessage}
+        </div>
+      )}
 
       <CourseTable
         courses={currentCourses}

@@ -3,7 +3,13 @@ export interface Student {
   fullName?: string;
   phone?: string;
   email?: string;
-  profileImage?: string;
+  avatarUrl?: string;
+  purchases: {
+    course: {
+      id: string;
+      title: string;
+    };
+  }[];
 }
 
 export interface StudentDetails extends Student {

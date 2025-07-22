@@ -56,7 +56,7 @@ const StudentsPage: React.FC = () => {
       <Breadcrumb items={breadcrumbItems} />
 
       <StudentsHeader
-        totalStudents={1041}
+        totalStudents={filteredStudents.length}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
         entriesPerPage={entriesPerPage}

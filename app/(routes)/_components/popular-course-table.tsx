@@ -26,13 +26,13 @@ export const PopularCourseTable: React.FC = () => {
         if (data.error) {
           throw new Error(data.details || "API returned an error");
         }
-        setCourses(data.courses || []); // Set the courses array, fallback to empty array
+        setCourses(data.courses || []);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
         console.error("Failed to load popular courses:", errorMessage);
         setError(errorMessage);
-        setCourses([]); // Ensure courses is an array
+        setCourses([]);
       } finally {
         setLoading(false);
       }
@@ -40,6 +40,29 @@ export const PopularCourseTable: React.FC = () => {
 
     fetchCourses();
   }, []);
+
+  const handleDeleteCourse = async (courseId: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/courses", {
+        method: "DELETE",
+        body: JSON.stringify({ id: courseId }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to delete course. ${errorText}`);
+      }
+
+      setCourses((prev) => prev.filter((course) => course.id !== courseId));
+    } catch (err) {
+      console.error("Delete failed:", err);
+      setError("Failed to delete course.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="mt-8 bg-white rounded-lg shadow-sm">
@@ -109,7 +132,10 @@ export const PopularCourseTable: React.FC = () => {
                       <button className="p-2 text-blue-600 hover:bg-blue-50 rounded">
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="p-2 text-red-600 hover:bg-red-50 rounded">
+                      <button
+                        onClick={() => handleDeleteCourse(course.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
