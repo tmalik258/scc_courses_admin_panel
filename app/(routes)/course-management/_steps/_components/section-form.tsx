@@ -32,7 +32,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
       try {
         appendSection({
           name: "",
-          reading: "",
+          content: "",
           videoUrl: "",
         })
       } catch (error) {

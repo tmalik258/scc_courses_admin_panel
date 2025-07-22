@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { studentId: string } }
+  { params }: { params: Promise<{ studentId: string }> }
 ) {
   try {
-    const { studentId } = params;
+    const { studentId } = await params;
 
     if (!studentId) {
       return NextResponse.json({ error: "Missing student ID" }, { status: 400 });
@@ -36,10 +36,10 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { studentId: string } }
+  { params }: { params: Promise<{ studentId: string }> }
 ) {
   try {
-    const { studentId } = params;
+    const { studentId } = await params;
 
     if (!studentId) {
       return NextResponse.json({ error: "Missing student ID" }, { status: 400 });
@@ -62,10 +62,10 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { studentId: string } }
+  { params }: { params: Promise<{ studentId: string }> }
 ) {
   try {
-    const { studentId } = params;
+    const { studentId } = await params;
     const body = await request.json();
     const { name, phone, email, avatarUrl } = body;
 

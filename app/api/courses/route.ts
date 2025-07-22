@@ -130,6 +130,12 @@ export async function POST(req: Request) {
     // Create modules and lessons
     if (modules && modules.length > 0) {
       for (const [, mod] of modules.entries()) {
+        if (!mod.title) {
+          return NextResponse.json(
+            { error: "Module title is required." },
+            { status: 400 }
+          );
+        }
         const createdModule = await prisma.module.create({
           data: {
             title: mod.title,
@@ -140,10 +146,16 @@ export async function POST(req: Request) {
         // Create lessons for this module
         if (mod.lessons && mod.lessons.length > 0) {
           for (const [, les] of mod.lessons.entries()) {
+            if (!les.name) {
+              return NextResponse.json(
+                { error: "Lesson name is required." },
+                { status: 400 }
+              );
+            }
             await prisma.lessons.create({
               data: {
                 title: les.name,
-                content: les.reading || null,
+                content: les.content || null,
                 video_url: les.videoUrl || null,
                 updated_at: new Date(),
                 is_free: false,
@@ -159,6 +171,12 @@ export async function POST(req: Request) {
     // Create resources
     if (resources && resources.length > 0) {
       for (const res of resources) {
+        if (!res.title || !res.url) {
+          return NextResponse.json(
+            { error: "Resource title and URL are required." },
+            { status: 400 }
+          );
+        }
         await prisma.resources.create({
           data: {
             name: res.title,

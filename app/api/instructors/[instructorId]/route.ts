@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { instructorId: string } }
+  { params }: { params: Promise<{ instructorId: string }> }
 ) {
   try {
-    const { instructorId } = params;
+    const { instructorId } = await params;
     const instructor = await prisma.profile.findUnique({
       where: { id: instructorId, role: "INSTRUCTOR" },
       include: {
@@ -62,10 +62,10 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { instructorId: string } }
+  { params }: { params: Promise<{ instructorId: string }> }
 ) {
   try {
-    const { instructorId } = params;
+    const { instructorId } = await params;
     const instructor = await prisma.profile.delete({
       where: { id: instructorId, role: "INSTRUCTOR" },
     });
@@ -89,10 +89,10 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { instructorId: string } }
+  { params }: { params: Promise<{ instructorId: string }> }
 ) {
   try {
-    const { instructorId } = params;
+    const { instructorId } = await params;
     const body = await request.json();
     const { fullName, role, bio, phone, avatarUrl } = body; // Updated fields based on schema
 
