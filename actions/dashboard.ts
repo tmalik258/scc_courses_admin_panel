@@ -1,3 +1,4 @@
+// actions/dashboard.ts
 import { DashboardData } from "@/types/dashboard";
 
 export async function fetchDashboardOverview(): Promise<DashboardData> {
