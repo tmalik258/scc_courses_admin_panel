@@ -8,38 +8,12 @@ import {
   subDays,
   formatDistanceToNow,
 } from "date-fns";
-
-interface StudentGrowthPoint {
-  month: string;
-  value: number;
-}
-
-interface RecentCourse {
-  id: string;
-  title: string;
-  timeAgo: string;
-}
-
-interface PopularCourse {
-  id: string;
-  title: string;
-  category: string;
-  categoryColor: string;
-  instructor: string;
-  enrollments: number;
-  price: string;
-  lessons: number;
-}
-
-interface DashboardData {
-  totalStudents: number;
-  totalCourses: number;
-  purchasedCourses: number;
-  totalRevenue: number;
-  studentGrowth: StudentGrowthPoint[];
-  recentCourses: RecentCourse[];
-  popularCourses: PopularCourse[];
-}
+import {
+  DashboardData,
+  StudentGrowthPoint,
+  RecentCourse,
+  PopularCourse,
+} from "@/types/dashboard";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -50,20 +24,25 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Fetch total students
     const totalStudents = await prisma.profile.count({
       where: { role: "STUDENT" },
     });
 
+    // Fetch total courses
     const totalCourses = await prisma.course.count();
 
+    // Fetch total purchased courses
     const purchasedCourses = await prisma.purchase.count();
 
+    // Fetch total revenue
     const totalRevenueResult = await prisma.invoice.aggregate({
       where: { status: "SUCCESS" },
       _sum: { totalAmount: true },
     });
     const totalRevenue = Number(totalRevenueResult._sum.totalAmount) || 0;
 
+    // Fetch student growth (last 6 months)
     const studentGrowth: StudentGrowthPoint[] = await Promise.all(
       Array.from({ length: 6 }, (_, i) => {
         const monthStart = startOfMonth(subMonths(new Date(), 5 - i));
@@ -84,6 +63,7 @@ export async function GET(request: Request) {
       })
     );
 
+    // Fetch recent courses (last 7 days)
     const recentCourses: RecentCourse[] = await prisma.course
       .findMany({
         where: {
@@ -105,6 +85,7 @@ export async function GET(request: Request) {
         }))
       );
 
+    // Fetch popular courses (most purchases in last 30 days)
     const popularCourses: PopularCourse[] = await prisma.course
       .findMany({
         where: {

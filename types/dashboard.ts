@@ -1,10 +1,34 @@
+// types/dashboard.ts
+export interface StudentGrowthPoint {
+  month: string;
+  value: number;
+}
+
+export interface RecentCourse {
+  id: string;
+  title: string;
+  timeAgo: string;
+}
+
+export interface PopularCourse {
+  id: string;
+  title: string;
+  category: string;
+  categoryColor: string;
+  instructor: string;
+  enrollments: number;
+  price: string;
+  lessons: number;
+}
+
 export interface DashboardData {
   totalStudents: number;
   totalCourses: number;
   purchasedCourses: number;
   totalRevenue: number;
-  studentGrowth: { month: string; value: number }[];
-  recentCourses: { id: string; title: string; timeAgo: string }[]; // added `id` for component key
+  studentGrowth: StudentGrowthPoint[];
+  recentCourses: RecentCourse[];
+  popularCourses: PopularCourse[];
 }
 
 export interface CourseSummary {
