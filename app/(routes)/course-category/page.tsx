@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { useCourseCategories } from "@/hooks/useCourseCategories";
 import { Category } from "@/lib/generated/prisma";
+import { categoryStyles } from "@/lib/categoryStyles";
 
 export default function CourseCategoryPage() {
   const router = useRouter();
