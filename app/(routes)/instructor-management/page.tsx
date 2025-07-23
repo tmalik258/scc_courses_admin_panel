@@ -2,8 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -67,10 +66,6 @@ const InstructorManagementPage: React.FC = () => {
               className="pl-10 w-80 bg-gray-50 border-gray-200"
             />
           </div>
-          <Button className="bg-sky-400 hover:bg-sky-500 text-white px-6 py-2 rounded-lg cursor-pointer">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Instructor
-          </Button>
         </div>
       </div>
 

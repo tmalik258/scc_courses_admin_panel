@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { useStudentData } from "@/hooks/useStudentData";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -20,7 +19,7 @@ const StudentManagementPage: React.FC = () => {
       student.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.phone?.includes(searchQuery),
+      student.phone?.includes(searchQuery)
   );
 
   const handleEdit = (studentId: string) => {
@@ -36,7 +35,12 @@ const StudentManagementPage: React.FC = () => {
     { label: "Student Management", active: true },
   ];
 
-  if (loading) return <div className="flex items-center justify-center h-full"><LumaSpin /></div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-full">
+        <LumaSpin />
+      </div>
+    );
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -45,7 +49,8 @@ const StudentManagementPage: React.FC = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            All Students <span className="text-sky-500">({students.length})</span>
+            All Students{" "}
+            <span className="text-sky-500">({students.length})</span>
           </h1>
         </div>
         <div className="flex items-center gap-4">
@@ -58,10 +63,6 @@ const StudentManagementPage: React.FC = () => {
               className="pl-10 w-80 bg-gray-50 border-gray-200"
             />
           </div>
-          <Button className="bg-sky-400 hover:bg-sky-500 text-white px-6 py-2 rounded-lg">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Student
-          </Button>
         </div>
       </div>
 
@@ -74,8 +75,12 @@ const StudentManagementPage: React.FC = () => {
                   <div className="flex items-center space-x-1">
                     <span>Student ID</span>
                     <div className="flex flex-col">
-                      <button className="text-gray-400 hover:text-gray-600">▲</button>
-                      <button className="text-gray-400 hover:text-gray-600">▼</button>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        ▲
+                      </button>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        ▼
+                      </button>
                     </div>
                   </div>
                 </th>
@@ -86,8 +91,12 @@ const StudentManagementPage: React.FC = () => {
                   <div className="flex items-center space-x-1">
                     <span>Name</span>
                     <div className="flex flex-col">
-                      <button className="text-gray-400 hover:text-gray-600">▲</button>
-                      <button className="text-gray-400 hover:text-gray-600">▼</button>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        ▲
+                      </button>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        ▼
+                      </button>
                     </div>
                   </div>
                 </th>
@@ -111,12 +120,17 @@ const StudentManagementPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-gray-200">
-                        {student.fullName?.split(" ").map((n) => n[0]).join("")}
+                        {student.fullName
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
                       </AvatarFallback>
                     </Avatar>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{student.fullName}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {student.fullName}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{student.phone}</div>
