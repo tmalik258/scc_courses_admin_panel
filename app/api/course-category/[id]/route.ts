@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { CategoryWithRelations } from "@/types/category";
-import path from "path";
-import fs from "fs/promises";
-
-// Ensure the upload directory exists
-const uploadDir = path.join(process.cwd(), "public/uploads");
 
 export async function GET(
   request: Request,
@@ -70,19 +65,16 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await fs.mkdir(uploadDir, { recursive: true });
-
     const { id } = params;
-    const formData = await request.formData();
-    const name = formData.get("name")?.toString();
-    const status = formData.get("status")?.toString();
-    const thumbnail = formData.get("thumbnail");
+    const body = await request.json();
+
+    const { name, status, thumbnail } = body;
 
     console.log("PUT /api/course-category/[id] received:", {
       id,
       name,
       status,
-      thumbnail: thumbnail instanceof File ? thumbnail.name : thumbnail,
+      thumbnail,
     });
 
     if (!name) {
@@ -101,33 +93,8 @@ export async function PUT(
       name,
       slug: name.toLowerCase().replace(/\s+/g, "-"),
       isActive: status === "active",
+      icon: thumbnail || null,
     };
-
-    if (thumbnail instanceof File) {
-      if (thumbnail.size > 2 * 1024 * 1024) {
-        return NextResponse.json(
-          { success: false, error: "Thumbnail size exceeds 2MB" },
-          { status: 400 }
-        );
-      }
-      if (!["image/png", "image/jpeg"].includes(thumbnail.type)) {
-        return NextResponse.json(
-          { success: false, error: "Thumbnail must be PNG or JPG" },
-          { status: 400 }
-        );
-      }
-      const extension = path.extname(thumbnail.name) || ".jpg";
-      const filename = `${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2)}${extension}`;
-      const filePath = path.join(uploadDir, filename);
-      const buffer = Buffer.from(await thumbnail.arrayBuffer());
-      console.log("Saving thumbnail:", { filePath, size: buffer.length });
-      await fs.writeFile(filePath, buffer);
-      categoryData.icon = `/uploads/${filename}`;
-    } else if (thumbnail === "") {
-      categoryData.icon = null;
-    }
 
     const category = await prisma.category.update({
       where: { id },

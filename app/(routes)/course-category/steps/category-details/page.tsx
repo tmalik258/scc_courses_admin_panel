@@ -9,6 +9,7 @@ import { ChevronRight } from "lucide-react";
 import { useCategoryForm } from "@/hooks/useCourseCategories";
 import { toast } from "sonner";
 import { useState } from "react";
+import { uploadImage } from "@/utils/supabase/uploadImage";
 
 export default function CategoryDetailsPage() {
   const router = useRouter();
@@ -40,14 +41,25 @@ export default function CategoryDetailsPage() {
     }
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("name", formData.name);
-      formDataToSend.append("status", formData.status);
-      formDataToSend.append("thumbnail", thumbnail);
+      // Upload to Supabase
+      const imageUrl = await uploadImage(thumbnail);
 
+      if (!imageUrl) {
+        toast.error("Image upload failed");
+        return;
+      }
+
+      // Send data to API
       const res = await fetch("/api/course-category", {
         method: "POST",
-        body: formDataToSend,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          status: formData.status,
+          thumbnail: imageUrl,
+        }),
       });
 
       const json = await res.json();
@@ -156,20 +168,24 @@ export default function CategoryDetailsPage() {
           <div className="space-y-4">
             <Label className="text-sm font-medium text-gray-700">Logo</Label>
             <Card className="border-2 border-dashed border-gray-200 bg-gray-50">
-              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
+              <CardContent className="flex flex-col items-center justify-center p-8 text-center space-y-4">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <div className="px-4 py-2">Upload Image</div>
+                </label>
                 {preview && (
                   <img
                     src={preview}
                     alt="Category icon preview"
-                    className="mt-2 h-16 w-16 object-cover rounded-full"
+                    className="mt-2 h-16 w-16 object-cover rounded-full border border-gray-300"
                   />
                 )}
-                <p className="text-sm text-gray-500 mt-2">Max file size: 2MB</p>
+                <p className="text-sm text-gray-500">Max file size: 2MB</p>
               </CardContent>
             </Card>
           </div>

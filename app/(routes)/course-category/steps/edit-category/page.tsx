@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ChevronRight, RotateCcw, Trash2 } from "lucide-react";
 import { useCategoryForm } from "@/hooks/useCourseCategories";
 import { CategoryWithRelations } from "@/types/category";
+import { uploadImage } from "@/utils/supabase/uploadImage";
 
 export default function EditCategoryPage() {
   const router = useRouter();
@@ -22,7 +23,6 @@ export default function EditCategoryPage() {
 
   useEffect(() => {
     if (!id) {
-      console.error("No category ID provided in URL");
       toast.error("Category ID is required");
       router.push("/course-category");
       return;
@@ -36,16 +36,17 @@ export default function EditCategoryPage() {
           data: CategoryWithRelations;
           error?: string;
         } = await res.json();
+
         if (!json.success) {
           throw new Error(json.error || "Failed to fetch category");
         }
+
         const category = json.data;
         handleChange("name", category.name);
         handleChange("status", category.status);
         setExistingIcon(category.icon);
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching category:", err);
         setError(
           err instanceof Error ? err.message : "Failed to fetch category"
         );
@@ -64,14 +65,14 @@ export default function EditCategoryPage() {
 
   const handleDeleteImage = async () => {
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("name", formData.name);
-      formDataToSend.append("status", formData.status);
-      formDataToSend.append("thumbnail", ""); // Send empty string to clear icon
-
       const res = await fetch(`/api/course-category/${id}`, {
         method: "PUT",
-        body: formDataToSend,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          status: formData.status,
+          thumbnail: "", // clears icon
+        }),
       });
 
       const json = await res.json();
@@ -96,16 +97,24 @@ export default function EditCategoryPage() {
     }
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("name", formData.name);
-      formDataToSend.append("status", formData.status);
+      let thumbnailUrl = existingIcon;
+
       if (thumbnail) {
-        formDataToSend.append("thumbnail", thumbnail);
+        thumbnailUrl = await uploadImage(thumbnail);
+        if (!thumbnailUrl) {
+          toast.error("Image upload failed");
+          return;
+        }
       }
 
       const res = await fetch(`/api/course-category/${id}`, {
         method: "PUT",
-        body: formDataToSend,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          status: formData.status,
+          thumbnail: thumbnailUrl || "",
+        }),
       });
 
       const json = await res.json();
@@ -140,7 +149,6 @@ export default function EditCategoryPage() {
   if (loading) {
     return <div className="min-h-screen bg-white p-6">Loading...</div>;
   }
-
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto">
