@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronRight, RotateCcw, Trash2 } from "lucide-react";
 import { useCategoryForm } from "@/hooks/useCourseCategories";
-import { CategoryWithRelations } from "@/types/category";
 import { uploadImage } from "@/utils/supabase/uploadImage";
+import { Category } from "@/lib/generated/prisma";
+import Image from "next/image";
 
 interface EditCategoryPageProps {
   category: Category;
@@ -21,9 +22,11 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
   const { formData, handleChange, runValidation, errors } = useCategoryForm();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [existingIcon, setExistingIcon] = useState<string | null>(category.icon);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) {
+    if (!categoryId) {
       toast.error("Category ID is required");
       router.push("/course-category");
       return;
@@ -31,10 +34,10 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
 
     const fetchCategory = async () => {
       try {
-        const res = await fetch(`/api/course-category/${id}`);
+        const res = await fetch(`/api/course-category/${categoryId}`);
         const json: {
           success: boolean;
-          data: CategoryWithRelations;
+          data: Category;
           error?: string;
         } = await res.json();
 
@@ -44,7 +47,7 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
 
         const category = json.data;
         handleChange("name", category.name);
-        handleChange("status", category.status);
+        handleChange("status", category.isActive ? "active" : "inactive");
         setExistingIcon(category.icon);
         setLoading(false);
       } catch (err) {
@@ -57,7 +60,7 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
     };
 
     fetchCategory();
-  }, [id, router, handleChange]);
+  }, [router, handleChange, categoryId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -66,7 +69,7 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
 
   const handleDeleteImage = async () => {
     try {
-      const res = await fetch(`/api/course-category/${id}`, {
+      const res = await fetch(`/api/course-category/${categoryId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
