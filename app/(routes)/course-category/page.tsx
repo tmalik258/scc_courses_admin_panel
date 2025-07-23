@@ -41,9 +41,8 @@ export default function CourseCategoryPage() {
   };
 
   const placeholderImage =
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACVSURBVHhe7dNBCQAwDAPB7v8v2C5p6CkI/IEeCmxEyAAzQz8wk2nGImYg3yI4gD0oIAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCDgB3eW0z6vA1yMAAAAAElFTkSuQmCC";
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACVSURBVHhe7dNBCQAwDAPB7v8v2C5p6CkI/IEeCmxEyAAzQz8wk2nGImYg3yI4gD0oIAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCDgB3eW0z6vA1yMAAAAAElFTkSuQmCC";
 
-  // Sort categories by createdAt and assign displayId
   const sortedCategories = [...categories].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
@@ -77,9 +76,7 @@ export default function CourseCategoryPage() {
             </div>
           </div>
           <Button
-            onClick={() =>
-              router.push("/course-category/create")
-            }
+            onClick={() => router.push("/course-category/create")}
             className="bg-sky-500 hover:bg-sky-600 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -108,8 +105,9 @@ export default function CourseCategoryPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              sortedCategories.map(
-                (category: Category, index: number) => (
+              sortedCategories.map((category: Category, index: number) => {
+                const { bgColor, textColor } = getCategoryStyle(category.name);
+                return (
                   <TableRow key={category.id}>
                     <TableCell className="font-mono text-sm text-gray-600">
                       {`67775f553-${index + 1}`}
@@ -136,9 +134,7 @@ export default function CourseCategoryPage() {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={
-                          category.isActive ? "default" : "secondary"
-                        }
+                        variant={category.isActive ? "default" : "secondary"}
                         className={
                           category.isActive
                             ? "bg-green-100 text-green-800 hover:bg-green-100"
@@ -152,9 +148,7 @@ export default function CourseCategoryPage() {
                       <div className="flex items-center gap-2">
                         <Button
                           onClick={() =>
-                            router.push(
-                              `/course-category/edit/${category.id}`
-                            )
+                            router.push(`/course-category/edit/${category.id}`)
                           }
                           variant="outline"
                           size="icon"
