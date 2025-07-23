@@ -6,6 +6,7 @@ import {
   BookOpen,
   DollarSign,
   LayoutDashboard,
+  FolderKanban, // Optional: used for Course Category
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -24,6 +25,11 @@ const Sidebar = ({ onNavigate }: { onNavigate: (path: string) => void }) => {
       icon: BookOpen,
     },
     {
+      label: "Course Category", // ✅ New item added here
+      href: "/course-category",
+      icon: FolderKanban,
+    },
+    {
       label: "Instructor Management",
       href: "/instructor-management",
       icon: Users,
@@ -40,12 +46,10 @@ const Sidebar = ({ onNavigate }: { onNavigate: (path: string) => void }) => {
     },
   ];
 
-  // Derive nonDashboardRoutes from routes array, excluding Dashboard
   const nonDashboardRoutes = routes
     .filter((route) => route.href !== "/")
     .map((route) => route.href);
 
-  // Determine if Dashboard should be active
   const isDashboardActive = (pathname: string) => {
     return (
       pathname === "/" ||
