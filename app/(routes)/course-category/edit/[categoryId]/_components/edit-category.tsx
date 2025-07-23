@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,16 @@ import { useCategoryForm } from "@/hooks/useCourseCategories";
 import { CategoryWithRelations } from "@/types/category";
 import { uploadImage } from "@/utils/supabase/uploadImage";
 
-export default function EditCategoryPage() {
+interface EditCategoryPageProps {
+  category: Category;
+  categoryId: string;
+}
+
+export default function EditCategory({ category, categoryId }: EditCategoryPageProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id");
   const { formData, handleChange, runValidation, errors } = useCategoryForm();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [existingIcon, setExistingIcon] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [existingIcon, setExistingIcon] = useState<string | null>(category.icon);
 
   useEffect(() => {
     if (!id) {
@@ -107,7 +108,7 @@ export default function EditCategoryPage() {
         }
       }
 
-      const res = await fetch(`/api/course-category/${id}`, {
+      const res = await fetch(`/api/course-category/${categoryId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -126,10 +127,7 @@ export default function EditCategoryPage() {
       router.push("/course-category");
     } catch (err) {
       console.error("Error updating category:", err);
-      toast.error(
-        "Failed to update category: " +
-          (err instanceof Error ? err.message : "Unknown error")
-      );
+      toast.error(err instanceof Error ? err.message : "Failed to update category");
     }
   };
 
@@ -152,18 +150,13 @@ export default function EditCategoryPage() {
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-8">
           <span>Course Category</span>
           <ChevronRight className="w-4 h-4" />
           <span className="text-blue-500">Edit Category</span>
         </div>
-
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Edit Category
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Edit Category</h1>
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -180,33 +173,21 @@ export default function EditCategoryPage() {
             </Button>
           </div>
         </div>
-
-        {/* Form Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Left Column - Form Fields */}
           <div className="space-y-6">
-            {/* Category ID */}
             <div className="space-y-2">
-              <Label
-                htmlFor="categoryId"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="categoryId" className="text-sm font-medium text-gray-700">
                 Category ID
               </Label>
               <Input
                 id="categoryId"
-                value={id || ""}
+                value={categoryId || ""}
                 readOnly
                 className="bg-gray-50 text-gray-600"
               />
             </div>
-
-            {/* Category Name */}
             <div className="space-y-2">
-              <Label
-                htmlFor="categoryName"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="categoryName" className="text-sm font-medium text-gray-700">
                 Category Name
               </Label>
               <Input
@@ -215,16 +196,10 @@ export default function EditCategoryPage() {
                 onChange={(e) => handleChange("name", e.target.value)}
                 className="border-gray-300"
               />
-              {errors.name && (
-                <span className="text-red-600 text-sm">{errors.name}</span>
-              )}
+              {errors.name && <span className="text-red-600 text-sm">{errors.name}</span>}
             </div>
-
-            {/* Status */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-700">
-                Status
-              </Label>
+              <Label className="text-sm font-medium text-gray-700">Status</Label>
               <div className="flex gap-6">
                 <div className="flex items-center space-x-2">
                   <input
@@ -236,10 +211,7 @@ export default function EditCategoryPage() {
                     onChange={() => handleChange("status", "active")}
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <Label
-                    htmlFor="active"
-                    className="text-sm font-normal cursor-pointer"
-                  >
+                  <Label htmlFor="active" className="text-sm font-normal cursor-pointer">
                     Active
                   </Label>
                 </div>
@@ -253,28 +225,21 @@ export default function EditCategoryPage() {
                     onChange={() => handleChange("status", "inactive")}
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <Label
-                    htmlFor="inactive"
-                    className="text-sm font-normal cursor-pointer"
-                  >
+                  <Label htmlFor="inactive" className="text-sm font-normal cursor-pointer">
                     Inactive
                   </Label>
                 </div>
               </div>
-              {errors.status && (
-                <span className="text-red-600 text-sm">{errors.status}</span>
-              )}
+              {errors.status && <span className="text-red-600 text-sm">{errors.status}</span>}
             </div>
           </div>
-
-          {/* Right Column - Logo Section */}
           <div className="space-y-4">
             <Label className="text-sm font-medium text-gray-700">Logo</Label>
-
-            {/* Logo Display */}
             <div className="w-48 h-48 bg-purple-100 rounded-2xl flex items-center justify-center">
               {existingIcon ? (
-                <img
+                <Image
+                  width={100}
+                  height={100}
                   src={existingIcon}
                   alt="Category thumbnail"
                   className="w-full h-full object-cover rounded-2xl"
@@ -297,8 +262,6 @@ export default function EditCategoryPage() {
                 </div>
               )}
             </div>
-
-            {/* Action Buttons */}
             <div className="space-y-2">
               <Button
                 variant="ghost"

@@ -4,10 +4,10 @@ import { CategoryWithRelations } from "@/types/category";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const category = await prisma.category.findUnique({
       where: { id },
@@ -28,13 +28,7 @@ export async function GET(
       );
     }
 
-    const mappedCategory: CategoryWithRelations = {
-      ...category,
-      createdAt: category.createdAt.toISOString(),
-      status: category.isActive ? "active" : "inactive",
-    };
-
-    return NextResponse.json({ success: true, data: mappedCategory });
+    return NextResponse.json({ success: true, data: category });
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
@@ -62,7 +56,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = params;
@@ -109,13 +103,7 @@ export async function PUT(
       },
     });
 
-    const mappedCategory: CategoryWithRelations = {
-      ...category,
-      createdAt: category.createdAt.toISOString(),
-      status: category.isActive ? "active" : "inactive",
-    };
-
-    return NextResponse.json({ success: true, data: mappedCategory });
+    return NextResponse.json({ success: true, data: category });
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
@@ -156,10 +144,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     await prisma.category.delete({
       where: { id },
