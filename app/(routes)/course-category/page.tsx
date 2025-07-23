@@ -15,7 +15,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { useCourseCategories } from "@/hooks/useCourseCategories";
-import { CategoryWithRelations } from "@/types/category";
+
+import { categoryStyles } from "@/lib/categoryStyles";
 
 export default function CourseCategoryPage() {
   const router = useRouter();
@@ -46,6 +47,15 @@ export default function CourseCategoryPage() {
   const sortedCategories = [...categories].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
+
+  const getCategoryStyle = (name: string) => {
+    return (
+      categoryStyles.find((c) => c.name === name) || {
+        bgColor: "bg-gray-100",
+        textColor: "text-gray-600",
+      }
+    );
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -99,8 +109,10 @@ export default function CourseCategoryPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              sortedCategories.map(
-                (category: CategoryWithRelations, index: number) => (
+              sortedCategories.map((category, index) => {
+                const { bgColor, textColor } = getCategoryStyle(category.name);
+
+                return (
                   <TableRow key={category.id}>
                     <TableCell className="font-mono text-sm text-gray-600">
                       {`67775f553-${index + 1}`}
@@ -120,8 +132,10 @@ export default function CourseCategoryPage() {
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium text-gray-900">
-                      {category.name}
+                    <TableCell>
+                      <Badge className={`${bgColor} ${textColor} font-medium`}>
+                        {category.name}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -167,8 +181,8 @@ export default function CourseCategoryPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )
-              )
+                );
+              })
             )}
           </TableBody>
         </Table>
