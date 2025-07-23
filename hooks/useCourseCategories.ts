@@ -1,27 +1,15 @@
+import { Category } from "@/lib/generated/prisma";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 
-export interface CategoryWithRelations {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  icon: string | null;
-  color: string | null;
-  isActive: boolean;
-  createdAt: string;
-  courses: { id: string; title: string }[];
-  status: "active" | "inactive";
-}
-
 export interface CategoriesResponse {
   success: boolean;
-  data: CategoryWithRelations[];
+  data: Category[];
   error?: string;
 }
 
 export const useCourseCategories = () => {
-  const [categories, setCategories] = useState<CategoryWithRelations[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {

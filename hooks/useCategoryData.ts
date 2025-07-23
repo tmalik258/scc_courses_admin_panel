@@ -14,7 +14,6 @@ export const useCategoryData = () => {
     try {
       const { data: categories } = await getAllCategories();
       setCategories(categories);
-      // console.log("Categories fetched:", categories);
       setError(null);
     } catch (err) {
       if (err instanceof Error) {

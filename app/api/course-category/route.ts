@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { CategoryWithRelations, CategoriesResponse } from "@/types/category";
 import path from "path";
 import fs from "fs/promises";
 
@@ -22,20 +21,7 @@ export async function GET() {
       },
     });
 
-    const mappedCategories: CategoryWithRelations[] = categories.map(
-      (category) => ({
-        ...category,
-        createdAt: category.createdAt.toISOString(),
-        status: category.isActive ? "active" : "inactive",
-      })
-    );
-
-    const response: CategoriesResponse = {
-      success: true,
-      data: mappedCategories,
-    };
-
-    return NextResponse.json(response);
+    return NextResponse.json({ success: true, data: categories });
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
@@ -136,13 +122,8 @@ export async function POST(request: Request) {
       },
     });
 
-    const mappedCategory: CategoryWithRelations = {
-      ...category,
-      createdAt: category.createdAt.toISOString(),
-      status: category.isActive ? "active" : "inactive",
-    };
 
-    return NextResponse.json({ success: true, data: mappedCategory });
+    return NextResponse.json({ success: true, data: category });
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";

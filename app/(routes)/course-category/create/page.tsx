@@ -10,8 +10,9 @@ import { useCategoryForm } from "@/hooks/useCourseCategories";
 import { toast } from "sonner";
 import { useState } from "react";
 import { uploadImage } from "@/utils/supabase/uploadImage";
+import Image from "next/image";
 
-export default function CategoryDetailsPage() {
+export default function CategoryCreatePage() {
   const router = useRouter();
   const { formData, handleChange, runValidation, errors } = useCategoryForm();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
@@ -179,7 +180,9 @@ export default function CategoryDetailsPage() {
                   <div className="px-4 py-2">Upload Image</div>
                 </label>
                 {preview && (
-                  <img
+                  <Image
+                    width={100}
+                    height={100}
                     src={preview}
                     alt="Category icon preview"
                     className="mt-2 h-16 w-16 object-cover rounded-full border border-gray-300"

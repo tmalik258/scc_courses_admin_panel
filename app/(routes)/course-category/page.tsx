@@ -15,8 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { useCourseCategories } from "@/hooks/useCourseCategories";
-
-import { categoryStyles } from "@/lib/categoryStyles";
+import { Category } from "@/lib/generated/prisma";
 
 export default function CourseCategoryPage() {
   const router = useRouter();
@@ -78,7 +77,7 @@ export default function CourseCategoryPage() {
           </div>
           <Button
             onClick={() =>
-              router.push("/course-category/steps/category-details")
+              router.push("/course-category/create")
             }
             className="bg-sky-500 hover:bg-sky-600 text-white"
           >
@@ -97,7 +96,6 @@ export default function CourseCategoryPage() {
                 </div>
               </TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Courses</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -109,10 +107,8 @@ export default function CourseCategoryPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              sortedCategories.map((category, index) => {
-                const { bgColor, textColor } = getCategoryStyle(category.name);
-
-                return (
+              sortedCategories.map(
+                (category: Category, index: number) => (
                   <TableRow key={category.id}>
                     <TableCell className="font-mono text-sm text-gray-600">
                       {`67775f553-${index + 1}`}
@@ -140,28 +136,23 @@ export default function CourseCategoryPage() {
                     <TableCell>
                       <Badge
                         variant={
-                          category.status === "active" ? "default" : "secondary"
+                          category.isActive ? "default" : "secondary"
                         }
                         className={
-                          category.status === "active"
+                          category.isActive
                             ? "bg-green-100 text-green-800 hover:bg-green-100"
                             : "bg-gray-100 text-gray-600 hover:bg-gray-100"
                         }
                       >
-                        {category.status === "active" ? "Active" : "Inactive"}
+                        {category.isActive ? "Active" : "Inactive"}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-700">
-                        {category.courses?.length ?? 0}
-                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
                           onClick={() =>
                             router.push(
-                              `/course-category/steps/edit-category?id=${category.id}`
+                              `/course-category/edit/${category.id}`
                             )
                           }
                           variant="outline"
