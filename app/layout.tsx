@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Manrope } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 // import NextTopLoader from "nextjs-toploader";
 
 const dmSans = DM_Sans({
@@ -32,6 +33,7 @@ export default function RootLayout({
       >
         {/* <NextTopLoader /> */}
         {children}
+        <Toaster />
       </body>
     </html>
   );
