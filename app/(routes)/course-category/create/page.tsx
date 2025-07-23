@@ -42,25 +42,14 @@ export default function CategoryCreatePage() {
     }
 
     try {
-      // Upload to Supabase
-      const imageUrl = await uploadImage(thumbnail);
+      const form = new FormData();
+      form.append("name", formData.name);
+      form.append("status", formData.status); // e.g., "active" or "inactive"
+      form.append("thumbnail", thumbnail); // this should be a File object
 
-      if (!imageUrl) {
-        toast.error("Image upload failed");
-        return;
-      }
-
-      // Send data to API
       const res = await fetch("/api/course-category", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          status: formData.status,
-          thumbnail: imageUrl,
-        }),
+        body: form, // ✅ No need for headers, browser sets them automatically
       });
 
       const json = await res.json();
@@ -72,10 +61,7 @@ export default function CategoryCreatePage() {
       router.push("/course-category");
     } catch (err) {
       console.error("Error creating category:", err);
-      toast.error(
-        "Failed to create category: " +
-          (err instanceof Error ? err.message : "Unknown error")
-      );
+      toast.error("Failed to create category: " + (err as Error).message);
     }
   };
 
