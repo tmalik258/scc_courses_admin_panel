@@ -5,15 +5,15 @@ import { Toaster } from "sonner";
 // import NextTopLoader from "nextjs-toploader";
 
 const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'], // adjust weights as needed
-  variable: '--font-dm-sans', // Tailwind custom property
+  subsets: ["latin"],
+  weight: ["400", "500", "700"], // adjust weights as needed
+  variable: "--font-dm-sans", // Tailwind custom property
 });
 
 const manrope = Manrope({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'], // adjust weights as needed
-  variable: '--font-manrope', // Tailwind custom property
+  subsets: ["latin"],
+  weight: ["400", "500", "700"], // adjust weights as needed
+  variable: "--font-manrope", // Tailwind custom property
 });
 
 export const metadata: Metadata = {

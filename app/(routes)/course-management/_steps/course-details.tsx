@@ -5,9 +5,9 @@ import { useEffect, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
 import {
   Select,
   SelectContent,
@@ -18,8 +18,8 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
+  FormDescription,
   FormItem,
   FormLabel,
   FormMessage,
@@ -34,6 +34,7 @@ import { type FileWithPreview } from "@/hooks/use-file-upload";
 import { toast } from "sonner";
 import FileUploadWrapper from "@/components/file-upload-wrapper";
 import debounce from "lodash.debounce";
+import RichTextEditor from "@/components/editor/TextEditorTool";
 
 interface CourseDetailsStepProps {
   formData: CourseFormData;
@@ -197,135 +198,31 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
           <FormField
             control={form.control}
             name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Course Description</FormLabel>
-                <FormControl>
-                  <div>
-                    {/* Rich Text Editor Toolbar */}
-                    <div className="border border-gray-300 rounded-t-lg bg-gray-50 p-2 flex items-center gap-2 flex-wrap">
-                      <Select defaultValue="normal">
-                        <SelectTrigger className="w-20 h-8 text-xs">
-                          <SelectValue placeholder="Normal" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="normal">Normal</SelectItem>
-                          <SelectItem value="h1">H1</SelectItem>
-                          <SelectItem value="h2">H2</SelectItem>
-                          <SelectItem value="h3">H3</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          <span className="font-bold">B</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          <span className="italic">I</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          <span className="underline">U</span>
-                        </Button>
-                      </div>
-                      <div className="w-px h-6 bg-gray-300"></div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          ≡
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          ≡
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          ≡
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          ≡
-                        </Button>
-                      </div>
-                      <div className="w-px h-6 bg-gray-300"></div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          {"<>"}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          {'"'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          •
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          type="button"
-                        >
-                          1.
-                        </Button>
-                      </div>
-                    </div>
-                    <Textarea
-                      placeholder="Course Description....."
-                      className="min-h-[200px] rounded-t-none border-t-0 resize-none"
-                      {...field}
-                    />
-                  </div>
-                </FormControl>
-                <FormDescription className={(field.value.length >= 100) && (field.value.length <= 1000) ? "" : `text-red-500`}>
-                  Min 100 characters and max 1000 characters required (
-                  {(field.value || "").length}/1000)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Strip HTML tags to count only actual text
+              const plainTextLength = field.value
+                ? field.value.replace(/<[^>]*>?/gm, "").trim().length
+                : 0;
+
+              const isValidLength =
+                plainTextLength >= 100 && plainTextLength <= 1000;
+
+              return (
+                <FormItem>
+                  <FormLabel>Course Description</FormLabel>
+                  <FormControl>
+                    <RichTextEditor name="description" />
+                  </FormControl>
+                  <FormMessage />
+                  <FormDescription
+                    className={isValidLength ? "" : "text-red-500"}
+                  >
+                    Min 100 characters and max 1000 characters required (
+                    {plainTextLength}/1000)
+                  </FormDescription>
+                </FormItem>
+              );
+            }}
           />
 
           {/* Category */}

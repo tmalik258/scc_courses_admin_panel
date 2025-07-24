@@ -16,7 +16,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { VideoUploadField } from "@/components/videoUploadField";
+import { FileUploadField } from "@/components/fileUploadField";
 import { CourseFormData } from "@/types/course";
 import debounce from "lodash.debounce";
 
@@ -172,10 +172,10 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <VideoUploadField
-                        label={`Resource ${index + 1} Video`}
+                      <FileUploadField
+                        label={`Resource ${index + 1} File (PDF, Video, etc.)`}
                         value={field.value}
-                        onChange={(videoUrl) => field.onChange(videoUrl)}
+                        onChange={(url) => field.onChange(url)}
                         disabled={form.formState.isSubmitting}
                       />
                     </FormControl>
