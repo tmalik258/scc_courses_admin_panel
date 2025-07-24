@@ -1,32 +1,48 @@
-"use client"
+"use client";
 
-import { useFieldArray, type UseFormReturn } from "react-hook-form"
-import { ChevronDown, ChevronUp, Trash2, Edit, Plus, Check, X } from "lucide-react"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import React, { useCallback, useState } from "react"
-import type { CourseLessonsFormValues } from "@/types/course"
-import { FormField } from "@/components/ui/form"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import SectionForm from "./lesson-form"
+import { useFieldArray, type UseFormReturn } from "react-hook-form";
+import {
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  Edit,
+  Plus,
+  Check,
+  X,
+} from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import React, { useCallback, useState } from "react";
+import type { CourseLessonsFormValues } from "@/types/course";
+import { FormField } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import SectionForm from "./lesson-form";
 
 interface ModuleSectionProps {
-  moduleIndex: number
-  form: UseFormReturn<CourseLessonsFormValues>
-  isExpanded: boolean
-  onToggle: () => void
-  onDelete: () => void
+  moduleIndex: number;
+  form: UseFormReturn<CourseLessonsFormValues>;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
 }
 
 const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
   ({ moduleIndex, form, isExpanded, onToggle, onDelete }) => {
-    const [isEditingTitle, setIsEditingTitle] = useState(false)
-    const [tempTitle, setTempTitle] = useState("")
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [tempTitle, setTempTitle] = useState("");
 
-    const { fields: sectionFields, append: appendSection } = useFieldArray({
+    const {
+      fields: sectionFields,
+      append: appendSection,
+      remove: removeSection,
+    } = useFieldArray({
       control: form.control,
       name: `modules.${moduleIndex}.lessons`,
-    })
+    });
 
     const addSection = useCallback(() => {
       try {
@@ -34,51 +50,63 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
           name: "",
           content: "",
           videoUrl: "",
-        })
+          isFree: false, // Ensure new lessons have isFree default
+        });
       } catch (error) {
-        console.error("Error adding section:", error)
+        console.error("Error adding section:", error);
       }
-    }, [appendSection])
+    }, [appendSection]);
+
+    const handleDeleteSection = useCallback(
+      (sectionIndex: number) => {
+        try {
+          removeSection(sectionIndex);
+        } catch (error) {
+          console.error("Error deleting section:", error);
+        }
+      },
+      [removeSection]
+    );
 
     const handleEditClick = useCallback(
       (e: React.MouseEvent) => {
-        e.stopPropagation()
-        const currentTitle = form.getValues(`modules.${moduleIndex}.title`)
-        setTempTitle(currentTitle || "")
-        setIsEditingTitle(true)
+        e.stopPropagation();
+        const currentTitle = form.getValues(`modules.${moduleIndex}.title`);
+        setTempTitle(currentTitle || "");
+        setIsEditingTitle(true);
       },
-      [form, moduleIndex],
-    )
+      [form, moduleIndex]
+    );
 
     const handleSaveTitle = useCallback(
       (e: React.MouseEvent) => {
-        e.stopPropagation()
-        form.setValue(`modules.${moduleIndex}.title`, tempTitle)
-        setIsEditingTitle(false)
+        e.stopPropagation();
+        form.setValue(`modules.${moduleIndex}.title`, tempTitle);
+        setIsEditingTitle(false);
       },
-      [form, moduleIndex, tempTitle],
-    )
+      [form, moduleIndex, tempTitle]
+    );
 
     const handleCancelEdit = useCallback((e: React.MouseEvent) => {
-      e.stopPropagation()
-      setIsEditingTitle(false)
-      setTempTitle("")
-    }, [])
+      e.stopPropagation();
+      setIsEditingTitle(false);
+      setTempTitle("");
+    }, []);
 
     const handleInputKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
-          e.preventDefault()
-          form.setValue(`modules.${moduleIndex}.title`, tempTitle)
-          setIsEditingTitle(false)
+          e.preventDefault();
+          form.setValue(`modules.${moduleIndex}.title`, tempTitle);
+          setIsEditingTitle(false);
         } else if (e.key === "Escape") {
-          e.preventDefault()
-          setIsEditingTitle(false)
-          setTempTitle("")
+          e.preventDefault();
+          setIsEditingTitle(false);
+          setTempTitle("");
         }
       },
-      [form, moduleIndex, tempTitle],
-    )
+      [form, moduleIndex, tempTitle]
+    );
 
     return (
       <div className="border border-gray-200 rounded-lg">
@@ -86,11 +114,18 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
           <CollapsibleTrigger asChild>
             <div className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 cursor-pointer">
               <div className="flex items-center space-x-2 flex-1">
-                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
                 <span className="text-gray-600">Module {moduleIndex + 1}:</span>
 
                 {isEditingTitle ? (
-                  <div className="flex items-center space-x-2 flex-1" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="flex items-center space-x-2 flex-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Input
                       value={tempTitle}
                       onChange={(e) => setTempTitle(e.target.value)}
@@ -123,7 +158,9 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
                     control={form.control}
                     name={`modules.${moduleIndex}.title`}
                     render={({ field }) => (
-                      <span className="font-medium text-gray-900 flex-1">{field.value || "Untitled Module"}</span>
+                      <span className="font-medium text-gray-900 flex-1">
+                        {field.value || "Untitled Module"}
+                      </span>
                     )}
                   />
                 )}
@@ -135,8 +172,8 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
                   variant="outline"
                   size="sm"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onDelete()
+                    e.stopPropagation();
+                    onDelete();
                   }}
                   className="text-red-600 border-red-600 hover:bg-red-50"
                 >
@@ -157,7 +194,11 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
                   </Button>
                 )}
 
-                <Button type="button" size="sm" className="bg-sky-500 hover:bg-sky-600 text-white">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-sky-500 hover:bg-sky-600 text-white"
+                >
                   Save
                 </Button>
               </div>
@@ -173,6 +214,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
                   sectionIndex={sectionIndex}
                   form={form}
                   isLast={sectionIndex === sectionFields.length - 1}
+                  onDelete={() => handleDeleteSection(sectionIndex)} // Pass delete handler
                 />
               ))}
 
@@ -192,10 +234,10 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
           </CollapsibleContent>
         </Collapsible>
       </div>
-    )
-  },
-)
+    );
+  }
+);
 
-ModuleSection.displayName = "ModuleSection"
+ModuleSection.displayName = "ModuleSection";
 
-export default ModuleSection
+export default ModuleSection;

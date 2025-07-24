@@ -42,7 +42,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
               id: lesson.id, // Include lesson ID
               name: lesson.name || "",
               content: lesson.content || "",
-              videoUrl: lesson.videoUrl || undefined,
+              videoUrl: lesson.videoUrl || undefined, // Use undefined instead of empty string
             })),
           }))
         : [
@@ -54,7 +54,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
                   id: undefined,
                   name: "",
                   content: "",
-                  videoUrl: undefined,
+                  videoUrl: undefined, // Use undefined instead of empty string
                 },
               ],
             },
@@ -81,17 +81,27 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
     const currentFormValues = form.getValues().modules;
     const incomingModules = formData.modules?.length
       ? formData.modules.map((_module) => ({
+          id: _module.id, // Include module ID
           title: _module.title || "",
           lessons: (_module.lessons || []).map((lesson) => ({
+            id: lesson.id, // Include lesson ID
             name: lesson.name || "",
             content: lesson.content || "",
-            videoUrl: lesson.videoUrl || "",
+            videoUrl: lesson.videoUrl || undefined, // Use undefined instead of empty string
           })),
         }))
       : [
           {
+            id: undefined,
             title: "New Module",
-            lessons: [{ name: "", content: "", videoUrl: "" }],
+            lessons: [
+              {
+                id: undefined,
+                name: "",
+                content: "",
+                videoUrl: undefined, // Use undefined instead of empty string
+              },
+            ],
           },
         ];
 
@@ -110,8 +120,16 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
 
   const addNewModule = useCallback(() => {
     appendModule({
+      id: undefined,
       title: "New Module",
-      lessons: [{ name: "", content: "", videoUrl: "" }],
+      lessons: [
+        {
+          id: undefined,
+          name: "",
+          content: "",
+          videoUrl: undefined, // Use undefined for new lessons
+        },
+      ],
     });
   }, [appendModule]);
 
@@ -120,11 +138,13 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
     const debouncedUpdate = debounce(async () => {
       const values = form.getValues();
       const safeModules = values.modules.map((_module) => ({
+        id: _module.id, // Preserve module ID
         title: _module.title || "",
         lessons: _module.lessons.map((lesson) => ({
+          id: lesson.id, // Preserve lesson ID
           name: lesson.name || "",
           content: lesson.content || "",
-          videoUrl: lesson.videoUrl || "",
+          videoUrl: lesson.videoUrl || undefined, // Use undefined instead of empty string
         })),
       }));
 

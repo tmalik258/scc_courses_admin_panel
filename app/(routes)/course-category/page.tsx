@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { useCourseCategories } from "@/hooks/useCourseCategories";
+import { Category } from "@/lib/generated/prisma";
 import { categoryStyles } from "@/lib/categoryStyles";
 
 export default function CourseCategoryPage() {
@@ -30,11 +31,14 @@ export default function CourseCategoryPage() {
     }
   };
 
-  const isValidImageSrc = (src?: string | null) =>
-    !!src &&
-    (src.startsWith("/") ||
-      src.startsWith("http://") ||
-      src.startsWith("https://"));
+  const isValidImageSrc = (src: string | undefined | null): boolean => {
+    return (
+      !!src &&
+      (src.startsWith("/") ||
+        src.startsWith("http://") ||
+        src.startsWith("https://"))
+    );
+  };
 
   const placeholderImage =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACVSURBVHhe7dNBCQAwDAPB7v8v2C5p6CkI/IEeCmxEyAAzQz8wk2nGImYg3yI4gD0oIAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCDgB3eW0z6vA1yMAAAAAElFTkSuQmCC";
@@ -43,11 +47,14 @@ export default function CourseCategoryPage() {
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
-  const getCategoryStyle = (name: string) =>
-    categoryStyles.find((c) => c.name === name) ?? {
-      bgColor: "bg-gray-100",
-      textColor: "text-gray-600",
-    };
+  const getCategoryStyle = (name: string) => {
+    return (
+      categoryStyles.find((c) => c.name === name) || {
+        bgColor: "bg-gray-100",
+        textColor: "text-gray-600",
+      }
+    );
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -76,7 +83,6 @@ export default function CourseCategoryPage() {
             Add Category
           </Button>
         </div>
-
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
@@ -91,18 +97,16 @@ export default function CourseCategoryPage() {
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
-
           <TableBody>
             {sortedCategories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell colSpan={6} className="text-center">
                   No categories found
                 </TableCell>
               </TableRow>
             ) : (
-              sortedCategories.map((category, index) => {
+              sortedCategories.map((category: Category, index: number) => {
                 const { bgColor, textColor } = getCategoryStyle(category.name);
-
                 return (
                   <TableRow key={category.id}>
                     <TableCell className="font-mono text-sm text-gray-600">
@@ -116,7 +120,7 @@ export default function CourseCategoryPage() {
                               ? category.icon!
                               : placeholderImage
                           }
-                          alt={category.name || "Category Icon"}
+                          alt={category.name}
                           width={32}
                           height={32}
                           className="rounded-full object-cover"
@@ -130,7 +134,7 @@ export default function CourseCategoryPage() {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant="secondary"
+                        variant={category.isActive ? "default" : "secondary"}
                         className={
                           category.isActive
                             ? "bg-green-100 text-green-800 hover:bg-green-100"
@@ -148,7 +152,7 @@ export default function CourseCategoryPage() {
                           }
                           variant="outline"
                           size="icon"
-                          className="w-8 h-8 border-sky-200 text-sky-600 hover:bg-sky-50"
+                          className="w-8 h-8 border-sky-200 text-sky-600 hover:bg-sky-50 bg-transparent"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -156,7 +160,7 @@ export default function CourseCategoryPage() {
                           onClick={() => handleDelete(category.id)}
                           variant="outline"
                           size="icon"
-                          className="w-8 h-8 border-red-200 text-red-600 hover:bg-red-50"
+                          className="w-8 h-8 border-red-200 text-red-600 hover:bg-red-50 bg-transparent"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

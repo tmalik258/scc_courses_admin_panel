@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import type React from "react";
@@ -24,7 +25,14 @@ const INITIAL_FORM_DATA: CourseFormData = {
   modules: [
     {
       title: "",
-      lessons: [{ name: "", videoUrl: "" }],
+      lessons: [
+        {
+          name: "",
+          videoUrl: "",
+          content: "",
+          isFree: false, // Add default isFree value
+        },
+      ],
     },
   ],
   resources: [
@@ -54,7 +62,21 @@ const AddCourse: React.FC = () => {
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        setFormData(() => ({ ...INITIAL_FORM_DATA, ...parsed }));
+        // Ensure backward compatibility by adding isFree to existing lessons
+        const updatedData = {
+          ...INITIAL_FORM_DATA,
+          ...parsed,
+          modules: (parsed.modules || INITIAL_FORM_DATA.modules).map(
+            (module: any) => ({
+              ...module,
+              lessons: (module.lessons || []).map((lesson: any) => ({
+                ...lesson,
+                isFree: lesson.isFree ?? false, // Default to false if not present
+              })),
+            })
+          ),
+        };
+        setFormData(updatedData);
       } catch (error) {
         console.error("Error parsing localStorage data:", error);
       }
@@ -121,15 +143,33 @@ const AddCourse: React.FC = () => {
     return true;
   }, [formData]);
 
+  // Transform form data for API submission
+  const transformFormDataForAPI = useCallback((data: CourseFormData) => {
+    return {
+      ...data,
+      modules: data.modules.map((module) => ({
+        ...module,
+        lessons: module.lessons.map((lesson) => ({
+          ...lesson,
+          // Map isFree to is_free for database compatibility
+          is_free: lesson.isFree ?? false,
+          // Remove the camelCase version to avoid conflicts
+          isFree: undefined,
+        })),
+      })),
+    };
+  }, []);
+
   const handleSaveAsDraft = useCallback(async () => {
     setIsSubmitting(true);
     try {
+      const transformedData = transformFormDataForAPI(formData);
       const response = await fetch("/api/courses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...formData, isPublished: false }),
+        body: JSON.stringify({ ...transformedData, isPublished: false }),
       });
 
       const result = await response.json();
@@ -148,7 +188,7 @@ const AddCourse: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, router]);
+  }, [formData, router, transformFormDataForAPI]);
 
   const handleSaveAndContinue = useCallback(async () => {
     if (currentStep === 3) {
@@ -159,12 +199,13 @@ const AddCourse: React.FC = () => {
       setIsSubmitting(true);
 
       try {
+        const transformedData = transformFormDataForAPI(formData);
         const response = await fetch("/api/courses", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ...formData, isPublished: true }),
+          body: JSON.stringify({ ...transformedData, isPublished: true }),
         });
 
         const result = await response.json();
@@ -186,7 +227,14 @@ const AddCourse: React.FC = () => {
     } else {
       nextStep();
     }
-  }, [currentStep, formData, nextStep, validateFormData, router]);
+  }, [
+    currentStep,
+    formData,
+    nextStep,
+    validateFormData,
+    router,
+    transformFormDataForAPI,
+  ]);
 
   const steps = useMemo(
     () => [

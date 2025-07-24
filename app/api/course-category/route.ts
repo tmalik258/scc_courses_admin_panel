@@ -122,7 +122,6 @@ export async function POST(request: Request) {
       },
     });
 
-
     return NextResponse.json({ success: true, data: category });
   } catch (error: unknown) {
     const errorMessage =

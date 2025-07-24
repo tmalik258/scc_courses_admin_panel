@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import type React from "react";
@@ -15,6 +16,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+import { VideoUploadField } from "@/components/videoUploadField";
 import { CourseFormData } from "@/types/course";
 import debounce from "lodash.debounce";
 
@@ -26,7 +28,7 @@ interface ResourcesStepProps {
 
 const resourceSchema = z.object({
   title: z.string().min(1, "Resource title is required"),
-  url: z.string().url("Please enter a valid URL"),
+  url: z.string().url("Please enter a valid URL").optional(), // Make optional to allow upload without manual URL
 });
 
 const resourcesSchema = z.object({
@@ -67,7 +69,9 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({
         : [{ title: "", url: "" }];
 
     // Deep comparison to avoid unnecessary resets
-    if (JSON.stringify(currentFormValues) !== JSON.stringify(incomingResources)) {
+    if (
+      JSON.stringify(currentFormValues) !== JSON.stringify(incomingResources)
+    ) {
       form.reset({ resources: incomingResources }, { keepDirty: true });
     }
   }, [form, formData.resources]);
@@ -95,7 +99,9 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({
       }));
 
       // Only update if resources have changed to avoid unnecessary updates
-      if (JSON.stringify(safeResources) !== JSON.stringify(formData.resources)) {
+      if (
+        JSON.stringify(safeResources) !== JSON.stringify(formData.resources)
+      ) {
         updateFormData({ resources: safeResources });
       }
       const isValid = await form.trigger();
@@ -166,7 +172,12 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input placeholder="Resources File URL" {...field} />
+                      <VideoUploadField
+                        label={`Resource ${index + 1} Video`}
+                        value={field.value}
+                        onChange={(videoUrl) => field.onChange(videoUrl)}
+                        disabled={form.formState.isSubmitting}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

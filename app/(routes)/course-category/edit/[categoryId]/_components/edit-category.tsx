@@ -17,11 +17,16 @@ interface EditCategoryPageProps {
   categoryId: string;
 }
 
-export default function EditCategory({ category, categoryId }: EditCategoryPageProps) {
+export default function EditCategory({
+  category,
+  categoryId,
+}: EditCategoryPageProps) {
   const router = useRouter();
   const { formData, handleChange, runValidation, errors } = useCategoryForm();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [existingIcon, setExistingIcon] = useState<string | null>(category.icon);
+  const [existingIcon, setExistingIcon] = useState<string | null>(
+    category.icon
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,7 +135,9 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
       router.push("/course-category");
     } catch (err) {
       console.error("Error updating category:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to update category");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update category"
+      );
     }
   };
 
@@ -159,7 +166,9 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
           <span className="text-blue-500">Edit Category</span>
         </div>
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Edit Category</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Edit Category
+          </h1>
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -179,7 +188,10 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="categoryId" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="categoryId"
+                className="text-sm font-medium text-gray-700"
+              >
                 Category ID
               </Label>
               <Input
@@ -190,7 +202,10 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="categoryName" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="categoryName"
+                className="text-sm font-medium text-gray-700"
+              >
                 Category Name
               </Label>
               <Input
@@ -199,10 +214,14 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
                 onChange={(e) => handleChange("name", e.target.value)}
                 className="border-gray-300"
               />
-              {errors.name && <span className="text-red-600 text-sm">{errors.name}</span>}
+              {errors.name && (
+                <span className="text-red-600 text-sm">{errors.name}</span>
+              )}
             </div>
             <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-700">Status</Label>
+              <Label className="text-sm font-medium text-gray-700">
+                Status
+              </Label>
               <div className="flex gap-6">
                 <div className="flex items-center space-x-2">
                   <input
@@ -214,7 +233,10 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
                     onChange={() => handleChange("status", "active")}
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <Label htmlFor="active" className="text-sm font-normal cursor-pointer">
+                  <Label
+                    htmlFor="active"
+                    className="text-sm font-normal cursor-pointer"
+                  >
                     Active
                   </Label>
                 </div>
@@ -228,12 +250,17 @@ export default function EditCategory({ category, categoryId }: EditCategoryPageP
                     onChange={() => handleChange("status", "inactive")}
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <Label htmlFor="inactive" className="text-sm font-normal cursor-pointer">
+                  <Label
+                    htmlFor="inactive"
+                    className="text-sm font-normal cursor-pointer"
+                  >
                     Inactive
                   </Label>
                 </div>
               </div>
-              {errors.status && <span className="text-red-600 text-sm">{errors.status}</span>}
+              {errors.status && (
+                <span className="text-red-600 text-sm">{errors.status}</span>
+              )}
             </div>
           </div>
           <div className="space-y-4">
