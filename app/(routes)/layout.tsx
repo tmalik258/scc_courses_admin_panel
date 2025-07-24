@@ -3,7 +3,6 @@
 import Header from '@/components/header';
 import Sidebar from '@/components/sidebar';
 import React, { useTransition } from 'react';
-import { Toaster } from "@/components/ui/sonner"
 import { useRouter } from 'next/navigation';
 import { LumaSpin } from '@/components/luma-spin';
 
@@ -28,7 +27,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <main className="flex-1 p-6 pt-0">
           {isPending ? <div className="flex items-center justify-center h-full"><LumaSpin /></div> : children}
         </main>
-        <Toaster />
       </div>
     </div>
   );

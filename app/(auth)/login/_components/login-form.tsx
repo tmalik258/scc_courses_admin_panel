@@ -1,42 +1,52 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Eye, EyeOff } from "lucide-react"
-import Link from "next/link"
-import { login } from "@/actions/auth"
-import GoogleSigninButton from "../../_components/google-signin-button"
-import Divider from "@/components/divider"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
+import { login } from "@/actions/auth";
+import { toast } from "sonner";
+// import GoogleSigninButton from "../../_components/google-signin-button"
+// import Divider from "@/components/divider"
 
 export function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    rememberMe: false,
-  })
+  });
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }))
-  }
+    }));
+  };
+
+  const handleSubmit = async (formData: FormData) => {
+    const result = await login(formData);
+    if (result?.error) {
+      toast.error(result.error);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2">Log in to your account</h1>
+        <h1 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2">
+          Log in to your account
+        </h1>
       </div>
 
-      <form className="space-y-4">
+      <form className="space-y-4" action={handleSubmit}>
         {/* Email Field */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Email
           </label>
           <Input
@@ -53,7 +63,10 @@ export function LoginForm() {
 
         {/* Password Field */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Password
           </label>
           <div className="relative">
@@ -72,42 +85,40 @@ export function LoginForm() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
         </div>
 
-        {/* Remember Me */}
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="remember"
-            checked={formData.rememberMe}
-            onCheckedChange={(checked) => handleInputChange("rememberMe", checked as boolean)}
-          />
-          <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
-            Remember me
-          </label>
-        </div>
-
         {/* Login Button */}
-        <Button formAction={login} type="submit" className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm">
+        <Button
+          type="submit"
+          className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm"
+        >
           Log in
         </Button>
 
         {/* Divider */}
-        <Divider text="atau" />
+        {/* <Divider text="atau" /> */}
 
         {/* Google Sign up */}
-        <GoogleSigninButton />
+        {/* <GoogleSigninButton /> */}
       </form>
 
       {/* Sign up Link */}
       <div className="text-center max-md:text-sm">
         <span className="text-gray-600">Haven&apos;t an account? </span>
-        <Link href="/signup" className="text-aqua-mist hover:text-aqua-depth font-medium">
+        <Link
+          href="/signup"
+          className="text-aqua-mist hover:text-aqua-depth font-medium"
+        >
           Sign up
         </Link>
       </div>
     </div>
-  )
+  );
 }
