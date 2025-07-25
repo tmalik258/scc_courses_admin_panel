@@ -11,6 +11,16 @@ export interface Course {
   lessons: number;
 }
 
+export interface CreateCourseFormData {
+  title: string;
+  description?: string;
+  categoryId: string;
+  price: string;
+  instructorId: string;
+  thumbnailUrl?: string | null;
+  isPublished?: boolean;
+}
+
 export interface CourseFormData {
   title: string;
   description?: string;

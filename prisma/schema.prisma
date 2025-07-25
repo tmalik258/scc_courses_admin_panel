@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
+  provider      = "prisma-client-js"
+  output        = "../lib/generated/prisma"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
@@ -43,13 +43,13 @@ model Course {
   isPublished  Boolean       @default(false) @map("is_published")
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
-  resources    Resources[]
   certificates Certificate[]
   category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   instructor   Profile       @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: Cascade)
-  purchases    Purchase[]
-  reviews      Review[]
   modules      Module[]
+  purchases    Purchase[]
+  resources    Resources[]
+  reviews      Review[]
 
   @@map("courses")
 }
@@ -161,13 +161,13 @@ model PaypalCustomer {
 }
 
 model Module {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  courseId     String    @map("course_id") @db.Uuid
-  title        String
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  lessons      Lessons[]
-  course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId  String    @map("course_id") @db.Uuid
+  title     String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  lessons   Lessons[]
+  course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@map("modules")
 }
@@ -186,17 +186,17 @@ model Resources {
 }
 
 model Lessons {
-  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  module_id      String     @db.Uuid
-  course_id      String     @db.Uuid
-  title          String
-  content        String?
-  video_url      String?
-  is_free        Boolean    @default(false)
-  created_at     DateTime   @default(now())
-  updated_at     DateTime
-  modules        Module     @relation(fields: [module_id], references: [id], onDelete: Cascade)
-  progress       Progress[]
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  course_id  String     @db.Uuid
+  title      String
+  content    String?
+  video_url  String?
+  is_free    Boolean    @default(false)
+  created_at DateTime   @default(now())
+  updated_at DateTime
+  module_id  String     @db.Uuid
+  modules    Module     @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  progress   Progress[]
 
   @@map("lessons")
 }

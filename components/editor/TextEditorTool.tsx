@@ -1,61 +1,69 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { TextStyleKit } from "@tiptap/extension-text-style";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+import TextAlign from "@tiptap/extension-text-align";
 import { Button } from "@/components/ui/button";
 import { useFormContext, Controller } from "react-hook-form";
+import { CodeXml } from "lucide-react";
 
-interface RichTextEditorProps {
+const RichTextEditor = ({
+  name,
+  placeholder = "Course Description...",
+}: {
   name: string;
-}
+  placeholder?: string;
+}) => {
+  const { control, setValue } = useFormContext();
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ name }) => {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const { control, watch, setValue } = useFormContext();
-  const content = watch(name);
+  // Call useEditor hook unconditionally with immediate rendering disabled
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions: [
+      TextStyleKit,
+      StarterKit,
+      Placeholder.configure({
+        placeholder: placeholder,
+      }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
+    ],
+    content: "",
+    onUpdate: ({ editor }) => {
+      setValue(name, editor.getHTML(), { shouldDirty: true });
+    },
+  });
 
-  // Keep editor in sync with form value
-  useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== content) {
-      editorRef.current.innerHTML = content || "";
-    }
-  }, [content]);
-
-  const exec = (command: string, value?: string) => {
-    const el = editorRef.current;
-    if (!el) return;
-    el.focus();
-
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-
-    switch (command) {
-      case "insertOrderedList":
-        document.execCommand("insertOrderedList");
-        break;
-      case "insertUnorderedList":
-        document.execCommand("insertUnorderedList");
-        break;
-      case "formatBlock":
-        // Must use uppercase tags in older browsers
-        document.execCommand("formatBlock", false, value?.toUpperCase());
-        break;
-      default:
-        document.execCommand(command);
-    }
-
-    setValue(name, el.innerHTML);
-  };
+  // Render logic
+  if (!editor) {
+    return null;
+  }
 
   return (
-    <div>
+    <div className="border rounded-lg overflow-hidden">
       {/* Toolbar */}
-      <div className="border border-gray-300 rounded-t-lg bg-gray-50 p-2 flex items-center gap-2 flex-wrap">
+      <div className="border-b border-gray-300 bg-gray-50 p-2 flex items-center gap-2 flex-wrap">
+        <select
+          className="p-1 border rounded-tl-lg text-sm bg-white"
+          onChange={(e) =>
+            editor.chain().focus().setTextAlign(e.target.value).run()
+          }
+          defaultValue="left"
+        >
+          <option value="left">Normal</option>
+          <option value="center">Center</option>
+          <option value="right">Right</option>
+          <option value="justify">Justify</option>
+        </select>
         <Button
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 font-bold"
-          onClick={() => exec("bold")}
-          type="button"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          disabled={!editor.can().toggleBold()}
         >
           B
         </Button>
@@ -63,8 +71,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ name }) => {
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 italic"
-          onClick={() => exec("italic")}
-          type="button"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          disabled={!editor.can().toggleItalic()}
         >
           I
         </Button>
@@ -72,18 +80,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ name }) => {
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 underline"
-          onClick={() => exec("underline")}
-          type="button"
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          disabled={!editor.can().toggleUnderline()}
         >
           U
         </Button>
-
         <Button
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
-          onClick={() => exec("insertOrderedList")}
-          type="button"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          disabled={!editor.can().toggleOrderedList()}
         >
           1.
         </Button>
@@ -91,18 +98,28 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ name }) => {
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
-          onClick={() => exec("insertUnorderedList")}
-          type="button"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          disabled={!editor.can().toggleBulletList()}
         >
           •
         </Button>
-
         <Button
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
-          onClick={() => exec("formatBlock", "<h1>")}
-          type="button"
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          disabled={!editor.can().toggleCodeBlock()}
+        >
+          <CodeXml className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 1 }).run()
+          }
+          disabled={!editor.can().toggleHeading({ level: 1 })}
         >
           H1
         </Button>
@@ -110,8 +127,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ name }) => {
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
-          onClick={() => exec("formatBlock", "<h2>")}
-          type="button"
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
+          disabled={!editor.can().toggleHeading({ level: 2 })}
         >
           H2
         </Button>
@@ -122,19 +141,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ name }) => {
         name={name}
         control={control}
         defaultValue=""
-        render={() => (
-          <div
-            ref={editorRef}
-            contentEditable
-            className="min-h-[150px] border border-t-0 border-gray-300 p-3 focus:outline-none"
-            onInput={() => {
-              if (editorRef.current) {
-                setValue(name, editorRef.current.innerHTML, {
-                  shouldDirty: true,
-                });
-              }
-            }}
-            suppressContentEditableWarning={true}
+        render={({ field }) => (
+          <EditorContent
+            editor={editor}
+            onBlur={() =>
+              setValue(name, editor.getHTML(), { shouldDirty: true })
+            }
+            className="min-h-[150px] border-0 p-3 outline-none focus:outline-none"
+            onFocus={() => editor.commands.setContent(field.value || "")}
           />
         )}
       />

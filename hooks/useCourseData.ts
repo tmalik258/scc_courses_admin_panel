@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getCourses, getCourseById, updateCourse, deleteCourse } from "@/actions/course-data";
-import { CourseFormData, CourseWithRelations } from "@/types/course";
+import { getCourses, getCourseById, updateCourse, deleteCourse, createCourse } from "@/actions/course-data";
+import { CourseFormData, CourseWithRelations, CreateCourseFormData } from "@/types/course";
 
 export const useCourseData = () => {
   const [courses, setCourses] = useState<CourseWithRelations[]>([]);
@@ -52,6 +52,26 @@ export const useCourseData = () => {
       isFetchingRef.current = null;
     }
   }, []);
+
+  const handleCreateCourse = useCallback(async (data: CreateCourseFormData) => {
+    setLoading(true);
+    try {
+      const newCourse = await createCourse(data);
+      await refreshCourses();
+      setError(null);
+      return newCourse;
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
+      console.error("Error creating course:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [refreshCourses]);
 
   const handleUpdateCourse = useCallback(async (courseId: string, data: Partial<CourseFormData>) => {
     setLoading(true);
@@ -103,6 +123,7 @@ export const useCourseData = () => {
     setSelectedCourse,
     refreshCourses,
     selectCourse,
+    handleCreateCourse,
     handleUpdateCourse,
     handleDeleteCourse,
     loading,

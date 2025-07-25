@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CourseFormData, CourseWithRelations } from '@/types/course';
+import { CourseFormData, CourseWithRelations, CreateCourseFormData } from '@/types/course';
 
 export async function getCourses(): Promise<{ courses: CourseWithRelations[] }> {
   try {
@@ -26,6 +26,20 @@ export async function getCourseById(courseId: string): Promise<CourseWithRelatio
       console.error('Error fetching course:', error);
     }
     throw new Error('Failed to fetch course', { cause: error });
+  }
+}
+
+export async function createCourse(data: CreateCourseFormData): Promise<CourseWithRelations> {
+  try {
+    const response = await axios.post('/api/courses', { ...data, isPublished: false });
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error creating course:', error.message);
+    } else {
+      console.error('Error creating course:', error);
+    }
+    throw new Error('Failed to create course', { cause: error });
   }
 }
 

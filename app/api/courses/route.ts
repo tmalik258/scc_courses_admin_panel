@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Decimal } from "@prisma/client/runtime/library";
 import prisma from "@/lib/prisma";
-import { CourseFormData } from "@/types/course";
+import { CreateCourseFormData } from "@/types/course";
 
 // UUID validation helper
 function isValidUUID(uuid: string): boolean {
@@ -33,7 +33,18 @@ export async function GET() {
 
     return NextResponse.json({ courses }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching courses:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const errorCode =
+      typeof error === "object" && error && "code" in error
+        ? error.code
+        : undefined;
+
+    console.error("GET /api/courses error:", {
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      code: errorCode,
+    });
     return NextResponse.json(
       { error: "Failed to fetch courses" },
       { status: 500 }
@@ -44,7 +55,7 @@ export async function GET() {
 // POST: Create a new popular course
 export async function POST(req: Request) {
   try {
-    const body: CourseFormData = await req.json();
+    const body: CreateCourseFormData = await req.json();
     const {
       title,
       description,
@@ -52,8 +63,6 @@ export async function POST(req: Request) {
       price,
       instructorId,
       thumbnailUrl,
-      modules,
-      resources,
     } = body;
 
     if (!title || !instructorId || !categoryId) {
@@ -101,77 +110,28 @@ export async function POST(req: Request) {
         description: description || null,
         instructorId,
         categoryId,
-        price: price ? new Decimal(price) : null,
+        price: price ? new Decimal(price) : 0,
         thumbnailUrl: thumbnailUrl || null,
       },
     });
-
-    if (modules?.length) {
-      for (const mod of modules) {
-        if (!mod.title) {
-          return NextResponse.json(
-            { error: "Module title is required." },
-            { status: 400 }
-          );
-        }
-
-        const createdModule = await prisma.module.create({
-          data: {
-            title: mod.title,
-            courseId: createdCourse.id,
-          },
-        });
-
-        for (const lesson of mod.lessons || []) {
-          if (!lesson.name) {
-            return NextResponse.json(
-              { error: "Lesson name is required." },
-              { status: 400 }
-            );
-          }
-
-          await prisma.lessons.create({
-            data: {
-              title: lesson.name,
-              content: lesson.content || null,
-              video_url: lesson.videoUrl || null,
-              updated_at: new Date(),
-              is_free: false,
-              module_id: createdModule.id,
-              course_id: createdCourse.id,
-            },
-          });
-        }
-      }
-    }
-
-    if (resources?.length) {
-      for (const res of resources) {
-        if (!res.title || !res.url) {
-          return NextResponse.json(
-            { error: "Resource title and URL are required." },
-            { status: 400 }
-          );
-        }
-
-        await prisma.resources.create({
-          data: {
-            name: res.title,
-            url: res.url,
-            course_id: createdCourse.id,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        });
-      }
-    }
 
     return NextResponse.json(
       { success: true, course: createdCourse },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating course:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const errorCode =
+      typeof error === "object" && error && "code" in error
+        ? error.code
+        : undefined;
+
+    console.error("POST /api/courses error:", {
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      code: errorCode,
+    });
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
