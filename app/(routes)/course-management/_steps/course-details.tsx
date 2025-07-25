@@ -34,7 +34,7 @@ import { type FileWithPreview } from "@/hooks/use-file-upload";
 import { toast } from "sonner";
 import FileUploadWrapper from "@/components/file-upload-wrapper";
 import debounce from "lodash.debounce";
-import RichTextEditor from "@/components/editor/TextEditorTool";
+import RichTextEditor from "@/components/rich-text-editor";
 
 interface CourseDetailsStepProps {
   formData: CourseFormData;
@@ -211,7 +211,7 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({
                 <FormItem>
                   <FormLabel>Course Description</FormLabel>
                   <FormControl>
-                    <RichTextEditor name="description" />
+                    <RichTextEditor onChange={field.onChange} content={field.value} />
                   </FormControl>
                   <FormMessage />
                   <FormDescription
