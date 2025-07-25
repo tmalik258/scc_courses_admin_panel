@@ -45,6 +45,8 @@ export async function GET() {
       stack: error instanceof Error ? error.stack : undefined,
       code: errorCode,
     });
+
+    console.log("Database URL:", process.env.DATABASE_URL);
     return NextResponse.json(
       { error: "Failed to fetch courses" },
       { status: 500 }

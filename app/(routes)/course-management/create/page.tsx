@@ -22,7 +22,7 @@ const INITIAL_FORM_DATA: CreateCourseFormData = {
 
 const AddCoursePage: React.FC = () => {
   const router = useRouter();
-  const { handleCreateCourse, loading: isSubmitting } = useCourseData();
+  const { handleCreateCourse, isSubmitting } = useCourseData();
   const [formData, setFormData] = useState<CreateCourseFormData>(INITIAL_FORM_DATA);
   const [canProceed, setCanProceed] = useState(false);
   const [currentStep] = useState(1); // Always start at step 1
@@ -114,7 +114,7 @@ const AddCoursePage: React.FC = () => {
             disabled={!canProceed || isSubmitting}
             className="bg-sky-500 hover:bg-sky-600 px-6 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            {isSubmitting && <DashedSpinner />}
+            {isSubmitting && <DashedSpinner invert={true} />}
             {isSubmitting ? "Saving..." : "Save & Continue"}
           </Button>
         </div>

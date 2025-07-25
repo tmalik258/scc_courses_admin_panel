@@ -8,6 +8,7 @@ export const useCourseData = () => {
   const [courses, setCourses] = useState<CourseWithRelations[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<CourseWithRelations | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const isFetchingRef = useRef<string | null>(null); // Track ongoing fetch by courseId
 
@@ -54,7 +55,7 @@ export const useCourseData = () => {
   }, []);
 
   const handleCreateCourse = useCallback(async (data: CreateCourseFormData) => {
-    setLoading(true);
+    setIsSubmitting(true);
     try {
       const newCourse = await createCourse(data);
       await refreshCourses();
@@ -69,7 +70,7 @@ export const useCourseData = () => {
       console.error("Error creating course:", err);
       throw err;
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   }, [refreshCourses]);
 
@@ -127,6 +128,7 @@ export const useCourseData = () => {
     handleUpdateCourse,
     handleDeleteCourse,
     loading,
+    isSubmitting,
     error,
   };
 };
