@@ -9,10 +9,12 @@ import Highlight from "@tiptap/extension-highlight";
 
 interface RichTextEditorProps {
   content: string;
+  placeholder?: string;
   onChange: (content: string) => void;
 }
 export default function RichTextEditor({
   content,
+  placeholder = "Type something...",
   onChange,
 }: RichTextEditorProps) {
   const editor = useEditor({
@@ -37,6 +39,7 @@ export default function RichTextEditor({
     content: content,
     editorProps: {
       attributes: {
+        placeholder: placeholder,
         class: "min-h-[156px] overflow-x-auto border rounded-md bg-slate-50 py-2 px-3",
       },
     },

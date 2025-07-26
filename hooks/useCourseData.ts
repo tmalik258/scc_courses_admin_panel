@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getCourses, getCourseById, updateCourse, deleteCourse, createCourse } from "@/actions/course-data";
+import { getCourses, getCourseById, updateCourse, updateModule, updateResource, deleteCourse, createCourse } from "@/actions/course-data";
 import { CourseFormData, CourseWithRelations, CreateCourseFormData } from "@/types/course";
 
 export const useCourseData = () => {
   const [courses, setCourses] = useState<CourseWithRelations[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<CourseWithRelations | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  const isFetchingRef = useRef<string | null>(null); // Track ongoing fetch by courseId
+  const isFetchingRef = useRef<string | null>(null);
 
   const refreshCourses = useCallback(async () => {
     setLoading(true);
@@ -31,10 +32,7 @@ export const useCourseData = () => {
   }, []);
 
   const selectCourse = useCallback(async (courseId: string) => {
-    // Prevent duplicate fetches for the same courseId
-    if (isFetchingRef.current === courseId) {
-      return;
-    }
+    if (isFetchingRef.current === courseId) return;
     isFetchingRef.current = courseId;
     setLoading(true);
     try {
@@ -55,7 +53,7 @@ export const useCourseData = () => {
   }, []);
 
   const handleCreateCourse = useCallback(async (data: CreateCourseFormData) => {
-    setIsSubmitting(true);
+    setIsCreating(true);
     try {
       const newCourse = await createCourse(data);
       await refreshCourses();
@@ -70,12 +68,12 @@ export const useCourseData = () => {
       console.error("Error creating course:", err);
       throw err;
     } finally {
-      setIsSubmitting(false);
+      setIsCreating(false);
     }
   }, [refreshCourses]);
 
   const handleUpdateCourse = useCallback(async (courseId: string, data: Partial<CourseFormData>) => {
-    setLoading(true);
+    setIsUpdating(true);
     try {
       const updatedCourse = await updateCourse(courseId, data);
       setSelectedCourse(updatedCourse);
@@ -90,7 +88,47 @@ export const useCourseData = () => {
       console.error("Error updating course:", err);
       throw err;
     } finally {
-      setLoading(false);
+      setIsUpdating(false);
+    }
+  }, [refreshCourses]);
+
+  const handleUpdateModule = useCallback(async (courseId: string, moduleId: string, data: { title: string; lessons: CourseFormData["modules"][0]["lessons"] }) => {
+    setIsUpdating(true);
+    try {
+      const updatedCourse = await updateModule(courseId, moduleId, data);
+      setSelectedCourse(updatedCourse);
+      await refreshCourses();
+      setError(null);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
+      console.error("Error updating module:", err);
+      throw err;
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [refreshCourses]);
+
+  const handleUpdateResource = useCallback(async (courseId: string, resourceId: string, data: { title: string; url: string }) => {
+    setIsUpdating(true);
+    try {
+      const updatedCourse = await updateResource(courseId, resourceId, data);
+      setSelectedCourse(updatedCourse);
+      await refreshCourses();
+      setError(null);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        setError(new Error("Unknown error"));
+      }
+      console.error("Error updating resource:", err);
+      throw err;
+    } finally {
+      setIsUpdating(false);
     }
   }, [refreshCourses]);
 
@@ -126,9 +164,12 @@ export const useCourseData = () => {
     selectCourse,
     handleCreateCourse,
     handleUpdateCourse,
+    handleUpdateModule,
+    handleUpdateResource,
     handleDeleteCourse,
     loading,
-    isSubmitting,
+    isCreating,
+    isUpdating,
     error,
   };
 };

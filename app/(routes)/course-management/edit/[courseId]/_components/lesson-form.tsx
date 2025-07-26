@@ -1,14 +1,7 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React from "react";
 import { Input } from "@/components/ui/input";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
 import {
   FormControl,
   FormDescription,
@@ -23,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { VideoUploadField } from "@/components/videoUploadField";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2 } from "lucide-react";
-import RichTextEditor from "@/components/editor/TextEditorTool";
+import RichTextEditor from "@/components/rich-text-editor";
 
 interface SectionFormProps {
   moduleIndex: number;
@@ -106,7 +99,11 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(
                 <FormLabel>Reading</FormLabel>
                 <FormControl>
                   <RichTextEditor
-                    name={`modules.${moduleIndex}.lessons.${sectionIndex}.content`}
+                    content={value}
+                    onChange={(content) => {
+                      field.onChange(content);
+                    }}
+                    placeholder="Enter reading content (min 100 characters, max 1000 characters)"
                   />
                 </FormControl>
                 <FormMessage />

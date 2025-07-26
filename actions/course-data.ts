@@ -57,6 +57,34 @@ export async function updateCourse(courseId: string, data: Partial<CourseFormDat
   }
 }
 
+export async function updateModule(courseId: string, moduleId: string, data: { title: string; lessons: CourseFormData["modules"][0]["lessons"] }): Promise<CourseWithRelations> {
+  try {
+    const response = await axios.put(`/api/courses/${courseId}/modules/${moduleId}`, data);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error updating module:', error.message);
+    } else {
+      console.error('Error updating module:', error);
+    }
+    throw new Error('Failed to update module', { cause: error });
+  }
+}
+
+export async function updateResource(courseId: string, resourceId: string, data: { title: string; url: string }): Promise<CourseWithRelations> {
+  try {
+    const response = await axios.put(`/api/courses/${courseId}/resources/${resourceId}`, data);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error updating resource:', error.message);
+    } else {
+      console.error('Error updating resource:', error);
+    }
+    throw new Error('Failed to update resource', { cause: error });
+  }
+}
+
 export async function deleteCourse(courseId: string): Promise<void> {
   try {
     await axios.delete(`/api/courses/${courseId}`);

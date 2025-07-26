@@ -22,7 +22,7 @@ const INITIAL_FORM_DATA: CreateCourseFormData = {
 
 const AddCoursePage: React.FC = () => {
   const router = useRouter();
-  const { handleCreateCourse, isSubmitting } = useCourseData();
+  const { handleCreateCourse, isCreating: isSubmitting } = useCourseData();
   const [formData, setFormData] = useState<CreateCourseFormData>(INITIAL_FORM_DATA);
   const [canProceed, setCanProceed] = useState(false);
   const [currentStep] = useState(1); // Always start at step 1

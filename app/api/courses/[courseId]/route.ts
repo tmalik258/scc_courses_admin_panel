@@ -49,92 +49,16 @@ export async function PUT(
 
   try {
     const validatedData = updateCourseSchema.parse(body);
-    const { modules, resources, ...courseData } = validatedData;
+    const { title, description, categoryId, price, instructorId, thumbnailUrl, isPublished } = validatedData;
 
-    const updateData: UpdateData = { ...courseData };
-
-    if (courseData.price !== undefined) {
-      updateData.price = courseData.price
-        ? parseFloat(courseData.price.toString())
-        : null;
-    }
-
-    if (modules && modules.length > 0) {
-      updateData.modules = {
-        upsert: modules
-          .filter((module) => module.title || module.lessons?.length)
-          .map((module) => ({
-            where: { id: module.id || crypto.randomUUID() },
-            update: {
-              title: module.title || undefined,
-              lessons: {
-                upsert:
-                  module.lessons
-                    ?.filter(
-                      (lesson) =>
-                        lesson.name || lesson.videoUrl || lesson.content
-                    )
-                    .map((lesson) => ({
-                      where: { id: lesson.id || crypto.randomUUID() },
-                      update: {
-                        title: lesson.name || undefined,
-                        content: lesson.content ?? null, // Handle undefined as null
-                        video_url: lesson.videoUrl || undefined,
-                        updated_at: new Date(),
-                      },
-                      create: {
-                        course_id: courseId, // Correct for Lessons
-                        title: lesson.name || "Untitled Lesson",
-                        content: lesson.content ?? null, // Handle undefined as null
-                        video_url: lesson.videoUrl,
-                        updated_at: new Date(),
-                      },
-                    })) || [],
-              },
-            },
-            create: {
-              title: module.title || "Untitled Module",
-              lessons: {
-                create:
-                  module.lessons
-                    ?.filter(
-                      (lesson) =>
-                        lesson.name || lesson.videoUrl || lesson.content
-                    )
-                    .map((lesson) => ({
-                      course_id: courseId, // Correct for Lessons
-                      title: lesson.name || "Untitled Lesson",
-                      content: lesson.content ?? null, // Handle undefined as null
-                      video_url: lesson.videoUrl,
-                      updated_at: new Date(),
-                    })) || [],
-              },
-            },
-          })),
-      };
-    }
-
-    if (resources && resources.length > 0) {
-      updateData.resources = {
-        upsert: resources
-          .filter((resource) => resource.title || resource.url)
-          .map((resource) => ({
-            where: { id: resource.id || crypto.randomUUID() },
-            update: {
-              name: resource.title || undefined,
-              url: resource.url || undefined,
-              updatedAt: new Date(),
-            },
-            create: {
-              name: resource.title || "Untitled Resource",
-              url: resource.url,
-              updatedAt: new Date(),
-            },
-          })),
-      };
-    }
-
-    console.log("Update data:", JSON.stringify(updateData, null, 2)); // Debug log
+    const updateData: Partial<UpdateData> = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (categoryId !== undefined) updateData.categoryId = categoryId;
+    if (price !== undefined) updateData.price = price ? parseFloat(price.toString()) : null;
+    if (instructorId !== undefined) updateData.instructorId = instructorId;
+    if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl || null;
+    if (isPublished !== undefined) updateData.isPublished = isPublished;
 
     const updated = await prisma.course.update({
       where: { id: courseId },
