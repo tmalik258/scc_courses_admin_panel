@@ -1,9 +1,11 @@
-import { LoginForm } from "./_components/login-form"
+import { Suspense } from "react";
+import LoginPage from "./_components/login-page";
+import { LumaSpin } from "@/components/luma-spin";
 
-const LoginPage = () => {
-  return (
-    <LoginForm />
-  )
-}
+const LoginPageWrapper = () => (
+  <Suspense fallback={<div className="flex items-center justify-center h-full"><LumaSpin /></div>}>
+    <LoginPage />
+  </Suspense>
+);
 
-export default LoginPage;
+export default LoginPageWrapper;

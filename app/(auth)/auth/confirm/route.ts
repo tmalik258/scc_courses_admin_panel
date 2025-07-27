@@ -21,8 +21,11 @@ export async function GET(request: NextRequest) {
       // redirect user to specified redirect URL or root of app
       redirect(next)
     }
+
+    console.error('[auth/confirm] Invalid token_hash or type provided for email confirmation:', error.message)
+    redirect(`/login?error="${error.message}"`)
   }
 
   // redirect the user to an error page with some instructions
-  redirect('/error')
+  redirect(`/login?error=invalid_token`)
 }
