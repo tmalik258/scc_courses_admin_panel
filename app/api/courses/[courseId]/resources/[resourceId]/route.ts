@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import z from "zod";
 
 const resourceSchema = z.object({
-  title: z.string().optional(),
+  name: z.string().optional(),
   url: z.string().url().optional(),
 });
 
@@ -17,10 +17,10 @@ export async function PUT(
 
   try {
     const validatedData = resourceSchema.parse(body);
-    const { title, url } = validatedData;
+    const { name, url } = validatedData;
 
     const updateData = {
-      name: title,
+      name: name,
       url: url,
       updatedAt: new Date(),
     };

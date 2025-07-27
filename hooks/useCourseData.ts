@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   getCourses,
   getCourseById,
@@ -11,12 +11,15 @@ import {
   createCourse,
   createModule,
   deleteModule,
+  deleteResource,
+  createResource,
 } from "@/actions/course-data";
 import {
   CourseFormData,
   CourseWithRelations,
   CreateCourseFormData,
 } from "@/types/course";
+import { Lessons } from "@/lib/generated/prisma";
 
 export const useCourseData = () => {
   const [courses, setCourses] = useState<CourseWithRelations[]>([]);
@@ -115,7 +118,7 @@ export const useCourseData = () => {
   );
 
   const handleCreateModule = useCallback(
-    async (courseId: string, data: { title: string; lessons: CourseFormData["modules"][0]["lessons"] }) => {
+    async (courseId: string, data: { title: string; lessons: Partial<Lessons>[] }) => {
       setIsCreating(true);
       try {
         const newModule = await createModule(courseId, data);
@@ -148,7 +151,7 @@ export const useCourseData = () => {
     async (
       courseId: string,
       moduleId: string,
-      data: { title: string; lessons: CourseFormData["modules"][0]["lessons"] }
+      data: { title: string; lessons: Partial<Lessons>[] }
     ) => {
       setIsUpdating(true);
       try {
@@ -199,12 +202,38 @@ export const useCourseData = () => {
     [refreshCourses, selectedCourse]
   );
 
+  const handleCreateResource = useCallback(
+    async (courseId: string, data: { name: string; url: string }) => {
+      setIsCreating(true);
+      try {
+        const newResource = await createResource(courseId, data);
+        console.log("[useCourseData] New resource created:", newResource);
+        if (selectedCourse) {
+          setSelectedCourse({
+            ...selectedCourse,
+            resources: [...selectedCourse.resources, newResource],
+          });
+        }
+        await refreshCourses();
+        setError(null);
+        return newResource;
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err);
+        } else {
+          setError(new Error("Unknown error"));
+        }
+        console.error("Error creating resource:", err);
+        throw err;
+      } finally {
+        setIsCreating(false);
+      }
+    },
+    [refreshCourses, selectedCourse]
+  );
+
   const handleUpdateResource = useCallback(
-    async (
-      courseId: string,
-      resourceId: string,
-      data: { title: string; url: string }
-    ) => {
+    async (courseId: string, resourceId: string, data: { name: string; url: string }) => {
       setIsUpdating(true);
       try {
         const updatedCourse = await updateResource(courseId, resourceId, data);
@@ -224,6 +253,34 @@ export const useCourseData = () => {
       }
     },
     [refreshCourses]
+  );
+
+  const handleDeleteResource = useCallback(
+    async (courseId: string, resourceId: string) => {
+      setIsUpdating(true);
+      try {
+        await deleteResource(courseId, resourceId);
+        if (selectedCourse) {
+          setSelectedCourse({
+            ...selectedCourse,
+            resources: selectedCourse.resources.filter(resource => resource.id !== resourceId),
+          });
+        }
+        await refreshCourses();
+        setError(null);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err);
+        } else {
+          setError(new Error("Unknown error"));
+        }
+        console.error("Error deleting resource:", err);
+        throw new Error("Failed to delete resource", { cause: err });
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [refreshCourses, selectedCourse]
   );
 
   const handleDeleteCourse = useCallback(
@@ -249,10 +306,6 @@ export const useCourseData = () => {
     [refreshCourses]
   );
 
-  useEffect(() => {
-    refreshCourses();
-  }, [refreshCourses]);
-
   return {
     courses,
     selectedCourse,
@@ -265,7 +318,9 @@ export const useCourseData = () => {
     handleCreateModule,
     handleUpdateModule,
     handleDeleteModule,
+    handleCreateResource,
     handleUpdateResource,
+    handleDeleteResource,
     loading,
     isCreating,
     isUpdating,

@@ -30,10 +30,13 @@ import { uploadImage } from "@/utils/supabase/uploadImage";
 import { CheckCircleIcon } from "lucide-react";
 import { type FileWithPreview } from "@/hooks/use-file-upload";
 import { toast } from "sonner";
-import FileUploadWrapper from "@/components/file-upload-wrapper";
+import ImageUploadWrapper from "@/components/image-upload-wrapper";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useCourseData } from "@/hooks/useCourseData";
 import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { fetchImage } from "@/utils/supabase/fetchImage";
+import { validate as uuidValidate } from 'uuid';
 
 const courseDetailsSchema = z.object({
   title: z
@@ -44,12 +47,12 @@ const courseDetailsSchema = z.object({
     .string()
     .min(100, "Description must be at least 100 characters")
     .max(1000, "Description must be less than 1000 characters"),
-  category: z.string().min(1, "Please select a category"),
+  categoryId: z.string().min(1, "Please select a category"),
   price: z
     .string()
     .min(1, "Price is required")
     .regex(/^₹?\d+(\.\d{1,2})?$/, "Please enter a valid price"),
-  instructor: z.string().min(1, "Please select an instructor"),
+  instructorId: z.string().min(1, "Please select an instructor"),
 });
 
 type CourseDetailsFormValues = z.infer<typeof courseDetailsSchema>;
@@ -60,19 +63,22 @@ interface CourseDetailsStepProps {
 
 const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
   const { courseId } = useParams<{ courseId: string }>();
-  const { selectedCourse, handleUpdateCourse } = useCourseData();
+  const { selectedCourse, isUpdating, handleUpdateCourse, selectCourse } = useCourseData();
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [displayImageUrl, setDisplayImageUrl] = useState<string | null>(
     selectedCourse?.thumbnailUrl || null
   );
 
   const {
     categories,
+    refreshCategories,
     loading: categoryLoading,
     error: categoryError,
   } = useCategoryData();
   const {
     instructors,
+    refreshInstructors,
     loading: instructorsLoading,
     error: instructorsError,
   } = useInstructorData();
@@ -82,29 +88,55 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
     defaultValues: {
       title: selectedCourse?.title || "",
       description: selectedCourse?.description || "",
-      category: selectedCourse?.category?.id || "",
+      categoryId: selectedCourse?.category?.id || "",
       price: selectedCourse?.price?.toString() || "",
-      instructor: selectedCourse?.instructor?.id || "",
+      instructorId: selectedCourse?.instructor?.id || "",
     },
     mode: "onChange",
   });
 
-  // Sync form with selectedCourse
+  useEffect(() => {
+    if (instructors.length === 0) {
+      refreshInstructors();
+    }
+  }, [instructors, refreshInstructors]);
+
+  useEffect(() => {
+    if (categories.length === 0) {
+      refreshCategories();
+    }
+  }, [categories, refreshCategories]);
+
+  useEffect(() => {
+    if (courseId && !selectedCourse) {
+      selectCourse(courseId);
+    }
+  }, [courseId, selectCourse, selectedCourse]);
+
   useEffect(() => {
     form.reset({
       title: selectedCourse?.title || "",
       description: selectedCourse?.description || "",
-      category: selectedCourse?.category?.id || "",
+      categoryId: selectedCourse?.category?.id || "",
       price: selectedCourse?.price?.toString() || "",
-      instructor: selectedCourse?.instructor?.id || "",
+      instructorId: selectedCourse?.instructor?.id || "",
     });
+    (async () => {
+      if (selectedCourse?.thumbnailUrl && selectedCourse.thumbnailUrl !== null) {
+        setDisplayImageUrl(await fetchImage(selectedCourse.thumbnailUrl));
+      } else {
+        setDisplayImageUrl(null);
+      }
+    })();
     setUploadedImageUrl(selectedCourse?.thumbnailUrl || null);
   }, [form, selectedCourse]);
 
-  // Handle file upload
   const handleFileUpload = useCallback(
     async (files: FileWithPreview[]) => {
-      if (!courseId || files.length === 0) return;
+      if (!courseId || files.length === 0 || !uuidValidate(courseId)) {
+        toast.error("Invalid or missing course ID");
+        return;
+      }
 
       const fileWithPreview = files[0];
       const file = fileWithPreview.file;
@@ -116,17 +148,14 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
         const imageUrl = await uploadImage(file);
         if (imageUrl) {
           setUploadedImageUrl(imageUrl);
+          setDisplayImageUrl(await fetchImage(imageUrl));
           await handleUpdateCourse(courseId, { thumbnailUrl: imageUrl });
           toast.success("Thumbnail uploaded successfully!");
         } else {
           toast.error("Failed to upload thumbnail. Please try again.");
         }
       } catch (error) {
-        if (error instanceof Error) {
-          console.error("Error uploading image:", error.message);
-        } else {
-          console.error("Error uploading image:", error);
-        }
+        console.error("Error uploading image:", error);
         toast.error("An error occurred while uploading. Please try again.");
       } finally {
         setIsUploading(false);
@@ -135,51 +164,47 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
     [courseId, handleUpdateCourse]
   );
 
-  // Handle file removal
   const handleFileRemove = useCallback(async () => {
-    if (!courseId) return;
+    if (!courseId || !uuidValidate(courseId)) {
+      toast.error("Invalid or missing course ID");
+      return;
+    }
     setIsUploading(true);
     setUploadedImageUrl(null);
     await handleUpdateCourse(courseId, { thumbnailUrl: null });
     setIsUploading(false);
   }, [courseId, handleUpdateCourse]);
 
-  // Save and navigate
-  const handleSave = useCallback(async () => {
+  const handleSaveAndContinue = useCallback(async () => {
+    if (!form.formState.isValid) {
+      toast.error("Please fill out all required fields correctly");
+      return;
+    }
+
+    if (!courseId || !uuidValidate(courseId)) {
+      toast.error("Invalid or missing course ID");
+      return;
+    }
+
     const values = form.getValues();
-    if (!courseId) return;
+    console.log("Saving course details:", values);
+
     try {
       await handleUpdateCourse(courseId, {
         title: values.title,
         description: values.description,
-        categoryId: values.category,
-        price: values.price,
-        instructorId: values.instructor,
+        categoryId: values.categoryId,
+        price: parseFloat(values.price.replace("₹", "")) || 0,
+        instructorId: values.instructorId,
         thumbnailUrl: uploadedImageUrl,
       });
-      if (form.formState.isValid) {
-        onNext();
-      }
+      toast.success("Course details saved successfully!");
+      onNext();
     } catch (err) {
-      if (err instanceof Error) {
-        console.error("Error saving course details:", err.message);
-        toast.error(err.message);
-      } else {
-        console.error("Error saving course details:", err);
-        toast.error("Failed to save course details.");
-      }
+      console.error("Error saving course details:", err);
       toast.error("Failed to save course details.");
     }
   }, [form, courseId, handleUpdateCourse, uploadedImageUrl, onNext]);
-
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      if (form.formState.isValid) {
-        handleSave();
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, handleSave]);
 
   return (
     <Form {...form}>
@@ -205,20 +230,16 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
               const plainTextLength = field.value
                 ? field.value.replace(/<[^>]*>?/gm, "").trim().length
                 : 0;
-              const isValidLength =
-                plainTextLength >= 100 && plainTextLength <= 1000;
+              const isValidLength = plainTextLength >= 100 && plainTextLength <= 1000;
               return (
                 <FormItem>
                   <FormLabel>Course Description</FormLabel>
                   <FormControl>
-                    <RichTextEditor onChange={field.onChange} content={field.value} />
+                    <RichTextEditor onChange={field.onChange} content={field.value || ""} />
                   </FormControl>
                   <FormMessage />
-                  <FormDescription
-                    className={isValidLength ? "" : "text-red-500"}
-                  >
-                    Min 100 characters and max 1000 characters required (
-                    {plainTextLength}/1000)
+                  <FormDescription className={isValidLength ? "" : "text-red-500"}>
+                    Min 100 characters and max 1000 characters required ({plainTextLength}/1000)
                   </FormDescription>
                 </FormItem>
               );
@@ -226,14 +247,14 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
           />
           <FormField
             control={form.control}
-            name="category"
+            name="categoryId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
                 {categoryError ? (
                   <p className="text-red-500">{categoryError.message}</p>
                 ) : (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={categoryLoading}>
                     <FormControl>
                       <SelectTrigger>
                         {categoryLoading ? (
@@ -244,12 +265,11 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {!categoryLoading &&
-                        categories?.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
+                      {categories?.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -272,14 +292,14 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
           />
           <FormField
             control={form.control}
-            name="instructor"
+            name="instructorId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Instructor</FormLabel>
                 {instructorsError ? (
                   <p className="text-red-500">{instructorsError.message}</p>
                 ) : (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={instructorsLoading}>
                     <FormControl>
                       <SelectTrigger>
                         {instructorsLoading ? (
@@ -290,12 +310,11 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {!instructorsLoading &&
-                        instructors.map((instructor) => (
-                          <SelectItem key={instructor.id} value={instructor.id}>
-                            {instructor.fullName}
-                          </SelectItem>
-                        ))}
+                      {instructors.map((instructor) => (
+                        <SelectItem key={instructor.id} value={instructor.id}>
+                          {instructor.fullName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -305,15 +324,13 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
           />
         </div>
         <div className="lg:col-span-1">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Thumbnail
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Thumbnail</label>
           <div className="relative">
-            <FileUploadWrapper
+            <ImageUploadWrapper
               onFilesAdded={handleFileUpload}
               onFileRemove={handleFileRemove}
               isUploading={isUploading}
-              uploadedImageUrl={uploadedImageUrl}
+              uploadedImageUrl={displayImageUrl}
               maxSizeMB={2}
             />
             {isUploading && (
@@ -338,6 +355,23 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
           )}
         </div>
       </div>
+      <div className="mt-6 flex justify-end gap-4">
+        <Button
+          type="button"
+          onClick={handleSaveAndContinue}
+          disabled={isUpdating || isUploading || !form.formState.isValid || categoryLoading || instructorsLoading}
+          className="bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 px-6 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isUpdating ? <DashedSpinner invert={true} /> : null}
+          Save and Continue
+        </Button>
+      </div>
+      {process.env.NODE_ENV === "development" && (
+        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+          <h3 className="font-semibold mb-2">Debug Info:</h3>
+          <pre className="text-xs overflow-auto">{JSON.stringify(form.getValues(), null, 2)}</pre>
+        </div>
+      )}
     </Form>
   );
 };

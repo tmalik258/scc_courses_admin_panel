@@ -2,14 +2,14 @@
 
 import { getAllCategories } from "@/actions/categories";
 import { Category } from "@/lib/generated/prisma";
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 
 export const useCategoryData = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   
-  const refreshCategories = async () => {
+  const refreshCategories = useCallback(async () => {
     setLoading(true);
     try {
       const { data: categories } = await getAllCategories();
@@ -25,14 +25,11 @@ export const useCategoryData = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-    useEffect(() => {
-      refreshCategories();
-    }, []);
+  }, []);
 
   return {
     categories,
+    refreshCategories,
     loading,
     error,
   };

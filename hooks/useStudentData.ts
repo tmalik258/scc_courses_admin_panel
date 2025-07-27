@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { fetchStudents, fetchStudentById, deleteStudent, updateStudent } from "@/actions/student-data";
 
 interface Course {
@@ -28,7 +28,7 @@ export function useStudentData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const refreshStudents = async () => {
+  const refreshStudents = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchStudents();
@@ -43,7 +43,7 @@ export function useStudentData() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const selectStudent = async (studentId: string) => {
     setLoading(true);
@@ -97,10 +97,6 @@ export function useStudentData() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    refreshStudents();
-  }, []);
 
   return { students, selectedStudent, setSelectedStudent, refreshStudents, selectStudent, handleDeleteStudent, handleUpdateStudent, loading, error };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Student } from "@/types/student";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { StudentsHeader } from "./_components/student-header";
@@ -13,8 +13,14 @@ const StudentsPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const { students } = useStudentData();
+  const { students, refreshStudents } = useStudentData();
   const router = useRouter();
+
+  useEffect(() => {
+    if (students.length === 0) {
+      refreshStudents();
+    }
+  }, [refreshStudents, students.length]);
 
   // Filter students based on search
   const filteredStudents = students.filter(

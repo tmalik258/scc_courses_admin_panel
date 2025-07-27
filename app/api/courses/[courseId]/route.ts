@@ -1,8 +1,9 @@
-import { Prisma } from "@/lib/generated/prisma";
+import { Course, Prisma } from "@/lib/generated/prisma";
 import prisma from "@/lib/prisma";
-import { updateCourseSchema, UpdateData } from "@/types/course";
 import { NextResponse } from "next/server";
 import z from "zod";
+import { validate as uuidValidate } from 'uuid';
+import { Decimal } from "@prisma/client/runtime/library";
 
 export async function GET(
   _: Request,
@@ -21,6 +22,7 @@ export async function GET(
         },
         instructor: true,
         category: true,
+        resources: true,
       },
     });
 
@@ -44,26 +46,51 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
-  const { courseId } = await params;
-  const body = await req.json();
-
   try {
-    const validatedData = updateCourseSchema.parse(body);
-    const { title, description, categoryId, price, instructorId, thumbnailUrl, isPublished } = validatedData;
+    const { courseId } = await params;
+    console.log("Received courseId:", courseId);
 
-    const updateData: Partial<UpdateData> = {};
+    // Validate UUID
+    if (!courseId || !uuidValidate(courseId)) {
+      return NextResponse.json(
+        { error: "Invalid or missing courseId" },
+        { status: 400 }
+      );
+    }
+
+    const {
+      title,
+      description,
+      categoryId,
+      price,
+      instructorId,
+      thumbnailUrl,
+      isPublished,
+    } = await req.json();
+
+    console.log("Request data:", {
+      title,
+      description,
+      categoryId,
+      price,
+      instructorId,
+      thumbnailUrl,
+      isPublished,
+    });
+
+    const updateData: Partial<Course> = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (categoryId !== undefined) updateData.categoryId = categoryId;
-    if (price !== undefined) updateData.price = price ? parseFloat(price.toString()) : null;
+      updateData.price = price ? new Decimal(price) : null;
     if (instructorId !== undefined) updateData.instructorId = instructorId;
-    if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl || null;
+    if (thumbnailUrl !== undefined)
+      updateData.thumbnailUrl = thumbnailUrl || null;
     if (isPublished !== undefined) updateData.isPublished = isPublished;
 
     const updated = await prisma.course.update({
       where: { id: courseId },
-      data: updateData,
-      include: { modules: { include: { lessons: true } }, resources: true },
+      data: updateData
     });
 
     return NextResponse.json(updated);
@@ -81,10 +108,7 @@ export async function PUT(
         );
       }
     }
-    if (error instanceof Error) {
-      console.error("Error updating course:", error.message);
-      return NextResponse.json({ error: "Update failed" }, { status: 500 });
-    }
+    console.error("Error updating course:", error);
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }

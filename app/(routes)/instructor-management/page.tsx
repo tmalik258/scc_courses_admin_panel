@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,9 +11,16 @@ import { LumaSpin } from "@/components/luma-spin";
 import { useRouter } from "next/navigation";
 
 const InstructorManagementPage: React.FC = () => {
-  const { instructors, handleDeleteInstructor, loading } = useInstructorData();
+  const { instructors, refreshInstructors, handleDeleteInstructor, loading } =
+    useInstructorData();
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    if (instructors.length === 0) {
+      refreshInstructors();
+    }
+  }, [instructors, refreshInstructors]);
 
   const filteredInstructors = instructors.filter(
     (instructor) =>

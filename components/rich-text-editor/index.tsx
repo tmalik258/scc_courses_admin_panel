@@ -2,7 +2,7 @@
 
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React from "react";
+import React, { useEffect } from "react";
 import MenuBar from "./menu-bar";
 import TextAlign from "@tiptap/extension-text-align";
 import Highlight from "@tiptap/extension-highlight";
@@ -49,6 +49,17 @@ export default function RichTextEditor({
       onChange(editor.getHTML());
     },
   });
+
+  // Update editor content when the content prop changes
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content, { emitUpdate: false }); // avoid triggering onUpdate
+    }
+  }, [content, editor]);
+
+  if (!editor) {
+    return null;
+  }
 
   return (
     <div>

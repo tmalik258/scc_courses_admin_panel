@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { fetchInstructors, fetchInstructorById, deleteInstructor, updateInstructor } from "@/actions/instructor-data";
 import { Instructor } from "@/types/instructor";
 
@@ -8,7 +8,7 @@ export function useInstructorData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const refreshInstructors = async () => {
+  const refreshInstructors = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchInstructors();
@@ -23,7 +23,7 @@ export function useInstructorData() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const selectInstructor = async (instructorId: string) => {
     setLoading(true);
@@ -81,10 +81,6 @@ export function useInstructorData() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    refreshInstructors();
-  }, []);
 
   return { instructors, selectedInstructor, setSelectedInstructor, refreshInstructors, selectInstructor, handleDeleteInstructor, handleUpdateInstructor, loading, error };
 }

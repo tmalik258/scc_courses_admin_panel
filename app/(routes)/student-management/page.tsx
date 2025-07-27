@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useStudentData } from "@/hooks/useStudentData";
 import { Search, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,16 @@ import { LumaSpin } from "@/components/luma-spin";
 import { useRouter } from "next/navigation";
 
 const StudentManagementPage: React.FC = () => {
-  const { students, handleDeleteStudent, loading } = useStudentData();
+  const { students, refreshStudents, handleDeleteStudent, loading } =
+    useStudentData();
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    if (students.length === 0) {
+      refreshStudents();
+    }
+  }, [refreshStudents, students.length]);
 
   const filteredStudents = students.filter(
     (student) =>

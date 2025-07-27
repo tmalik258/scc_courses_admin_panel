@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   Plus,
   Search,
@@ -42,12 +42,18 @@ import { DashedSpinner } from "@/components/dashed-spinner";
 
 const CourseManagementPage: React.FC = () => {
   const router = useRouter();
-  const { courses, loading, error } = useCourseData();
+  const { courses, refreshCourses, loading, error } = useCourseData();
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Category");
   const [sortBy, setSortBy] = useState("Recently");
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (courses.length === 0) {
+      refreshCourses();
+    }
+  }, [courses.length, refreshCourses]);
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch = course.title

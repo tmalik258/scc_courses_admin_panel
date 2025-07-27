@@ -160,7 +160,9 @@ export async function DELETE(req: Request) {
     }
 
     await prisma.resources.deleteMany({ where: { course_id: courseId } });
-    await prisma.lessons.deleteMany({ where: { course_id: courseId } });
+    await prisma.lessons.deleteMany({
+      where: { modules: { courseId: courseId } },
+    });
     await prisma.module.deleteMany({ where: { courseId: courseId } });
     await prisma.course.delete({ where: { id: courseId } });
 

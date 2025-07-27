@@ -16,7 +16,6 @@ import {
 } from "next/navigation";
 import { LumaSpin } from "@/components/luma-spin";
 import { useCourseData } from "@/hooks/useCourseData";
-// import { DashedSpinner } from "@/components/dashed-spinner";
 
 const EditCoursePage: React.FC = () => {
   const router = useRouter();
@@ -211,24 +210,6 @@ const EditCoursePage: React.FC = () => {
             {getButtonText()}
           </Button>
         </div> */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-            <h3 className="font-semibold mb-2">Debug Info:</h3>
-            <pre className="text-xs overflow-auto">
-              {/* Add debug info if needed */}
-              {JSON.stringify(
-                {
-                  currentStep,
-                  courseId,
-                  loading,
-                  isUpdating,
-                },
-                null,
-                2
-              )}
-            </pre>
-          </div>
-        )}
       </div>
     </Suspense>
   );

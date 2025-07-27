@@ -31,7 +31,7 @@ import { uploadImage } from "@/utils/supabase/uploadImage";
 import { CheckCircleIcon } from "lucide-react";
 import { type FileWithPreview } from "@/hooks/use-file-upload";
 import { toast } from "sonner";
-import FileUploadWrapper from "@/components/file-upload-wrapper";
+import ImageUploadWrapper from "@/components/image-upload-wrapper";
 import debounce from "lodash.debounce";
 import RichTextEditor from "@/components/rich-text-editor";
 
@@ -77,6 +77,7 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
   } = useCategoryData();
   const {
     instructors,
+    refreshInstructors,
     loading: instructorsLoading,
     error: instructorsError,
   } = useInstructorData();
@@ -92,6 +93,12 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
     },
     mode: "onChange",
   });
+
+  useEffect(() => {
+    if (instructors.length === 0) {
+      refreshInstructors();
+    }
+  }, [instructors, refreshInstructors]);
 
   // Sync form with updated formData prop
   useEffect(() => {
@@ -210,7 +217,10 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
                 <FormItem>
                   <FormLabel>Course Description</FormLabel>
                   <FormControl>
-                    <RichTextEditor content={field.value} onChange={field.onChange} />
+                    <RichTextEditor
+                      content={field.value}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                   <FormDescription
@@ -220,7 +230,7 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
                     {plainTextLength}/1000)
                   </FormDescription>
                 </FormItem>
-              )
+              );
             }}
           />
 
@@ -319,7 +329,7 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
 
             {/* File Upload Component with custom handlers */}
             <div className="relative">
-              <FileUploadWrapper
+              <ImageUploadWrapper
                 onFilesAdded={handleFileUpload}
                 onFileRemove={handleFileRemove}
                 isUploading={isUploading}

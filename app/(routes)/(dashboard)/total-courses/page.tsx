@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { CourseWithRelations } from "@/types/course";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { CoursesHeader } from "./_components/course-header";
@@ -14,8 +14,14 @@ const CoursesPage: React.FC = () => {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { courses } = useCourseData();
+  const { courses, refreshCourses } = useCourseData();
   const router = useRouter();
+
+  useEffect(() => {
+    if (courses.length === 0) {
+      refreshCourses();
+    }
+  }, [courses.length, refreshCourses]);
 
   // Filter courses based on search
   const filteredCourses = courses.filter(

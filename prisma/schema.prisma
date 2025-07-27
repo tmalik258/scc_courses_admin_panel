@@ -178,7 +178,7 @@ model Resources {
   name      String
   url       String
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   courses   Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
 
   @@index([course_id])
@@ -187,13 +187,12 @@ model Resources {
 
 model Lessons {
   id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  course_id  String     @db.Uuid
   title      String
   content    String?
   video_url  String?
   is_free    Boolean    @default(false)
   created_at DateTime   @default(now())
-  updated_at DateTime
+  updated_at DateTime   @updatedAt
   module_id  String     @db.Uuid
   modules    Module     @relation(fields: [module_id], references: [id], onDelete: Cascade)
   progress   Progress[]

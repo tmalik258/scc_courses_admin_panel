@@ -22,7 +22,7 @@ import { useStudentData } from "@/hooks/useStudentData";
 import { useParams } from "next/navigation";
 import { LumaSpin } from "@/components/luma-spin";
 import { toast } from "sonner";
-import FileUploadWrapper from "@/components/file-upload-wrapper";
+import ImageUploadWrapper from "@/components/image-upload-wrapper";
 import { DashedSpinner } from "@/components/dashed-spinner";
 import { FileWithPreview } from "@/hooks/use-file-upload";
 import { uploadImage } from "@/utils/supabase/uploadImage";
@@ -358,7 +358,7 @@ const StudentDetailsPage: React.FC = () => {
 
                 {/* File Upload Component with custom handlers */}
                 <div className="relative">
-                  <FileUploadWrapper
+                  <ImageUploadWrapper
                     onFilesAdded={handleFileUpload}
                     onFileRemove={handleFileRemove}
                     isUploading={isUploading}

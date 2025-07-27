@@ -51,10 +51,10 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
     const addSection = useCallback(() => {
       try {
         appendSection({
-          name: "",
+          title: "",
           content: "",
-          videoUrl: "",
-          isFree: false, // Ensure new lessons have isFree default
+          video_url: "",
+          is_free: false, // Ensure new lessons have is_free default
         });
       } catch (error) {
         console.error("Error adding section:", error);

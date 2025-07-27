@@ -49,7 +49,7 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(
         {/* Section Name */}
         <FormField
           control={form.control}
-          name={`modules.${moduleIndex}.lessons.${sectionIndex}.name`}
+          name={`modules.${moduleIndex}.lessons.${sectionIndex}.title`}
           render={({ field }) => (
             <FormItem>
               <FormControl>
@@ -63,7 +63,7 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(
         {/* Is Free */}
         <FormField
           control={form.control}
-          name={`modules.${moduleIndex}.lessons.${sectionIndex}.isFree`}
+          name={`modules.${moduleIndex}.lessons.${sectionIndex}.is_free`}
           render={({ field }) => (
             <FormItem className="flex items-center space-x-2">
               <FormControl>
@@ -120,7 +120,7 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(
         {/* Video Upload */}
         <FormField
           control={form.control}
-          name={`modules.${moduleIndex}.lessons.${sectionIndex}.videoUrl`}
+          name={`modules.${moduleIndex}.lessons.${sectionIndex}.video_url`}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Video Learning</FormLabel>

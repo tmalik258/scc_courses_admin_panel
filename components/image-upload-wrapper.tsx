@@ -3,7 +3,7 @@ import { type FileWithPreview, useFileUpload } from "@/hooks/use-file-upload"
 import Image from "next/image"
 import { useCallback } from "react"
 
-interface FileUploadWrapperProps {
+interface ImageUploadWrapperProps {
   onFilesAdded: (files: FileWithPreview[]) => void
   onFileRemove: () => void
   isUploading: boolean
@@ -11,7 +11,7 @@ interface FileUploadWrapperProps {
   maxSizeMB: number
 }
 
-const FileUploadWrapper: React.FC<FileUploadWrapperProps> = ({
+const ImageUploadWrapper: React.FC<ImageUploadWrapperProps> = ({
   onFilesAdded,
   onFileRemove,
   isUploading,
@@ -100,4 +100,4 @@ const FileUploadWrapper: React.FC<FileUploadWrapperProps> = ({
   )
 }
 
-export default FileUploadWrapper
+export default ImageUploadWrapper
