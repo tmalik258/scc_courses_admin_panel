@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CourseFormData, CourseWithRelations, CreateCourseFormData } from '@/types/course';
+import { CourseFormData, CourseWithRelations, CourseWithRelationsResponse, CreateCourseFormData } from '@/types/course';
 
 export async function getCourses(): Promise<{ courses: CourseWithRelations[] }> {
   try {
@@ -29,7 +29,7 @@ export async function getCourseById(courseId: string): Promise<CourseWithRelatio
   }
 }
 
-export async function createCourse(data: CreateCourseFormData): Promise<CourseWithRelations> {
+export async function createCourse(data: CreateCourseFormData): Promise<CourseWithRelationsResponse> {
   try {
     const response = await axios.post('/api/courses', { ...data, isPublished: false });
     return response.data;
@@ -57,6 +57,20 @@ export async function updateCourse(courseId: string, data: Partial<CourseFormDat
   }
 }
 
+export async function createModule(courseId: string, data: { title: string; lessons: CourseFormData["modules"][0]["lessons"] }): Promise<CourseWithRelations["modules"][0]> {
+  try {
+    const response = await axios.post(`/api/courses/${courseId}/modules`, data);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error creating module:', error.message);
+    } else {
+      console.error('Error creating module:', error);
+    }
+    throw new Error('Failed to create module', { cause: error });
+  }
+}
+
 export async function updateModule(courseId: string, moduleId: string, data: { title: string; lessons: CourseFormData["modules"][0]["lessons"] }): Promise<CourseWithRelations> {
   try {
     const response = await axios.put(`/api/courses/${courseId}/modules/${moduleId}`, data);
@@ -68,6 +82,19 @@ export async function updateModule(courseId: string, moduleId: string, data: { t
       console.error('Error updating module:', error);
     }
     throw new Error('Failed to update module', { cause: error });
+  }
+}
+
+export async function deleteModule(courseId: string, moduleId: string): Promise<void> {
+  try {
+    await axios.delete(`/api/courses/${courseId}/modules/${moduleId}`);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error deleting module:', error.message);
+    } else {
+      console.error('Error deleting module:', error);
+    }
+    throw new Error('Failed to delete module', { cause: error });
   }
 }
 

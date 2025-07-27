@@ -56,6 +56,7 @@ const AddCoursePage: React.FC = () => {
 
     try {
       const newCourse = await handleCreateCourse(formData);
+      console.log("[AddCoursePage] New course created:", newCourse);
       toast.success("Course saved successfully!");
       router.push(`/course-management/edit/${newCourse.id}?step=2`);
     } catch (err) {

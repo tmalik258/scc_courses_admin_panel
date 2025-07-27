@@ -28,7 +28,6 @@ interface SectionFormProps {
 
 const SectionForm: React.FC<SectionFormProps> = React.memo(
   ({ moduleIndex, sectionIndex, form, isLast, onDelete }) => {
-    // const descriptionPath = `modules.${moduleIndex}.lessons.${sectionIndex}.description`;
 
     return (
       <div className="space-y-4 relative">
@@ -127,7 +126,7 @@ const SectionForm: React.FC<SectionFormProps> = React.memo(
               <FormLabel>Video Learning</FormLabel>
               <FormControl>
                 <VideoUploadField
-                  label={`Section ${moduleIndex + 1}-${sectionIndex + 1} Video`}
+                  // label={`Section ${moduleIndex + 1}-${sectionIndex + 1} Video`}
                   value={field.value}
                   onChange={field.onChange}
                   disabled={form.formState.isSubmitting}

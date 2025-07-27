@@ -16,7 +16,7 @@ import {
 } from "next/navigation";
 import { LumaSpin } from "@/components/luma-spin";
 import { useCourseData } from "@/hooks/useCourseData";
-import { DashedSpinner } from "@/components/dashed-spinner";
+// import { DashedSpinner } from "@/components/dashed-spinner";
 
 const EditCoursePage: React.FC = () => {
   const router = useRouter();
@@ -73,12 +73,12 @@ const EditCoursePage: React.FC = () => {
     router.push("/course-management");
   }, [router]);
 
-  const getButtonText = useCallback(() => {
-    if (currentStep === 3) {
-      return isUpdating ? "Publishing..." : "Save & Publish";
-    }
-    return isUpdating ? "Saving..." : "Continue";
-  }, [currentStep, isUpdating]);
+  // const getButtonText = useCallback(() => {
+  //   if (currentStep === 3) {
+  //     return isUpdating ? "Publishing..." : "Save & Publish";
+  //   }
+  //   return isUpdating ? "Saving..." : "Continue";
+  // }, [currentStep, isUpdating]);
 
   const renderCurrentStep = useCallback(() => {
     switch (currentStep) {
@@ -184,7 +184,7 @@ const EditCoursePage: React.FC = () => {
         <div className="transition-all duration-500 ease-in-out">
           {renderCurrentStep()}
         </div>
-        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+        {/* <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
           <Button
             variant="outline"
             onClick={prevStep}
@@ -210,7 +210,7 @@ const EditCoursePage: React.FC = () => {
             {isUpdating || loading ? <DashedSpinner /> : null}
             {getButtonText()}
           </Button>
-        </div>
+        </div> */}
         {process.env.NODE_ENV === "development" && (
           <div className="mt-8 p-4 bg-gray-100 rounded-lg">
             <h3 className="font-semibold mb-2">Debug Info:</h3>

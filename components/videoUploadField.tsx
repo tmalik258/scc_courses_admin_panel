@@ -16,7 +16,7 @@ interface VideoUploadFieldProps {
 export const VideoUploadField: React.FC<VideoUploadFieldProps> = ({
   value,
   onChange,
-  label = "Video",
+  label = "",
   disabled = false,
 }) => {
   const [videoFile, setVideoFile] = useState<File | null>(null);

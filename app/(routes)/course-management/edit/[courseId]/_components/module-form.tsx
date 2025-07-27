@@ -21,17 +21,21 @@ import { FormField } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SectionForm from "./lesson-form";
+import { DashedSpinner } from "@/components/dashed-spinner";
 
 interface ModuleSectionProps {
   moduleIndex: number;
   form: UseFormReturn<CourseLessonsFormValues>;
   isExpanded: boolean;
+  isUpdating?: boolean;
+  isCreating?: boolean;
   onToggle: () => void;
   onDelete: () => void;
+  onSave: () => void;
 }
 
 const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
-  ({ moduleIndex, form, isExpanded, onToggle, onDelete }) => {
+  ({ moduleIndex, form, isExpanded, isUpdating, isCreating, onToggle, onDelete, onSave }) => {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [tempTitle, setTempTitle] = useState("");
 
@@ -197,8 +201,14 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
                 <Button
                   type="button"
                   size="sm"
-                  className="bg-sky-500 hover:bg-sky-600 text-white"
+                  className="bg-sky-500 hover:bg-sky-600 text-white cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSave();
+                  }}
+                  disabled={ isUpdating || isCreating }
                 >
+                  {isUpdating || isCreating ? <DashedSpinner invert={true} /> : null}
                   Save
                 </Button>
               </div>

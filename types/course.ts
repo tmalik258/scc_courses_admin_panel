@@ -64,6 +64,12 @@ export interface CourseWithRelations extends PrismaCourse {
   resources: { id: string; title: string; url: string }[];
 }
 
+export interface CourseWithRelationsResponse {
+  success: boolean;
+  course: CourseWithRelations;
+}
+
+
 export interface CourseData {
   courses: CourseWithRelations[];
   loading: boolean;
