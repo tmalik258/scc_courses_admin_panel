@@ -49,7 +49,7 @@ export async function signup(formData: FormData) {
       user_id: signUpData.user.id,
       email: data.email,
       fullName: data.fullName,
-      avatarUrl: data.avatarUrl,
+      avatarUrl: data?.avatarUrl ?? null,
       role: "ADMIN",
       isActive: true,
       createdAt: new Date().toISOString(),

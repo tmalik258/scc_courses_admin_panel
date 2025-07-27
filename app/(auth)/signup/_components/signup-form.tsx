@@ -92,7 +92,6 @@ export function SignupForm() {
               id="password"
               type={showPassword ? "text" : "password"}
               name="password"
-              placeholder="sduejdigs52435"
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
               className="w-full pr-10"
@@ -103,7 +102,7 @@ export function SignupForm() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -118,7 +117,6 @@ export function SignupForm() {
               id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
-              placeholder="sduejdigs52435"
               value={formData.confirmPassword}
               onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
               className="w-full pr-10"
@@ -129,7 +127,7 @@ export function SignupForm() {
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showConfirmPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
           </div>
         </div>
