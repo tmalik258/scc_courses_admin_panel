@@ -47,15 +47,19 @@ export async function updateSession(request: NextRequest) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    console.log("No user found, redirecting to login page:", url.toString())
     return NextResponse.redirect(url)
   }
 
-  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
-    // user is logged in, redirect to the home page
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    return NextResponse.redirect(url)
-  }
+  console.log("User found:", user ? user.email : "No user")
+
+  // if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
+  //   // user is logged in, redirect to the home page
+  //   const url = request.nextUrl.clone()
+  //   url.pathname = '/'
+  //   console.log("User is already logged in, redirecting to home page:", url.toString())
+  //   return NextResponse.redirect(url)
+  // }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:

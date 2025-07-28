@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
           });
         } catch (e) {
           console.error("Database error finding profile:", e);
-          redirect("/error?message=Database error");
         }
 
         if (!profileData) {
@@ -52,8 +51,6 @@ export async function GET(request: NextRequest) {
                 avatarUrl: data.user.user_metadata?.picture ?? null,
                 role: "ADMIN",
                 isActive: true,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
               },
             });
           } catch (e) {

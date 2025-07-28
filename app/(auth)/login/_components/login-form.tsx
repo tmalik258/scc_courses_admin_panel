@@ -8,6 +8,7 @@ import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { login } from "@/actions/auth";
 import { toast } from "sonner";
+import { DashedSpinner } from "@/components/dashed-spinner";
 // import GoogleSigninButton from "../../_components/google-signin-button"
 // import Divider from "@/components/divider"
 
@@ -17,6 +18,7 @@ export function LoginForm() {
     email: "",
     password: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -26,9 +28,18 @@ export function LoginForm() {
   };
 
   const handleSubmit = async (formData: FormData) => {
-    const result = await login(formData);
-    if (result?.error) {
-      toast.error(result.error);
+    try {
+      setIsSubmitting(true);
+      // Call the login action
+      const result = await login(formData);
+      if (result?.error) {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      console.error("Login submission error:", error);
+      toast.error("Login failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -96,8 +107,10 @@ export function LoginForm() {
         {/* Login Button */}
         <Button
           type="submit"
-          className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm"
+          className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isSubmitting}
         >
+          {isSubmitting ? <DashedSpinner /> : null}
           Log in
         </Button>
 

@@ -1,56 +1,71 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Eye, EyeOff } from "lucide-react"
-import Link from "next/link"
-import { signup } from "@/actions/auth"
-import { toast } from "sonner"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
+import { signup } from "@/actions/auth";
+import { toast } from "sonner";
+import { DashedSpinner } from "@/components/dashed-spinner";
 
 export function SignupForm() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
-  })
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = async (formData: FormData) => {
-    const password = formData.get("password") as string
-    const confirmPassword = formData.get("confirmPassword") as string
+    try {
+      setIsSubmitting(true);
+      const password = formData.get("password") as string;
+      const confirmPassword = formData.get("confirmPassword") as string;
 
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
-      return
-    }
+      if (password !== confirmPassword) {
+        toast.error("Passwords do not match");
+        return;
+      }
 
-    const result = await signup(formData)
-    if (result?.error) {
-      toast.error(result.error)
+      const result = await signup(formData);
+      if (result?.error) {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      console.error("Signup submission error:", error);
+      toast.error("Signup failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2">Sign up</h1>
+        <h1 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2">
+          Sign up
+        </h1>
       </div>
 
       <form className="space-y-4" action={handleSubmit}>
         {/* Name Field */}
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Name
           </label>
           <Input
@@ -67,7 +82,10 @@ export function SignupForm() {
 
         {/* Email Field */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Email
           </label>
           <Input
@@ -84,7 +102,10 @@ export function SignupForm() {
 
         {/* Password Field */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Password
           </label>
           <div className="relative">
@@ -102,14 +123,21 @@ export function SignupForm() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              {showPassword ? (
+                <Eye className="w-4 h-4" />
+              ) : (
+                <EyeOff className="w-4 h-4" />
+              )}
             </button>
           </div>
         </div>
 
         {/* Confirm Password Field */}
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="confirmPassword"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Confirm Password
           </label>
           <div className="relative">
@@ -118,7 +146,9 @@ export function SignupForm() {
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               value={formData.confirmPassword}
-              onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("confirmPassword", e.target.value)
+              }
               className="w-full pr-10"
               required
             />
@@ -127,7 +157,11 @@ export function SignupForm() {
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              {showConfirmPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              {showConfirmPassword ? (
+                <Eye className="w-4 h-4" />
+              ) : (
+                <EyeOff className="w-4 h-4" />
+              )}
             </button>
           </div>
         </div>
@@ -147,18 +181,29 @@ export function SignupForm() {
         {/* Sign up Button */}
         <Button
           type="submit"
-          className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm"
+          className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={
+            !formData.fullName ||
+            !formData.email ||
+            !formData.password ||
+            !formData.confirmPassword ||
+            isSubmitting
+          }
         >
+          {isSubmitting ? <DashedSpinner /> : null}
           Sign up
         </Button>
       </form>
 
       <div className="text-center max-md:text-sm">
         <span className="text-gray-600">Have an account? </span>
-        <Link href="/login" className="text-aqua-mist hover:text-aqua-depth font-medium">
+        <Link
+          href="/login"
+          className="text-aqua-mist hover:text-aqua-depth font-medium"
+        >
           Log in
         </Link>
       </div>
     </div>
-  )
+  );
 }

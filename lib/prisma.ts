@@ -1,9 +1,6 @@
 import { PrismaClient as GeneratedPrismaClient } from "./generated/prisma";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
-// Set max listeners to avoid warnings
-process.setMaxListeners(20);
-
 // Extend the client type inline
 const prismaClient = new GeneratedPrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
