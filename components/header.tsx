@@ -23,7 +23,6 @@ import { useRouter } from "nextjs-toploader/app";
 import { signout } from "@/actions/auth";
 import { createClient } from "@/utils/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { redirect } from "next/navigation";
 import { toast } from "sonner";
 import { DashedSpinner } from "./dashed-spinner";
 
@@ -37,10 +36,8 @@ const Header = () => {
   useEffect(() => {
     // Initial fetch of user
     const fetchUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data?.user) {
-        redirect("/login");
-      } else {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
         setUser(data.user);
       }
     };

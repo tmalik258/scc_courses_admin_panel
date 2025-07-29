@@ -10,7 +10,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="min-h-screen flex max-md:flex-col max-md:bg-sky-ice">
+      <div className="min-h-[calc(100vh-5.05em)] flex max-md:flex-col max-md:bg-sky-ice">
         {/* Left Side - Illustration */}
         <div className="flex lg:w-1/2 md:bg-green-50 items-center justify-center p-4 md:p-8">
           <div className="max-w-md w-full">

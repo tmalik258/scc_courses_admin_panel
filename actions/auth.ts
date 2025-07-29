@@ -89,8 +89,13 @@ export async function signup(formData: FormData) {
     console.log("User data:", signUpData.user);
     let profileData;
     try {
-      profileData = await prisma.profile.findUnique({
-        where: { userId: signUpData.user.id },
+      profileData = await prisma.profile.findFirst({
+        where: {
+          OR: [
+            { userId: signUpData.user.id },
+            { email: signUpData.user.email },
+          ],
+        },
       });
     } catch (e) {
       console.error("Database error finding profile:", e);
@@ -109,7 +114,7 @@ export async function signup(formData: FormData) {
               "Unknown User",
             avatarUrl: signUpData.user.user_metadata?.picture ?? null,
             role: "ADMIN",
-            isActive: true
+            isActive: true,
           },
         });
       } catch (e) {
@@ -122,8 +127,7 @@ export async function signup(formData: FormData) {
     return { error: "No user data in session" };
   }
 
-  revalidatePath("/", "layout");
-  redirect("/");
+  return { success: "Verification email sent. Please check your inbox." };
 }
 
 export async function signout() {

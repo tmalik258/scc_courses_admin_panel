@@ -1,43 +1,59 @@
 "use client";
 
-import type React from "react";
-import { useState } from "react";
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { login } from "@/actions/auth";
 import { toast } from "sonner";
 import { DashedSpinner } from "@/components/dashed-spinner";
-// import GoogleSigninButton from "../../_components/google-signin-button"
-// import Divider from "@/components/divider"
+
+// Define the form schema using Zod
+const formSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" }),
+});
 
 export function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+  const [showPassword, setShowPassword] = React.useState(false);
+
+  // Initialize react-hook-form with Zod validation
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    const formData = new FormData();
+    formData.append("email", data.email);
+    formData.append("password", data.password);
 
-  const handleSubmit = async (formData: FormData) => {
-    setIsSubmitting(true);
     const result = await login(formData);
     if (result?.error) {
       console.error("Login submission error:", result.error);
       toast.error(result.error);
-    } else {
-      toast.success("Login successful!");
     }
 
-    if (result) setIsSubmitting(false);
+    if (result && !result.error) {
+      toast.success("Login successful!");
+    }
   };
 
   return (
@@ -48,76 +64,78 @@ export function LoginForm() {
         </h1>
       </div>
 
-      <form className="space-y-4" action={handleSubmit}>
-        {/* Email Field */}
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Email
-          </label>
-          <Input
-            id="email"
-            type="email"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Email Field */}
+          <FormField
+            control={form.control}
             name="email"
-            value={formData.email}
-            onChange={(e) => handleInputChange("email", e.target.value)}
-            className="w-full"
-            required
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    {...field}
+                    className="w-full"
+                    disabled={form.formState.isSubmitting}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        {/* Password Field */}
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-2"
+          {/* Password Field */}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      {...field}
+                      className="w-full pr-10"
+                      disabled={form.formState.isSubmitting}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    >
+                      {showPassword ? (
+                        <Eye className="w-4 h-4" />
+                      ) : (
+                        <EyeOff className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Login Button */}
+          <Button
+            type="submit"
+            className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={form.formState.isSubmitting}
           >
-            Password
-          </label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
-              onChange={(e) => handleInputChange("password", e.target.value)}
-              className="w-full pr-10"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              {showPassword ? (
-                <Eye className="w-4 h-4" />
-              ) : (
-                <EyeOff className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </div>
+            {form.formState.isSubmitting ? <>
+              <DashedSpinner invert={true} /> Logging in...
+            </> : "Log in"}
+          </Button>
+        </form>
+      </Form>
 
-        {/* Login Button */}
-        <Button
-          type="submit"
-          className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? <DashedSpinner /> : null}
-          Log in
-        </Button>
-
-        {/* Divider */}
-        {/* <Divider text="atau" /> */}
-
-        {/* Google Sign up */}
-        {/* <GoogleSigninButton /> */}
-      </form>
-
-      {/* Sign up Link */}
       <div className="text-center max-md:text-sm">
         <span className="text-gray-600">Haven&apos;t an account? </span>
         <Link

@@ -53,8 +53,6 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  console.log("User found:", user ? user.email : "No user");
-
   // if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
   //   // user is logged in, redirect to the home page
   //   const url = request.nextUrl.clone()

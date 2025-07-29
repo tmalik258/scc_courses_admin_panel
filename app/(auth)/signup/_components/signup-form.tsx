@@ -1,51 +1,76 @@
 "use client";
 
-import type React from "react";
-import { useState } from "react";
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { signup } from "@/actions/auth";
 import { toast } from "sonner";
 import { DashedSpinner } from "@/components/dashed-spinner";
+import { redirect } from "next/navigation";
+
+// Define the form schema using Zod
+const formSchema = z
+  .object({
+    fullName: z
+      .string()
+      .min(2, { message: "Name must be at least 2 characters" }),
+    email: z.string().email({ message: "Please enter a valid email address" }),
+    password: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters" }),
+    confirmPassword: z
+      .string()
+      .min(6, { message: "Confirm Password must be at least 6 characters" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export function SignupForm() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
+  // Initialize react-hook-form with Zod validation
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleSubmit = async (formData: FormData) => {
-    setIsSubmitting(true);
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    const formData = new FormData();
+    formData.append("fullName", data.fullName);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+    formData.append("confirmPassword", data.confirmPassword);
 
     const result = await signup(formData);
     if (result?.error) {
       console.error("Signup submission error:", result.error);
       toast.error(result.error);
-    } else {
-      toast.success("Signup successful! Please log in.");
     }
-    if (result) setIsSubmitting(false);
+    if (result?.success) {
+      toast.success(result.success);
+      redirect("/login")
+    }
   };
 
   return (
@@ -56,141 +81,146 @@ export function SignupForm() {
         </h1>
       </div>
 
-      <form className="space-y-4" action={handleSubmit}>
-        {/* Name Field */}
-        <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Name
-          </label>
-          <Input
-            id="name"
-            type="text"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Name Field */}
+          <FormField
+            control={form.control}
             name="fullName"
-            placeholder="Name"
-            value={formData.fullName}
-            onChange={(e) => handleInputChange("fullName", e.target.value)}
-            className="w-full"
-            required
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Enter your name"
+                    {...field}
+                    className="w-full"
+                    disabled={form.formState.isSubmitting}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        {/* Email Field */}
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Email
-          </label>
-          <Input
-            id="email"
-            type="email"
+          {/* Email Field */}
+          <FormField
+            control={form.control}
             name="email"
-            placeholder="abcd@gmail.com"
-            value={formData.email}
-            onChange={(e) => handleInputChange("email", e.target.value)}
-            className="w-full"
-            required
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    {...field}
+                    className="w-full"
+                    disabled={form.formState.isSubmitting}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        {/* Password Field */}
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Password
-          </label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
-              onChange={(e) => handleInputChange("password", e.target.value)}
-              className="w-full pr-10"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          {/* Password Field */}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      {...field}
+                      className="w-full pr-10"
+                      disabled={form.formState.isSubmitting}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    >
+                      {showPassword ? (
+                        <Eye className="w-4 h-4" />
+                      ) : (
+                        <EyeOff className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Confirm Password Field */}
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm your password"
+                      {...field}
+                      className="w-full pr-10"
+                      disabled={form.formState.isSubmitting}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    >
+                      {showConfirmPassword ? (
+                        <Eye className="w-4 h-4" />
+                      ) : (
+                        <EyeOff className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Terms Agreement */}
+          <div className="text-sm text-gray-600">
+            By creating an account, you agree to our{" "}
+            <Link
+              href="#service-policy"
+              className="text-aqua-mist hover:text-aqua-depth"
             >
-              {showPassword ? (
-                <Eye className="w-4 h-4" />
-              ) : (
-                <EyeOff className="w-4 h-4" />
-              )}
-            </button>
+              Service Policy
+            </Link>
+            .
           </div>
-        </div>
 
-        {/* Confirm Password Field */}
-        <div>
-          <label
-            htmlFor="confirmPassword"
-            className="block text-sm font-medium text-gray-700 mb-2"
+          {/* Sign up Button */}
+          <Button
+            type="submit"
+            className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={form.formState.isSubmitting}
           >
-            Confirm Password
-          </label>
-          <div className="relative">
-            <Input
-              id="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                handleInputChange("confirmPassword", e.target.value)
-              }
-              className="w-full pr-10"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              {showConfirmPassword ? (
-                <Eye className="w-4 h-4" />
-              ) : (
-                <EyeOff className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Terms Agreement */}
-        <div className="text-sm text-gray-600">
-          By creating an account, you agree to our{" "}
-          <Link
-            href="#service-policy"
-            className="text-aqua-mist hover:text-aqua-depth"
-          >
-            Service Policy
-          </Link>
-          .
-        </div>
-
-        {/* Sign up Button */}
-        <Button
-          type="submit"
-          className="w-full bg-aqua-mist hover:bg-aqua-depth text-white py-3 max-md:text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={
-            !formData.fullName ||
-            !formData.email ||
-            !formData.password ||
-            !formData.confirmPassword ||
-            isSubmitting
-          }
-        >
-          {isSubmitting ? <DashedSpinner /> : null}
-          Sign up
-        </Button>
-      </form>
+            {form.formState.isSubmitting ? <><DashedSpinner invert={true} /> Signing up</> : "Sign up"}
+          </Button>
+        </form>
+      </Form>
 
       <div className="text-center max-md:text-sm">
         <span className="text-gray-600">Have an account? </span>
