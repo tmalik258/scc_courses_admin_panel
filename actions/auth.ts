@@ -23,8 +23,13 @@ export async function login(formData: FormData) {
     console.log("User data:", signInData.user);
     let profileData;
     try {
-      profileData = await prisma.profile.findUnique({
-        where: { userId: signInData.user.id },
+      profileData = await prisma.profile.findFirst({
+        where: {
+          OR: [
+            { userId: signInData.user.id },
+            { email: signInData.user.email },
+          ],
+        },
       });
     } catch (e) {
       console.error("Database error finding profile:", e);
