@@ -61,8 +61,6 @@ export async function login(formData: FormData) {
     return { error: error.message };
   }
 
-  console.log("Login successful for user:", data.email);
-
   revalidatePath("/", "layout");
   redirect("/");
 }
@@ -83,6 +81,7 @@ export async function signup(formData: FormData) {
   });
 
   if (signUpError) {
+    console.error("Sign up error:", signUpError.message);
     return { error: signUpError.message };
   }
 

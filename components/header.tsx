@@ -23,24 +23,42 @@ import { useRouter } from "nextjs-toploader/app";
 import { signout } from "@/actions/auth";
 import { createClient } from "@/utils/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { redirect } from "next/navigation";
+import { toast } from "sonner";
+import { DashedSpinner } from "./dashed-spinner";
 
 const Header = () => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
+    // Initial fetch of user
     const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user) {
+        redirect("/login");
+      } else {
+        setUser(data.user);
       }
     };
     fetchUser();
-  }, [supabase.auth]);
+
+    // Subscribe to auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (event === "SIGNED_OUT") {
+        router.push("/login");
+      }
+    });
+
+    // Cleanup subscription
+    return () => subscription.unsubscribe();
+  }, [supabase.auth, router]);
 
   const handleRedirect = (path: string) => {
     router.push(path);
@@ -83,6 +101,15 @@ const Header = () => {
       href: "/payment-management",
     },
   ];
+
+  const handleSignout = async () => {
+    setIsLoggingOut(true);
+    const result = await signout();
+    if (result?.error) {
+      toast.error(result.error);
+    }
+    setIsLoggingOut(false);
+  };
 
   return (
     <>
@@ -137,16 +164,18 @@ const Header = () => {
           {user ? (
             // Admin Dropdown
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center space-x-2 focus:outline-none">
+              <DropdownMenuTrigger className="flex items-center space-x-2 focus:outline-none cursor-pointer">
                 <Image
-                  src={ user?.app_metadata?.avatar_url || "/images/profile.jpg"}
+                  src={user?.app_metadata?.avatar_url || "/images/profile.jpg"}
                   width={30}
                   height={30}
                   decoding="async"
                   className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-cover object-top"
                   alt="Profile"
                 />
-                <span className="text-gray-700 hidden md:block">{user?.app_metadata?.full_name}</span>
+                <span className="text-gray-700 hidden md:block">
+                  {user?.app_metadata?.full_name}
+                </span>
                 <svg
                   className="w-4 h-4 text-gray-400 hidden md:block"
                   fill="none"
@@ -164,11 +193,15 @@ const Header = () => {
               <DropdownMenuContent align="end" className="!all-[initial]">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
+                {/* <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Billing</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600" onClick={signout}>
+                <DropdownMenuItem>Billing</DropdownMenuItem> */}
+                {/* <DropdownMenuSeparator /> */}
+                <DropdownMenuItem
+                  className="text-red-600 cursor-pointer"
+                  onClick={handleSignout}
+                >
+                  {isLoggingOut && <DashedSpinner className="mr-2" />}
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

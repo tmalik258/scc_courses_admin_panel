@@ -29,26 +29,23 @@ export function SignupForm() {
   };
 
   const handleSubmit = async (formData: FormData) => {
-    try {
-      setIsSubmitting(true);
-      const password = formData.get("password") as string;
-      const confirmPassword = formData.get("confirmPassword") as string;
+    setIsSubmitting(true);
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
 
-      if (password !== confirmPassword) {
-        toast.error("Passwords do not match");
-        return;
-      }
-
-      const result = await signup(formData);
-      if (result?.error) {
-        toast.error(result.error);
-      }
-    } catch (error) {
-      console.error("Signup submission error:", error);
-      toast.error("Signup failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
     }
+
+    const result = await signup(formData);
+    if (result?.error) {
+      console.error("Signup submission error:", result.error);
+      toast.error(result.error);
+    } else {
+      toast.success("Signup successful! Please log in.");
+    }
+    if (result) setIsSubmitting(false);
   };
 
   return (

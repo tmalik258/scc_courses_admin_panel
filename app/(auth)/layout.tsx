@@ -22,7 +22,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
                   width={200}
                   height={200}
                   decoding="async"
-                  className="w-32 h-auto md:w-52 md:h-28 object-contain"
+                  className="w-28 h-auto md:w-28 md:h-24 object-contain"
                   alt="logo"
                 />
               </div>
@@ -31,7 +31,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
             <div className="relative max-md:hidden">
               <svg
                 width="462"
-                height="480"
+                height="400"
                 viewBox="0 0 462 480"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"

@@ -28,19 +28,16 @@ export function LoginForm() {
   };
 
   const handleSubmit = async (formData: FormData) => {
-    try {
-      setIsSubmitting(true);
-      // Call the login action
-      const result = await login(formData);
-      if (result?.error) {
-        toast.error(result.error);
-      }
-    } catch (error) {
-      console.error("Login submission error:", error);
-      toast.error("Login failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    setIsSubmitting(true);
+    const result = await login(formData);
+    if (result?.error) {
+      console.error("Login submission error:", result.error);
+      toast.error(result.error);
+    } else {
+      toast.success("Login successful!");
     }
+
+    if (result) setIsSubmitting(false);
   };
 
   return (
@@ -64,7 +61,6 @@ export function LoginForm() {
             id="email"
             type="email"
             name="email"
-            placeholder="abcd@gmail.com"
             value={formData.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
             className="w-full"
