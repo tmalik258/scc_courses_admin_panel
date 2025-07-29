@@ -34,28 +34,16 @@ const Header = () => {
   const supabase = createClient();
 
   useEffect(() => {
-    // Initial fetch of user
-    const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user);
-      }
-    };
-    fetchUser();
-
     // Subscribe to auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (event === "SIGNED_OUT") {
-        router.push("/login");
-      }
     });
 
     // Cleanup subscription
     return () => subscription.unsubscribe();
-  }, [supabase.auth, router]);
+  }, [supabase.auth]);
 
   const handleRedirect = (path: string) => {
     router.push(path);
