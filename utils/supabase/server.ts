@@ -15,7 +15,14 @@ export async function createClient() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, {
+                ...options,
+                secure: true,
+                sameSite: "lax",
+                httpOnly: true,
+                path: "/",
+                domain: "scc-admin-panel.web.app", // Explicitly set custom domain
+              })
             );
           } catch {
             // The `setAll` method was called from a Server Component.
@@ -27,6 +34,7 @@ export async function createClient() {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
+        detectSessionInUrl: true,
       },
     }
   );

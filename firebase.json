@@ -9,6 +9,36 @@
     ],
     "frameworksBackend": {
       "region": "us-central1"
-    }
+    },
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "ssrsccadminpanel",
+        "region": "us-central1"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          },
+          {
+            "key": "Set-Cookie",
+            "value": "Secure; HttpOnly; SameSite=Lax; Path=/; Domain=scc-admin-panel.web.app"
+          },
+          {
+            "key": "Access-Control-Allow-Credentials",
+            "value": "true"
+          },
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "https://scc-admin-panel.web.app"
+          }
+        ]
+      }
+    ]
   }
 }

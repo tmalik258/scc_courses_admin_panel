@@ -1,6 +1,5 @@
-// app/api/transactions/route.ts
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/server";
 
 // Define the shape of the transaction response
 interface Transaction {
@@ -37,6 +36,8 @@ export async function GET(request: Request) {
     const studentId = searchParams.get("studentId");
     const courseId = searchParams.get("courseId");
     const status = searchParams.get("status");
+
+    const supabase = await createClient();
 
     // Build the query
     let query = supabase.from("purchases").select(`
