@@ -3,17 +3,21 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  // serverExternalPackages: ["@prisma/client", "prisma"],
-  // webpack: (config, { isServer }) => {
-  //   // if (isServer) {
-  //   //   config.externals.push("@prisma/client");
-  //   // }
-  //   if (!isServer) {
-  //     // Ensure that all imports of 'yjs' resolve to the same instance
-  //     config.resolve.alias["yjs"] = path.resolve(__dirname, "node_modules/yjs");
-  //   }
-  //   return config;
-  // },
+  serverExternalPackages: ["@supabase/ssr"],
+
+  // Webpack configuration to handle memory leaks
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Increase max listeners for server-side rendering
+      config.externals = config.externals || [];
+      config.externals.push({
+        'utf-8-validate': 'commonjs utf-8-validate',
+        'bufferutil': 'commonjs bufferutil',
+      });
+    }
+    return config;
+  },
+
   images: {
     remotePatterns: [
       {

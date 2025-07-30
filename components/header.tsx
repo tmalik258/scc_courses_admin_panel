@@ -34,15 +34,11 @@ const Header = () => {
   const supabase = createClient();
 
   useEffect(() => {
-    // Subscribe to auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Cleanup subscription
-    return () => subscription.unsubscribe();
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) return;
+      setUser(data.user);
+    })();
   }, [supabase.auth]);
 
   const handleRedirect = (path: string) => {

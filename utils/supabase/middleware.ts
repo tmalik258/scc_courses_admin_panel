@@ -1,10 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Increase the limit to prevent memory leak warnings in serverless environment
+if (typeof process !== "undefined" && process.setMaxListeners) {
+  process.setMaxListeners(20);
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  // Skip middleware for static files and API routes
+  if (
+    request.nextUrl.pathname.startsWith("/_next") ||
+    request.nextUrl.pathname.startsWith("/api/") ||
+    request.nextUrl.pathname.match(
+      /\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2)$/
+    ) ||
+    request.nextUrl.pathname === "/favicon.ico"
+  ) {
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,8 +29,7 @@ export async function updateSession(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          const cookies = request.cookies.getAll();
-          return cookies;
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
@@ -23,56 +39,65 @@ export async function updateSession(request: NextRequest) {
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, {
+              ...options,
+              secure: true,
+              sameSite: "lax",
+              httpOnly: true,
+            })
           );
         },
       },
     }
   );
 
-  // Do not run code between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
+  // Define public routes
+  const publicRoutes = ["/login", "/signup", "/auth", "/error"];
+  const isPublicRoute = publicRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route)
+  );
 
-  // IMPORTANT: DO NOT REMOVE auth.getUser()
-
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
-
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth") &&
-    !request.nextUrl.pathname.startsWith("/error") &&
-    !request.nextUrl.pathname.startsWith("/signup")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    console.log("No user found, redirecting to login page:", url.toString());
-    return NextResponse.redirect(url);
+  // For public routes, just refresh the session without redirecting
+  if (isPublicRoute) {
+    try {
+      await supabase.auth.getUser();
+    } catch {
+      // Ignore errors on public routes
+    }
+    return supabaseResponse;
   }
 
-  // if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
-  //   // user is logged in, redirect to the home page
-  //   const url = request.nextUrl.clone()
-  //   url.pathname = '/'
-  //   console.log("User is already logged in, redirecting to home page:", url.toString())
-  //   return NextResponse.redirect(url)
-  // }
+  // For protected routes, check authentication
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (data.session) {
+      await supabase.auth.refreshSession();
+    }
+    if (error) {
+      console.error("Session refresh error:", error.message);
+      // const url = request.nextUrl.clone();
+      // url.pathname = "/login";
+      // return NextResponse.redirect(url);
+    }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is.
-  // If you're creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  return supabaseResponse;
+    if (userError || !user) {
+      console.log("Authentication failed, redirecting to login:", userError?.message, userError?.status, userError?.code);
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+
+    // User is authenticated, allow access
+    return supabaseResponse;
+  } catch (error) {
+    console.error("Middleware auth error:", error);
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
 }
