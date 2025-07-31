@@ -11,45 +11,46 @@ datasource db {
 }
 
 model Profile {
-  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId            String          @unique @map("user_id") @db.Uuid
-  email             String?         @unique
-  fullName          String?         @map("full_name")
-  avatarUrl         String?         @map("avatar_url")
-  role              Role            @default(STUDENT)
-  bio               String?
-  phone             String?
-  isActive          Boolean         @default(true) @map("is_active")
-  createdAt         DateTime        @default(now()) @map("created_at")
-  updatedAt         DateTime        @updatedAt @map("updated_at")
-  certificates      Certificate[]
-  instructorCourses Course[]        @relation("CourseInstructor")
-  paypalCustomer    PaypalCustomer?
-  progress          Progress[]
-  purchases         Purchase[]
-  reviews           Review[]
+  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId               String        @unique @map("user_id") @db.Uuid
+  email                String?       @unique
+  fullName             String?       @map("full_name")
+  avatarUrl            String?       @map("avatar_url")
+  role                 Role          @default(STUDENT)
+  bio                  String?
+  phone                String?
+  isActive             Boolean       @default(true) @map("is_active")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+  certificates         Certificate[]
+  instructorCourses    Course[]      @relation("CourseInstructor")
+  progress             Progress[]
+  purchases            Purchase[]
+  reviews              Review[]
+  courses_SavedCourses Course[]      @relation("SavedCourses")
 
   @@map("profiles")
 }
 
 model Course {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title        String
-  description  String?
-  instructorId String        @map("instructor_id") @db.Uuid
-  categoryId   String        @map("category_id") @db.Uuid
-  thumbnailUrl String?       @map("thumbnail_url")
-  price        Decimal?      @db.Decimal(10, 2)
-  isPublished  Boolean       @default(false) @map("is_published")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
-  certificates Certificate[]
-  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  instructor   Profile       @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: Cascade)
-  modules      Module[]
-  purchases    Purchase[]
-  resources    Resources[]
-  reviews      Review[]
+  id                    String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                 String
+  description           String?
+  instructorId          String        @map("instructor_id") @db.Uuid
+  categoryId            String        @map("category_id") @db.Uuid
+  thumbnailUrl          String?       @map("thumbnail_url")
+  price                 Decimal?      @db.Decimal(10, 2)
+  isPublished           Boolean       @default(false) @map("is_published")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+  certificates          Certificate[]
+  category              Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  instructor            Profile       @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: Cascade)
+  modules               Module[]
+  purchases             Purchase[]
+  resources             Resources[]
+  reviews               Review[]
+  profiles_SavedCourses Profile[]     @relation("SavedCourses")
 
   @@map("courses")
 }
@@ -149,17 +150,6 @@ model Invoice {
   @@map("invoices")
 }
 
-model PaypalCustomer {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId        String   @unique @map("student_id") @db.Uuid
-  paypalCustomerId String   @unique
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  student          Profile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@map("paypal_customers")
-}
-
 model Module {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   courseId  String    @map("course_id") @db.Uuid
@@ -173,12 +163,12 @@ model Module {
 }
 
 model Resources {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   course_id String   @db.Uuid
   name      String
   url       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   courses   Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
 
   @@index([course_id])
