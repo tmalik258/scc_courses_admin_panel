@@ -137,9 +137,9 @@ model Invoice {
   purchaseId    String   @unique @map("purchase_id") @db.Uuid
   invoiceNumber String   @unique @map("invoice_number")
   paymentDate   DateTime @map("payment_date")
-  paymentMethod PaymentMethod  @map("payment_method")
+  paymentMethod String   @map("payment_method")
   totalAmount   Decimal  @map("total_amount") @db.Decimal(10, 2)
-  status        PaymentStatus  @default(SUCCESS) @map("status") 
+  status        String   @default("SUCCESS") @map("status")
   category      String?
   courseName    String   @map("course_name")
   studentName   String   @map("student_name")
@@ -194,15 +194,4 @@ enum Role {
   STUDENT
   INSTRUCTOR
   ADMIN
-}
-
-enum PaymentMethod {
-  PAYPAL
-  RAZORPAY
-}
-
-enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
 }
