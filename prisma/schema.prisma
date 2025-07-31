@@ -27,7 +27,7 @@ model Profile {
   progress             Progress[]
   purchases            Purchase[]
   reviews              Review[]
-  courses_SavedCourses Course[]      @relation("SavedCourses")
+  savedCourses         Course[]      @relation("SavedCourses")
 
   @@map("profiles")
 }
@@ -50,7 +50,7 @@ model Course {
   purchases             Purchase[]
   resources             Resources[]
   reviews               Review[]
-  profiles_SavedCourses Profile[]     @relation("SavedCourses")
+  savedBy               Profile[]     @relation("SavedCourses")
 
   @@map("courses")
 }
