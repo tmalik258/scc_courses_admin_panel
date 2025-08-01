@@ -72,6 +72,7 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
 
   const {
     categories,
+    refreshCategories,
     loading: categoryLoading,
     error: categoryError,
   } = useCategoryData();
@@ -99,6 +100,12 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
       refreshInstructors();
     }
   }, [instructors, refreshInstructors]);
+
+  useEffect(() => {
+    if (categories.length === 0) {
+      refreshCategories();
+    }
+  }, [categories, refreshCategories]);
 
   // Sync form with updated formData prop
   useEffect(() => {

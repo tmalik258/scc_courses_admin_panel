@@ -32,6 +32,21 @@ export async function getCategoryById(id: string): Promise<CategoryResponse> {
   }
 }
 
+export async function createCategory(data: Category): Promise<CategoryResponse> {
+  try {
+    const response = await axios.post("/api/categories", data);
+    return response.data;
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error("Error creating category:", err.message);
+      throw new Error("Failed to create category: " + err.message);
+    } else {
+      console.error("Unknown error creating category:", err);
+      throw new Error("Failed to create category due to unknown error.");
+    }
+  }
+}
+
 export async function updateCategory(
   id: string,
   data: Partial<Category>

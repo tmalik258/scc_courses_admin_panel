@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  createCategory,
   deleteCategory,
   getAllCategories,
   getCategoryById,
@@ -18,6 +19,7 @@ export const useCategoryData = () => {
     null
   );
   const [loading, setLoading] = useState<boolean>(true);
+  const [creating, setCreating] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [updating, setUpdating] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
@@ -57,6 +59,36 @@ export const useCategoryData = () => {
       setLoading(false);
     }
   }, []);
+
+  const handleCreateCategory = useCallback(
+    async (
+      values: z.infer<typeof formSchema>,
+    ) => {
+      try {
+        setCreating(true);
+        const { data } = await createCategory({
+          ...values,
+          slug: values.name.toLowerCase().replace(/\s+/g, "-"),
+        });
+
+        toast.success("Category updated successfully");
+        return true;
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err);
+          toast.error(err.message);
+        } else {
+          setError(new Error("Unknown error"));
+          toast.error("Failed to update category");
+        }
+        console.error("Error updating category:", err);
+        return false;
+      } finally {
+        setCreating(false);
+      }
+    },
+    []
+  );
 
   const handleDeleteCategory = useCallback(
     async (categoryId: string) => {
@@ -115,10 +147,12 @@ export const useCategoryData = () => {
     categories,
     selectedCategory,
     selectCategory,
+    handleCreateCategory,
     handleDeleteCategory,
     handleUpdateCategory,
     refreshCategories,
     loading,
+    creating,
     deleting,
     updating,
     error,
