@@ -12,7 +12,7 @@ import ModuleSection from "./module-form";
 import { useFieldArray } from "react-hook-form";
 import { Plus } from "lucide-react";
 import { DashedSpinner } from "@/components/dashed-spinner";
-import { CourseLessonsFormValues, moduleSchema } from "@/types/course";
+import { CourseLessonsFormValues, moduleSchema } from "@/form-schemas/course";
 
 interface CourseLessonsStepProps {
   onNext: () => void;

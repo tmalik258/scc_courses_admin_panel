@@ -24,7 +24,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <Header />
       <div className="flex">
         <Sidebar onNavigate={handleNavigate} />
-        <main className="flex-1 p-6 pt-0">
+        <main className="flex-1 p-6 pt-0 w-full">
           {isPending ? <div className="flex items-center justify-center h-full"><LumaSpin /></div> : children}
         </main>
       </div>

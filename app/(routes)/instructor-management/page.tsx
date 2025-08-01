@@ -52,7 +52,7 @@ const InstructorManagementPage: React.FC = () => {
     );
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 px-2 max-w-4xl">
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Header */}
@@ -77,8 +77,8 @@ const InstructorManagementPage: React.FC = () => {
       </div>
 
       {/* Instructor Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden w-full">
+        <div className="overflow-x-auto w-full">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>

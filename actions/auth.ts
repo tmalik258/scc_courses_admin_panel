@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
-import { cookies } from "next/headers";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -19,19 +18,6 @@ export async function login(formData: FormData) {
   const { data: signInData, error } = await supabase.auth.signInWithPassword(
     data
   );
-
-  if (signInData?.session) {
-    await supabase.auth.setSession(signInData.session);
-    console.log("Login: Session set, cookie:", signInData.session.access_token.substring(0, 20) + "...");
-    const cookieStore = await cookies();
-    console.log(
-      "Login: Cookies after setSession:",
-      cookieStore.getAll().map((c) => ({
-        name: c.name,
-        value: c.value.substring(0, 20) + "...",
-      }))
-    );
-  }
 
   if (signInData?.user) {
     console.log("User data:", signInData.user);

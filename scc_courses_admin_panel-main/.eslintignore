@@ -1,6 +1,0 @@
-lib/generated/
-prisma/generated/
-**/*.wasm.js
-node_modules/
-.next/
-out/

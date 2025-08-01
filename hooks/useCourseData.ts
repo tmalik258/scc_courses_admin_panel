@@ -117,6 +117,29 @@ export const useCourseData = () => {
     [refreshCourses]
   );
 
+  const handleDeleteCourse = useCallback(
+    async (courseId: string) => {
+      setLoading(true);
+      try {
+        await deleteCourse(courseId);
+        await refreshCourses();
+        setSelectedCourse(null);
+        setError(null);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err);
+        } else {
+          setError(new Error("Unknown error"));
+        }
+        console.error("Error deleting course:", err);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [refreshCourses]
+  );
+
   const handleCreateModule = useCallback(
     async (courseId: string, data: { title: string; lessons: Partial<Lessons>[] }) => {
       setIsCreating(true);
@@ -281,29 +304,6 @@ export const useCourseData = () => {
       }
     },
     [refreshCourses, selectedCourse]
-  );
-
-  const handleDeleteCourse = useCallback(
-    async (courseId: string) => {
-      setLoading(true);
-      try {
-        await deleteCourse(courseId);
-        await refreshCourses();
-        setSelectedCourse(null);
-        setError(null);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
-        console.error("Error deleting course:", err);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [refreshCourses]
   );
 
   return {

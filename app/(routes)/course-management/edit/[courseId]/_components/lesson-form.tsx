@@ -10,7 +10,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { CourseLessonsFormValues } from "@/types/course";
+import { CourseLessonsFormValues } from "@/form-schemas/course";
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { VideoUploadField } from "@/components/videoUploadField";

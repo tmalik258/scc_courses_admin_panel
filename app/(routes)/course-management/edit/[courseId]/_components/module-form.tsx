@@ -16,7 +16,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import React, { useCallback, useState } from "react";
-import type { CourseLessonsFormValues } from "@/types/course";
+import type { CourseLessonsFormValues } from "@/form-schemas/course";
 import { FormField } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

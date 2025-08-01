@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
-import { useCategoryForm } from "@/hooks/useCourseCategories";
+import { useCategoryForm } from "@/hooks/useCategoryForm";
 import { toast } from "sonner";
 import { useState } from "react";
 import { uploadImage } from "@/utils/supabase/uploadImage";

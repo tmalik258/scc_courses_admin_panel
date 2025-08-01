@@ -19,21 +19,10 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Smart Coding Admin Dashboard",
   description: "Admin dashboard for Smart Coding platform",
+  icons: {
+    icon: "/logo.png",
+  }
 };
-
-if (typeof process !== 'undefined') {
-  // Increase max listeners for Firebase Functions environment
-  process.setMaxListeners(20);
-  
-  // Handle uncaught exceptions to prevent memory leaks
-  process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
-  });
-  
-  process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  });
-}
 
 export default function RootLayout({
   children,

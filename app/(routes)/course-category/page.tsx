@@ -14,20 +14,41 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { useCourseCategories } from "@/hooks/useCourseCategories";
 import { Category } from "@/lib/generated/prisma";
 import { categoryStyles } from "@/lib/categoryStyles";
+import { useCategoryData } from "@/hooks/useCategoryData";
+import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { DashedSpinner } from "@/components/dashed-spinner";
+import { fetchImage } from "@/utils/supabase/fetchImage";
 
 export default function CourseCategoryPage() {
   const router = useRouter();
-  const { categories, setSearchTerm, searchTerm, removeCategory } =
-    useCourseCategories();
+  const {
+    categories,
+    loading,
+    deleting,
+    refreshCategories,
+    handleDeleteCategory,
+  } = useCategoryData();
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
+  const placeholderImage =
+  "https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=76&q=80";
+
+  useEffect(() => {
+    if (categories.length === 0) {
+      refreshCategories();
+    }
+  }, [categories.length, refreshCategories]);
 
   const handleDelete = async (id: string) => {
     try {
-      await removeCategory(id);
+      await handleDeleteCategory(id);
+      toast.success("Category deleted successfully!");
     } catch (err) {
       console.error("Error deleting category:", err);
+      toast.error("Failed to delete category");
     }
   };
 
@@ -40,8 +61,15 @@ export default function CourseCategoryPage() {
     );
   };
 
-  const placeholderImage =
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACVSURBVHhe7dNBCQAwDAPB7v8v2C5p6CkI/IEeCmxEyAAzQz8wk2nGImYg3yI4gD0oIAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCCAgAAIIIAAAggggAACCCDgB3eW0z6vA1yMAAAAAElFTkSuQmCC";
+
+  const setIcon = async (icon: string | null) => {
+    if (icon && icon !== null && isValidImageSrc(icon)) {
+      return await fetchImage(icon);
+    } else {
+      return placeholderImage
+    }
+  };
+
 
   const sortedCategories = [...categories].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -53,6 +81,28 @@ export default function CourseCategoryPage() {
         bgColor: "bg-gray-100",
         textColor: "text-gray-600",
       }
+    );
+  };
+
+  const CategoryIcon = ({ icon, alt }: { icon: string | null, alt: string }) => {
+    const [src, setSrc] = useState<string>(placeholderImage);
+
+    useEffect(() => {
+      let isMounted = true;
+      setIcon(icon).then((result) => {
+        if (isMounted && result) setSrc(result);
+      });
+      return () => { isMounted = false; };
+    }, [icon]);
+
+    return (
+      <Image
+        src={src}
+        alt={alt}
+        width={32}
+        height={32}
+        className="rounded-full w-full h-full object-cover"
+      />
     );
   };
 
@@ -98,33 +148,31 @@ export default function CourseCategoryPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedCategories.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center">
+                  <div className="flex justify-center">
+                    <DashedSpinner />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : sortedCategories.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center">
                   No categories found
                 </TableCell>
               </TableRow>
             ) : (
-              sortedCategories.map((category: Category, index: number) => {
+              sortedCategories.map((category: Category) => {
                 const { bgColor, textColor } = getCategoryStyle(category.name);
                 return (
                   <TableRow key={category.id}>
                     <TableCell className="font-mono text-sm text-gray-600">
-                      {`67775f553-${index + 1}`}
+                      {category.id}
                     </TableCell>
                     <TableCell>
                       <div className="h-8 w-8">
-                        <Image
-                          src={
-                            isValidImageSrc(category.icon)
-                              ? category.icon!
-                              : placeholderImage
-                          }
-                          alt={category.name}
-                          width={32}
-                          height={32}
-                          className="rounded-full object-cover"
-                        />
+                        <CategoryIcon icon={category.icon} alt={category.name} />
                       </div>
                     </TableCell>
                     <TableCell>
@@ -152,7 +200,7 @@ export default function CourseCategoryPage() {
                           }
                           variant="outline"
                           size="icon"
-                          className="w-8 h-8 border-sky-200 text-sky-600 hover:bg-sky-50 bg-transparent"
+                          className="w-8 h-8 border-sky-200 text-sky-600 hover:bg-sky-50 bg-transparent cursor-pointer"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -160,9 +208,14 @@ export default function CourseCategoryPage() {
                           onClick={() => handleDelete(category.id)}
                           variant="outline"
                           size="icon"
-                          className="w-8 h-8 border-red-200 text-red-600 hover:bg-red-50 bg-transparent"
+                          className="w-8 h-8 border-red-200 text-red-600 hover:bg-red-50 bg-transparent cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={deleting}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {deleting ? (
+                            <DashedSpinner />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
                         </Button>
                       </div>
                     </TableCell>
