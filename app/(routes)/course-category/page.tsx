@@ -34,7 +34,7 @@ export default function CourseCategoryPage() {
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const placeholderImage =
-  "https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=76&q=80";
+    "https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=76&q=80";
 
   useEffect(() => {
     if (categories.length === 0) {
@@ -61,15 +61,13 @@ export default function CourseCategoryPage() {
     );
   };
 
-
   const setIcon = async (icon: string | null) => {
     if (icon && icon !== null && isValidImageSrc(icon)) {
       return await fetchImage(icon);
     } else {
-      return placeholderImage
+      return placeholderImage;
     }
   };
-
 
   const sortedCategories = [...categories].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -84,25 +82,37 @@ export default function CourseCategoryPage() {
     );
   };
 
-  const CategoryIcon = ({ icon, alt }: { icon: string | null, alt: string }) => {
-    const [src, setSrc] = useState<string>(placeholderImage);
+  const CategoryIcon = ({
+    icon,
+    alt,
+  }: {
+    icon: string | null;
+    alt: string;
+  }) => {
+    const [src, setSrc] = useState<string | null>(null);
 
     useEffect(() => {
       let isMounted = true;
       setIcon(icon).then((result) => {
         if (isMounted && result) setSrc(result);
       });
-      return () => { isMounted = false; };
+      return () => {
+        isMounted = false;
+      };
     }, [icon]);
 
     return (
-      <Image
-        src={src}
-        alt={alt}
-        width={32}
-        height={32}
-        className="rounded-full w-full h-full object-cover"
-      />
+      <div className="w-full h-full rounded-full border-1 border-gray-300">
+        {src && (
+          <Image
+            src={src}
+            alt={alt}
+            width={32}
+            height={32}
+            className="rounded-full w-full h-full object-cover"
+          />
+        )}
+      </div>
     );
   };
 
@@ -127,7 +137,7 @@ export default function CourseCategoryPage() {
           </div>
           <Button
             onClick={() => router.push("/course-category/create")}
-            className="bg-sky-500 hover:bg-sky-600 text-white"
+            className="bg-sky-500 hover:bg-sky-600 text-white cursor-pointer"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Category
@@ -172,7 +182,10 @@ export default function CourseCategoryPage() {
                     </TableCell>
                     <TableCell>
                       <div className="h-8 w-8">
-                        <CategoryIcon icon={category.icon} alt={category.name} />
+                        <CategoryIcon
+                          icon={category.icon}
+                          alt={category.name}
+                        />
                       </div>
                     </TableCell>
                     <TableCell>

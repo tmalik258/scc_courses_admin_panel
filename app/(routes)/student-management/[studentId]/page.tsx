@@ -26,6 +26,7 @@ import ImageUploadWrapper from "@/components/image-upload-wrapper";
 import { DashedSpinner } from "@/components/dashed-spinner";
 import { FileWithPreview } from "@/hooks/use-file-upload";
 import { uploadImage } from "@/utils/supabase/uploadImage";
+import { fetchImage } from "@/utils/supabase/fetchImage";
 
 // Zod schema for student form validation
 const studentSchema = z.object({
@@ -64,6 +65,9 @@ const StudentDetailsPage: React.FC = () => {
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [displayImageUrl, setDisplayImageUrl] = useState<string | null>(
+    selectedStudent?.avatarUrl || null
+  );
   const [courses, setCourses] = useState<
     Array<{ id: string; title: string; category: string; status: string }>
   >([]);
@@ -96,6 +100,17 @@ const StudentDetailsPage: React.FC = () => {
         email: selectedStudent.email || "",
         avatarUrl: selectedStudent.avatarUrl || "",
       });
+
+      (async () => {
+        if (
+          selectedStudent?.avatarUrl &&
+          selectedStudent.avatarUrl !== null
+        ) {
+          setDisplayImageUrl(await fetchImage(selectedStudent.avatarUrl));
+        } else {
+          setDisplayImageUrl(null);
+        }
+      })();
       setUploadedImageUrl(selectedStudent.avatarUrl || null);
 
       // Map purchases to courses
@@ -109,6 +124,12 @@ const StudentDetailsPage: React.FC = () => {
       setCourses(studentCourses);
     }
   }, [selectedStudent, form]);
+
+  useEffect(() => {
+    if(error) {
+      toast.error(error.message);
+    }
+  }, [error]);
 
   const handleSave = async (data: StudentFormValues) => {
     try {
@@ -178,6 +199,8 @@ const StudentDetailsPage: React.FC = () => {
           console.log("Upload successful, URL:", imageUrl);
           setUploadedImageUrl(imageUrl);
 
+          setDisplayImageUrl(await fetchImage(imageUrl));
+
           // Update form data immediately with the uploaded URL
           updateFormData({
             avatarUrl: imageUrl,
@@ -244,10 +267,6 @@ const StudentDetailsPage: React.FC = () => {
         <LumaSpin />
       </div>
     );
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
   }
 
   return (
@@ -362,7 +381,7 @@ const StudentDetailsPage: React.FC = () => {
                     onFilesAdded={handleFileUpload}
                     onFileRemove={handleFileRemove}
                     isUploading={isUploading}
-                    uploadedImageUrl={uploadedImageUrl}
+                    uploadedImageUrl={displayImageUrl}
                     maxSizeMB={2}
                   />
 

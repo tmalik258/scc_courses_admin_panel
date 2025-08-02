@@ -12,8 +12,10 @@ import { useCallback, useState } from "react";
 import { z } from "zod";
 import { formSchema } from "@/form-schemas/category";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const useCategoryData = () => {
+  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
@@ -66,12 +68,11 @@ export const useCategoryData = () => {
     ) => {
       try {
         setCreating(true);
-        const { data } = await createCategory({
-          ...values,
-          slug: values.name.toLowerCase().replace(/\s+/g, "-"),
-        });
+
+        await createCategory(values);
 
         toast.success("Category updated successfully");
+        router.push("/course-category");
         return true;
       } catch (err) {
         if (err instanceof Error) {
@@ -87,7 +88,7 @@ export const useCategoryData = () => {
         setCreating(false);
       }
     },
-    []
+    [router]
   );
 
   const handleDeleteCategory = useCallback(

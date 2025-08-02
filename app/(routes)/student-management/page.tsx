@@ -50,10 +50,10 @@ const StudentManagementPage: React.FC = () => {
     );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 px-2 md:w-[calc(100vw-20rem)]">
       <Breadcrumb items={breadcrumbItems} />
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex max-sm:flex-col max-sm:gap-4 items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
             All Students{" "}

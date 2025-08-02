@@ -39,7 +39,7 @@ const ImageUploadWrapper: React.FC<ImageUploadWrapperProps> = ({
   }, [files, removeFile, onFileRemove])
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 cursor-pointer">
       <div className="relative">
         {/* Drop area */}
         <div

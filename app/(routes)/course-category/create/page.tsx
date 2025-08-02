@@ -4,37 +4,24 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { useCategoryData } from "@/hooks/useCategoryData";
-import { LumaSpin } from "@/components/luma-spin";
 import CategoryForm from "./_components/category-form";
 import { DashedSpinner } from "@/components/dashed-spinner";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function CreateCategoryPage() {
   const router = useRouter();
   const {
     handleCreateCategory,
-    loading,
     creating,
     error,
   } = useCategoryData();
 
-  if (error) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-red-600">Error: {error.message}</p>
-        <Button onClick={() => router.push("/course-category")}>
-          Back to Categories
-        </Button>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <LumaSpin />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message);
+    }
+  }, [error]);
 
   return (
     <div className="h-full p-6">

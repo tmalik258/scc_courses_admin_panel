@@ -32,7 +32,7 @@ export async function getCategoryById(id: string): Promise<CategoryResponse> {
   }
 }
 
-export async function createCategory(data: Category): Promise<CategoryResponse> {
+export async function createCategory(data: Partial<Category>): Promise<CategoryResponse> {
   try {
     const response = await axios.post("/api/categories", data);
     return response.data;

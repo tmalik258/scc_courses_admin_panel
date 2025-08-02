@@ -36,16 +36,11 @@ export default function EditCategoryPage() {
     }
   }, [category, selectCategory, categoryId]);
 
-  if (error) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-red-600">Error: {error.message}</p>
-        <Button onClick={() => router.push("/course-category")}>
-          Back to Categories
-        </Button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message);
+    }
+  }, [error]);
 
   if (loading) {
     return (
@@ -70,7 +65,7 @@ export default function EditCategoryPage() {
           <div className="flex gap-3">
             <Button
               variant="outline"
-              className="px-6 bg-transparent"
+              className="px-6 bg-transparent cursor-pointer"
               onClick={() => router.push("/course-category")}
             >
               Cancel

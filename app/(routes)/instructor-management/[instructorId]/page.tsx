@@ -25,6 +25,7 @@ import ImageUploadWrapper from "@/components/image-upload-wrapper";
 import { DashedSpinner } from "@/components/dashed-spinner";
 import { FileWithPreview } from "@/hooks/use-file-upload";
 import { uploadImage } from "@/utils/supabase/uploadImage";
+import { fetchImage } from "@/utils/supabase/fetchImage";
 
 // Zod schema for instructor form validation
 const instructorSchema = z.object({
@@ -61,6 +62,9 @@ const InstructorDetailsPage: React.FC = () => {
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [displayImageUrl, setDisplayImageUrl] = useState<string | null>(
+    selectedInstructor?.avatarUrl || null
+  );
 
   const form = useForm<InstructorFormValues>({
     resolver: zodResolver(instructorSchema),
@@ -83,7 +87,10 @@ const InstructorDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (selectedInstructor) {
-      console.log("Selected instructor courses:", selectedInstructor.instructorCourses);
+      console.log(
+        "Selected instructor courses:",
+        selectedInstructor.instructorCourses
+      );
       form.reset({
         id: selectedInstructor.id,
         fullName: selectedInstructor.fullName || "",
@@ -92,9 +99,25 @@ const InstructorDetailsPage: React.FC = () => {
         phone: selectedInstructor.phone || "",
         avatarUrl: selectedInstructor.avatarUrl || "",
       });
+      (async () => {
+        if (
+          selectedInstructor?.avatarUrl &&
+          selectedInstructor.avatarUrl !== null
+        ) {
+          setDisplayImageUrl(await fetchImage(selectedInstructor.avatarUrl));
+        } else {
+          setDisplayImageUrl(null);
+        }
+      })();
       setUploadedImageUrl(selectedInstructor.avatarUrl || null);
     }
   }, [selectedInstructor, form]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message);
+    }
+  }, [error]);
 
   const handleSave = async (data: InstructorFormValues) => {
     try {
@@ -125,9 +148,12 @@ const InstructorDetailsPage: React.FC = () => {
     }
   };
 
-  const updateFormData = useCallback((data: Partial<InstructorFormValues>) => {
-    form.reset((prev) => ({ ...prev, ...data }));
-  }, [form]);
+  const updateFormData = useCallback(
+    (data: Partial<InstructorFormValues>) => {
+      form.reset((prev) => ({ ...prev, ...data }));
+    },
+    [form]
+  );
 
   const handleCancel = () => {
     window.history.back();
@@ -152,6 +178,8 @@ const InstructorDetailsPage: React.FC = () => {
         if (imageUrl) {
           console.log("Upload successful, URL:", imageUrl);
           setUploadedImageUrl(imageUrl);
+
+          setDisplayImageUrl(await fetchImage(imageUrl));
 
           // Update form data immediately with the uploaded URL
           updateFormData({
@@ -193,10 +221,6 @@ const InstructorDetailsPage: React.FC = () => {
         <LumaSpin />
       </div>
     );
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
   }
 
   return (
@@ -330,7 +354,7 @@ const InstructorDetailsPage: React.FC = () => {
                     onFilesAdded={handleFileUpload}
                     onFileRemove={handleFileRemove}
                     isUploading={isUploading}
-                    uploadedImageUrl={uploadedImageUrl}
+                    uploadedImageUrl={displayImageUrl}
                     maxSizeMB={2}
                   />
 
