@@ -39,9 +39,11 @@ export async function PUT(
                 updated_at: new Date(),
               },
               create: {
-                course_id: courseId,
+                // ✅ FIX: removed `course_id`
                 title: lesson.name || "Untitled Lesson",
-                video_url: lesson.videoUrl,
+                video_url: lesson.videoUrl || null,
+                is_free: false, // optional: default value
+                created_at: new Date(),
                 updated_at: new Date(),
               },
             })),
