@@ -31,11 +31,22 @@ interface ModuleSectionProps {
   isCreating?: boolean;
   onToggle: () => void;
   onDelete: () => void;
-  onSave: () => void;
+  onSave: () => Promise<boolean>; // updated to return boolean
+  onNext?: () => Promise<void>; // optional new callback
 }
 
 const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
-  ({ moduleIndex, form, isExpanded, isUpdating, isCreating, onToggle, onDelete, onSave }) => {
+  ({
+    moduleIndex,
+    form,
+    isExpanded,
+    isUpdating,
+    isCreating,
+    onToggle,
+    onDelete,
+    onSave,
+    onNext,
+  }) => {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [tempTitle, setTempTitle] = useState("");
 
@@ -49,25 +60,12 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
     });
 
     const addSection = useCallback(() => {
-      try {
-        appendSection({
-          title: "",
-          content: "",
-          video_url: "",
-          is_free: false, // Ensure new lessons have is_free default
-        });
-      } catch (error) {
-        console.error("Error adding section:", error);
-      }
+      appendSection({ title: "", content: "", video_url: "", is_free: false });
     }, [appendSection]);
 
     const handleDeleteSection = useCallback(
       (sectionIndex: number) => {
-        try {
-          removeSection(sectionIndex);
-        } catch (error) {
-          console.error("Error deleting section:", error);
-        }
+        removeSection(sectionIndex);
       },
       [removeSection]
     );
@@ -75,8 +73,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
     const handleEditClick = useCallback(
       (e: React.MouseEvent) => {
         e.stopPropagation();
-        const currentTitle = form.getValues(`modules.${moduleIndex}.title`);
-        setTempTitle(currentTitle || "");
+        setTempTitle(form.getValues(`modules.${moduleIndex}.title`) || "");
         setIsEditingTitle(true);
       },
       [form, moduleIndex]
@@ -94,7 +91,6 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
     const handleCancelEdit = useCallback((e: React.MouseEvent) => {
       e.stopPropagation();
       setIsEditingTitle(false);
-      setTempTitle("");
     }, []);
 
     const handleInputKeyDown = useCallback(
@@ -106,7 +102,6 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
         } else if (e.key === "Escape") {
           e.preventDefault();
           setIsEditingTitle(false);
-          setTempTitle("");
         }
       },
       [form, moduleIndex, tempTitle]
@@ -127,32 +122,30 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
 
                 {isEditingTitle ? (
                   <div
-                    className="flex items-center space-x-2 flex-1"
                     onClick={(e) => e.stopPropagation()}
+                    className="flex items-center space-x-2 flex-1"
                   >
                     <Input
                       value={tempTitle}
                       onChange={(e) => setTempTitle(e.target.value)}
                       onKeyDown={handleInputKeyDown}
+                      placeholder="Module title"
                       className="flex-1 h-8 text-sm font-medium"
-                      placeholder="Enter module title"
                       autoFocus
                     />
                     <Button
-                      type="button"
                       variant="ghost"
                       size="sm"
                       onClick={handleSaveTitle}
-                      className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
                     >
                       <Check className="w-4 h-4" />
                     </Button>
                     <Button
-                      type="button"
                       variant="ghost"
                       size="sm"
                       onClick={handleCancelEdit}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -172,44 +165,44 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
 
               <div className="flex space-x-2">
                 <Button
-                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     onDelete();
                   }}
-                  className="text-red-600 border-red-600 hover:bg-red-50"
+                  className="text-red-600 border-red-600"
                 >
-                  <Trash2 className="w-4 h-4 mr-1" />
-                  Delete
+                  <Trash2 className="w-4 h-4 mr-1" /> Delete
                 </Button>
 
                 {!isEditingTitle && (
                   <Button
-                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleEditClick}
-                    className="text-sky-600 border-sky-600 hover:bg-sky-50 bg-transparent"
+                    className="text-sky-600 border-sky-600"
                   >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
+                    <Edit className="w-4 h-4 mr-1" /> Edit
                   </Button>
                 )}
 
                 <Button
-                  type="button"
+                  variant="outline"
                   size="sm"
-                  className="bg-sky-500 hover:bg-sky-600 text-white cursor-pointer"
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    onSave();
+                    const ok = await onSave();
+                    if (ok && onNext) await onNext();
                   }}
-                  disabled={ isUpdating || isCreating }
+                  disabled={isUpdating || isCreating}
+                  className="bg-sky-500 hover:bg-sky-600 text-white"
                 >
-                  {isUpdating || isCreating ? <DashedSpinner invert={true} /> : null}
-                  Save
+                  {isUpdating || isCreating ? (
+                    <DashedSpinner invert />
+                  ) : (
+                    "Save & Continue"
+                  )}
                 </Button>
               </div>
             </div>
@@ -217,27 +210,24 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
 
           <CollapsibleContent>
             <div className="p-6 space-y-8">
-              {sectionFields.map((sectionField, sectionIndex) => (
+              {sectionFields.map((sec, si) => (
                 <SectionForm
-                  key={sectionField.id}
+                  key={sec.id}
                   moduleIndex={moduleIndex}
-                  sectionIndex={sectionIndex}
+                  sectionIndex={si}
                   form={form}
-                  isLast={sectionIndex === sectionFields.length - 1}
-                  onDelete={() => handleDeleteSection(sectionIndex)} // Pass delete handler
+                  isLast={si === sectionFields.length - 1}
+                  onDelete={() => handleDeleteSection(si)}
                 />
               ))}
 
-              {/* Add Section Button */}
               <div className="flex justify-end pt-4">
                 <Button
-                  type="button"
                   variant="outline"
                   onClick={addSection}
-                  className="text-sky-500 border-sky-500 hover:bg-sky-50 bg-transparent"
+                  className="border-sky-500 text-sky-500"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Section
+                  <Plus className="w-4 h-4 mr-2" /> Add Lesson
                 </Button>
               </div>
             </div>
@@ -249,5 +239,4 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
 );
 
 ModuleSection.displayName = "ModuleSection";
-
 export default ModuleSection;

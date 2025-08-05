@@ -102,9 +102,9 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
   }, [selectedCourse, form]);
 
   const handleSaveModule = useCallback(
-    async (moduleIndex: number) => {
+    async (moduleIndex: number): Promise<boolean> => {
       const moduleData = form.getValues(`modules.${moduleIndex}`);
-      if (!courseId) return;
+      if (!courseId) return false;
 
       try {
         if (moduleData.id) {
@@ -123,8 +123,11 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
               shouldValidate: true,
             });
             toast.success(`Module ${moduleIndex + 1} created successfully!`);
+          } else {
+            throw new Error("Module creation failed");
           }
         }
+        return true;
       } catch (err) {
         if (err instanceof Error) {
           const errorMessage = err.message || "Failed to save module";
@@ -139,6 +142,7 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
           console.error(`Error saving module ${moduleIndex + 1}:`, err);
           toast.error(`Failed to save module ${moduleIndex + 1}.`);
         }
+        return false;
       }
     },
     [form, courseId, handleUpdateModule, handleCreateModule]
@@ -201,12 +205,16 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
             key={field.id}
             moduleIndex={index}
             form={form}
-            isExpanded={expandedModule !== null && expandedModule === index}
+            isExpanded={expandedModule === index}
             isUpdating={isUpdating}
             isCreating={isCreating}
             onToggle={() => handleToggle(index)}
             onDelete={() => deleteModule(index)}
             onSave={() => handleSaveModule(index)}
+            onNext={async () => {
+              const ok = await handleSaveModule(index);
+              if (ok) onNext();
+            }}
           />
         ))}
         <div className="flex justify-between">

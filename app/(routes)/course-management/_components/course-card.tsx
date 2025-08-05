@@ -1,27 +1,29 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { formatDistanceToNow } from "date-fns";
+import { CircleAlertIcon, Clock, Edit, Trash2 } from "lucide-react";
+
 import { DashedSpinner } from "@/components/dashed-spinner";
-import {
-  AlertDialogFooter,
-  AlertDialogHeader,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CourseWithRelations } from "@/types/course";
-import { randomColorGenerator } from "@/utils/category";
-import { fetchImage } from "@/utils/supabase/fetchImage";
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@radix-ui/react-alert-dialog";
-import { formatDistanceToNow } from "date-fns";
-import { CircleAlertIcon, Clock, Edit, Trash2 } from "lucide-react";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+} from "@/components/ui/alert-dialog"; // ✅ FIXED import
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
+import { CourseWithRelations } from "@/types/course";
+import { randomColorGenerator } from "@/utils/category";
+import { fetchImage } from "@/utils/supabase/fetchImage";
 
 interface CourseCardProps {
   course: CourseWithRelations;
@@ -36,19 +38,11 @@ const CourseCard = ({ course, handleDelete, handleEdit }: CourseCardProps) => {
 
   useEffect(() => {
     (async () => {
-      if (
-        !thumbnailUrl &&
-        course?.thumbnailUrl &&
-        course.thumbnailUrl !== null
-      ) {
-        setThumbnailUrl(
-          await fetchImage(course.thumbnailUrl)
-            .then((res) => {
-              setLoading(true);
-              return res;
-            })
-            .finally(() => setLoading(false))
-        );
+      if (!thumbnailUrl && course?.thumbnailUrl) {
+        setLoading(true);
+        const fetchedUrl = await fetchImage(course.thumbnailUrl);
+        setThumbnailUrl(fetchedUrl);
+        setLoading(false);
       }
     })();
   }, [course.thumbnailUrl, thumbnailUrl]);
@@ -60,7 +54,7 @@ const CourseCard = ({ course, handleDelete, handleEdit }: CourseCardProps) => {
   return (
     <Card key={course.id} className="overflow-hidden border-0 shadow-sm">
       <div className="relative">
-        {/* Course Image with Gradient Background */}
+        {/* Course Image */}
         <div className="flex items-center justify-center relative px-5">
           {loading ? (
             <div className="w-full h-56 flex items-center justify-center">
@@ -76,6 +70,7 @@ const CourseCard = ({ course, handleDelete, handleEdit }: CourseCardProps) => {
               className="w-full h-56 object-cover rounded-xl"
             />
           )}
+
           {/* Category Badge */}
           <div className="absolute top-2 left-7 z-20">
             <Badge
@@ -86,7 +81,8 @@ const CourseCard = ({ course, handleDelete, handleEdit }: CourseCardProps) => {
               {course.category.name}
             </Badge>
           </div>
-          {/* Edited Time */}
+
+          {/* Last Edited Time */}
           <div className="absolute top-2 right-7 flex items-center text-white text-xs bg-black/20 rounded-full px-2 py-1">
             <Clock className="w-3 h-3 mr-1" />
             Edited{" "}
@@ -108,6 +104,7 @@ const CourseCard = ({ course, handleDelete, handleEdit }: CourseCardProps) => {
         </div>
 
         <div className="flex gap-2">
+          {/* Edit Button */}
           <Button
             size="sm"
             variant="outline"
@@ -117,6 +114,8 @@ const CourseCard = ({ course, handleDelete, handleEdit }: CourseCardProps) => {
             <Edit className="w-4 h-4 mr-1" />
             Edit
           </Button>
+
+          {/* Delete Button with Alert Dialog */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -128,7 +127,7 @@ const CourseCard = ({ course, handleDelete, handleEdit }: CourseCardProps) => {
                 Delete
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
               <div className="flex flex-col gap-2 max-sm:items-center sm:flex-row sm:gap-4">
                 <div
                   className="flex size-9 shrink-0 items-center justify-center rounded-full border"
@@ -139,14 +138,21 @@ const CourseCard = ({ course, handleDelete, handleEdit }: CourseCardProps) => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete this course? All associated
-                    modules, lessons, and resources will be permanently removed.
+                    This action will permanently delete the course, including
+                    all modules and lessons.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
               </div>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => handleDelete(course.id)}>
+                <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(course.id);
+                  }}
+                >
                   Confirm
                 </AlertDialogAction>
               </AlertDialogFooter>
