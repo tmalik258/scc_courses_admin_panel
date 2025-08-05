@@ -36,10 +36,10 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
   const [expandedModule, setExpandedModule] = useState<number | null>(0);
 
   useEffect(() => {
-    if (courseId) {
+    if (courseId && !selectedCourse) {
       selectCourse(courseId);
     }
-  }, [courseId, selectCourse]);
+  }, [courseId, selectCourse, selectedCourse]);
 
   const form = useForm<CourseLessonsFormValues>({
     resolver: zodResolver(moduleSchema),

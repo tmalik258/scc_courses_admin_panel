@@ -150,6 +150,7 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
           setUploadedImageUrl(imageUrl);
           setDisplayImageUrl(await fetchImage(imageUrl));
           await handleUpdateCourse(courseId, { thumbnailUrl: imageUrl });
+          selectCourse(courseId)
           toast.success("Thumbnail uploaded successfully!");
         } else {
           toast.error("Failed to upload thumbnail. Please try again.");
@@ -161,7 +162,7 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
         setIsUploading(false);
       }
     },
-    [courseId, handleUpdateCourse]
+    [courseId, handleUpdateCourse, selectCourse]
   );
 
   const handleFileRemove = useCallback(async () => {

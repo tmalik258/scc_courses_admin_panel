@@ -94,7 +94,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="flex sticky top-0 z-50 items-center justify-between px-4 md:px-6 py-4 border-b border-gray-100 bg-white">
+      <header className="flex z-50 items-center justify-between px-4 md:px-6 py-4 border-b border-gray-100 bg-white">
         {/* Mobile Menu Button */}
         <button
           onClick={toggleMobileMenu}

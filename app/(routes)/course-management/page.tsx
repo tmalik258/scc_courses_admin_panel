@@ -5,40 +5,22 @@ import { useEffect, useState, useTransition } from "react";
 import {
   Plus,
   Search,
-  Clock,
-  Edit,
-  Trash2,
   ChevronDown,
-  CircleAlertIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useCourseData } from "@/hooks/useCourseData";
-import { formatDistanceToNow } from "date-fns";
 import { LumaSpin } from "@/components/luma-spin";
 import { DashedSpinner } from "@/components/dashed-spinner";
+import CourseCard from "./_components/course-card";
 
 const CourseManagementPage: React.FC = () => {
   const router = useRouter();
@@ -265,100 +247,12 @@ const CourseManagementPage: React.FC = () => {
       {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedCourses.map((course) => (
-          <Card key={course.id} className="overflow-hidden border-0 shadow-sm">
-            <div className="relative">
-              {/* Course Image with Gradient Background */}
-              <div className="flex items-center justify-center relative px-5">
-                <Image
-                  width={200}
-                  height={200}
-                  decoding="async"
-                  src={course.thumbnailUrl || "/images/course_placeholder.jpg"}
-                  alt={course.title}
-                  className="w-full h-56 object-cover rounded-xl"
-                />
-                {/* Category Badge */}
-                <div className="absolute top-2 left-7">
-                  <Badge
-                    className={`text-xs font-medium px-2 py-1 ${
-                      course.category.color || "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {course.category.name}
-                  </Badge>
-                </div>
-                {/* Edited Time */}
-                <div className="absolute top-2 right-7 flex items-center text-white text-xs bg-black/20 rounded-full px-2 py-1">
-                  <Clock className="w-3 h-3 mr-1" />
-                  Edited{" "}
-                  {formatDistanceToNow(new Date(course.updatedAt), {
-                    addSuffix: true,
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <CardContent className="px-5 flex flex-col justify-between h-full">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2 text-base leading-tight">
-                  {course.title}
-                </h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  {course.instructor.fullName || "Unknown"}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 text-sky-500 border-sky-500 hover:bg-sky-50 bg-white"
-                  onClick={() => handleEdit(course.id)}
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Edit
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-red-500 border-red-500 hover:bg-red-50 bg-white"
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <div className="flex flex-col gap-2 max-sm:items-center sm:flex-row sm:gap-4">
-                      <div
-                        className="flex size-9 shrink-0 items-center justify-center rounded-full border"
-                        aria-hidden="true"
-                      >
-                        <CircleAlertIcon className="opacity-80" size={16} />
-                      </div>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete this course? All
-                          associated modules, lessons, and resources will be
-                          permanently removed.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                    </div>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete(course.id)}
-                      >
-                        Confirm
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </CardContent>
-          </Card>
+          <CourseCard
+            key={course.id}
+            course={course}
+            handleDelete={handleDelete}
+            handleEdit={handleEdit}
+          />
         ))}
       </div>
 
