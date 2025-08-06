@@ -8,12 +8,13 @@ import { StudentTable } from "./_components/student-table";
 import { Pagination } from "@/components/pagination";
 import { useStudentData } from "@/hooks/useStudentData";
 import { useRouter } from "next/navigation";
+import { DashedSpinner } from "@/components/dashed-spinner";
 
 const StudentsPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const { students, refreshStudents } = useStudentData();
+  const { students, loading, refreshStudents } = useStudentData();
   const router = useRouter();
 
   useEffect(() => {
@@ -69,11 +70,17 @@ const StudentsPage: React.FC = () => {
         onEntriesChange={setEntriesPerPage}
       />
 
-      <StudentTable
-        students={currentStudents}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      {loading ? (
+        <div className="flex items-center justify-center">
+          <DashedSpinner size={24} />
+        </div>
+      ) : (
+        <StudentTable
+          students={currentStudents}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
 
       <Pagination
         currentPage={currentPage}

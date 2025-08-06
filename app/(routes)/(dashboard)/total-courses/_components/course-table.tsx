@@ -1,10 +1,14 @@
 "use client";
+"use client";
 
 import type React from "react";
 import { Edit, Trash2, ArrowUpDown } from "lucide-react";
 import type { CourseWithRelations } from "@/types/course";
 
 interface CourseTableProps {
+  courses: CourseWithRelations[];
+  onEdit: (course: CourseWithRelations) => void;
+  onDelete: (courseId: string) => void;
   courses: CourseWithRelations[];
   onEdit: (course: CourseWithRelations) => void;
   onDelete: (courseId: string) => void;
@@ -16,9 +20,14 @@ export const CourseTable: React.FC<CourseTableProps> = ({
   onEdit,
   onDelete,
 }) => {
+export const CourseTable: React.FC<CourseTableProps> = ({
+  courses,
+  onEdit,
+  onDelete,
+}) => {
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="max-w-[calc(100vw-3rem)] sm:max-w-dvh md:max-w-[calc(100vw-19rem)] overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -101,5 +110,7 @@ export const CourseTable: React.FC<CourseTableProps> = ({
         </table>
       </div>
     </div>
+  );
+};
   );
 };

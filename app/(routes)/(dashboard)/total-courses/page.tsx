@@ -8,6 +8,7 @@ import { CourseTable } from "./_components/course-table";
 import { Pagination } from "@/components/pagination";
 import { useCourseData } from "@/hooks/useCourseData";
 import { useRouter } from "next/navigation";
+import { DashedSpinner } from "@/components/dashed-spinner";
 
 const CoursesPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
