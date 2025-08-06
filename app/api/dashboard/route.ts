@@ -42,17 +42,18 @@ export async function GET(request: Request) {
     });
     const totalRevenue = Number(totalRevenueResult._sum.totalAmount) || 0;
 
-    // Fetch student growth (last 6 months)
+    // Student growth for last 6 months
     const studentGrowth: StudentGrowthPoint[] = await Promise.all(
       Array.from({ length: 6 }, (_, i) => {
         const monthStart = startOfMonth(subMonths(new Date(), 5 - i));
+        const monthEnd = startOfMonth(subMonths(new Date(), 4 - i));
         return prisma.profile
           .count({
             where: {
               role: "STUDENT",
               createdAt: {
                 gte: monthStart,
-                lt: startOfMonth(subMonths(new Date(), 4 - i)),
+                lt: monthEnd,
               },
             },
           })
@@ -63,7 +64,7 @@ export async function GET(request: Request) {
       })
     );
 
-    // Fetch recent courses (last 7 days)
+    // Recent courses (last 7 days)
     const recentCourses: RecentCourse[] = await prisma.course
       .findMany({
         where: {
@@ -85,7 +86,7 @@ export async function GET(request: Request) {
         }))
       );
 
-    // Fetch popular courses (most purchases in last 30 days)
+    // Popular courses (most purchases in last 30 days)
     const popularCourses: PopularCourse[] = await prisma.course
       .findMany({
         where: {
@@ -113,16 +114,15 @@ export async function GET(request: Request) {
         courses.map((course) => ({
           id: course.id,
           title: course.title,
-          category: course.category.name,
-          categoryColor: course.category.color || "blue",
-          instructor: course.instructor.fullName || "Unknown",
-          enrollments: course.purchases.length,
+          category: course.category?.name || "Unknown",
+          categoryColor: course.category?.color || "blue",
+          instructor: course.instructor?.fullName || "Unknown",
+          enrollments: course.purchases?.length || 0,
           price: `₹${course.price?.toFixed(2) || "0.00"}`,
-          lessons: course.modules.reduce(
-            (acc: number, mod: { lessons: { id: string }[] }) =>
-              acc + mod.lessons.length,
-            0
-          ),
+          lessons:
+            course.modules?.reduce((acc: number, mod) => {
+              return acc + (mod.lessons?.length || 0);
+            }, 0) || 0,
         }))
       );
 
@@ -137,8 +137,15 @@ export async function GET(request: Request) {
     };
 
     return NextResponse.json({ data: response });
-  } catch (error) {
-    console.error("Error fetching dashboard data:", error);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    console.error("Error fetching dashboard data:", {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      error,
+    });
+
     return NextResponse.json(
       { error: "Failed to fetch dashboard data" },
       { status: 500 }
