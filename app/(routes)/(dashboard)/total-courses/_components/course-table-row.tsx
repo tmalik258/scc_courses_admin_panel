@@ -1,5 +1,9 @@
+"use client";
+
 import { CourseWithRelations } from "@/types/course";
+import { randomColorGenerator } from "@/utils/category";
 import { Edit, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface CourseTableRowProps {
   course: CourseWithRelations;
@@ -8,6 +12,10 @@ interface CourseTableRowProps {
 }
 
 const CourseTableRow = ({ course, onEdit, onDelete }: CourseTableRowProps) => {
+  const [color, setColor] = useState("");
+  useEffect(() => {
+    if (!color) setColor(randomColorGenerator());
+  }, [color]);
   return (
     <tr key={course.id} className="hover:bg-gray-50">
       <td className="px-3 sm:px-6 py-4">
@@ -16,7 +24,11 @@ const CourseTableRow = ({ course, onEdit, onDelete }: CourseTableRowProps) => {
         </div>
       </td>
       <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        <span
+          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+            color || "bg-gray-100 text-gray-700"
+          }`}
+        >
           {course.category.name}
         </span>
       </td>
