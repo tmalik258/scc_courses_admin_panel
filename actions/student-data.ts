@@ -1,49 +1,11 @@
 import axios from "axios";
 
-export async function fetchStudents() {
+export async function fetchStudents(page = 1, limit = 10) {
   try {
-    const res = await axios.get("/api/students");
+    const res = await axios.get(`/api/students?page=${page}&limit=${limit}`);
     return res.data;
   } catch (error) {
     console.error("Error fetching students:", error);
-    throw error;
-  }
-}
-
-export async function fetchStudentById(studentId: string) {
-  try {
-    const res = await axios.get(`/api/students/${studentId}`);
-    return res.data;
-  } catch (error) {
-    console.error("Error fetching student:", error);
-    throw error;
-  }
-}
-
-export async function deleteStudent(studentId: string) {
-  try {
-    const res = await axios.delete(`/api/students/${studentId}`);
-    return res.data;
-  } catch (error) {
-    console.error("Error deleting student:", error);
-    throw error;
-  }
-}
-
-export async function updateStudent(
-  studentId: string,
-  data: {
-    fullName?: string;
-    phone?: string;
-    email?: string;
-    avatarUrl?: string;
-  }
-) {
-  try {
-    const res = await axios.patch(`/api/students/${studentId}`, data);
-    return res.data;
-  } catch (error) {
-    console.error("Error updating student:", error);
     throw error;
   }
 }

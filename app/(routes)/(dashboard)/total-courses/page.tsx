@@ -1,47 +1,31 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState } from "react";
-import type { CourseWithRelations } from "@/types/course";
+import React, { useState } from "react";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { CoursesHeader } from "./_components/course-header";
 import { CourseTable } from "./_components/course-table";
 import { Pagination } from "@/components/pagination";
-import { useCourseData } from "@/hooks/useCourseData";
+import { useAdminCourses } from "@/hooks/useAdminCourses";
 import { useRouter } from "next/navigation";
 
 const CoursesPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
-  const { courses, refreshCourses } = useCourseData();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (courses.length === 0) {
-      refreshCourses();
-    }
-  }, [courses.length, refreshCourses]);
-
-  const filteredCourses = courses.filter(
-    (course) =>
-      course.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-      course.category?.name
-        ?.toLowerCase()
-        .includes(searchValue.toLowerCase()) ||
-      course.instructor?.fullName
-        ?.toLowerCase()
-        .includes(searchValue.toLowerCase()) ||
-      course.id.toLowerCase().includes(searchValue.toLowerCase())
+  const { courses, totalCount, errorMessage } = useAdminCourses(
+    searchValue,
+    currentPage,
+    entriesPerPage
   );
 
-  const totalPages = Math.ceil(filteredCourses.length / entriesPerPage);
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const endIndex = startIndex + entriesPerPage;
-  const currentCourses = filteredCourses.slice(startIndex, endIndex);
+  const router = useRouter();
 
-  const handleEdit = (course: CourseWithRelations) => {
+  const totalPages = Math.ceil(totalCount / entriesPerPage);
+
+  const handleEdit = (course: any) => {
     router.push(`/course-management/edit/${course.id}`);
   };
 
@@ -51,21 +35,17 @@ const CoursesPage: React.FC = () => {
     setDeletingIds((prev) => new Set(prev).add(courseId));
 
     try {
-      const delay = new Promise((resolve) => setTimeout(resolve, 500));
-      const res = fetch(`/api/courses/${courseId}`, { method: "DELETE" });
-      const [apiResponse] = await Promise.all([res, delay]);
+      const res = await fetch(`/api/courses/${courseId}`, { method: "DELETE" });
 
-      if (!apiResponse.ok) {
-        const data = await apiResponse.json();
+      if (!res.ok) {
+        const data = await res.json();
         throw new Error(data?.error || "Failed to delete course.");
       }
 
-      setErrorMessage(null);
-      refreshCourses();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // Refetch current page
+      location.reload();
     } catch (err: any) {
       console.error("Failed to delete course:", err.message);
-      setErrorMessage(`Failed to delete course: ${err.message}`);
     } finally {
       setDeletingIds((prev) => {
         const newSet = new Set(prev);
@@ -81,10 +61,6 @@ const CoursesPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchValue, entriesPerPage]);
-
   const breadcrumbItems = [
     { label: "Dashboard", href: "/" },
     { label: "Total Courses", active: true },
@@ -95,11 +71,17 @@ const CoursesPage: React.FC = () => {
       <Breadcrumb items={breadcrumbItems} />
 
       <CoursesHeader
-        totalCourses={filteredCourses.length}
+        totalCourses={totalCount}
         searchValue={searchValue}
-        onSearchChange={setSearchValue}
+        onSearchChange={(value) => {
+          setSearchValue(value);
+          setCurrentPage(1); // reset to first page
+        }}
         entriesPerPage={entriesPerPage}
-        onEntriesChange={setEntriesPerPage}
+        onEntriesChange={(val) => {
+          setEntriesPerPage(val);
+          setCurrentPage(1);
+        }}
       />
 
       {errorMessage && (
@@ -109,7 +91,7 @@ const CoursesPage: React.FC = () => {
       )}
 
       <CourseTable
-        courses={currentCourses}
+        courses={courses}
         onEdit={handleEdit}
         onDelete={handleDelete}
         deletingIds={deletingIds}

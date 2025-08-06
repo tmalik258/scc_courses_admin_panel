@@ -28,6 +28,7 @@ import { FileWithPreview } from "@/hooks/use-file-upload";
 import { uploadImage } from "@/utils/supabase/uploadImage";
 import { fetchImage } from "@/utils/supabase/fetchImage";
 import { useRouter } from "next/navigation";
+import { Student } from "@/types/student";
 
 // Zod schema for student form validation
 const studentSchema = z.object({
@@ -57,6 +58,7 @@ const StudentDetailsPage: React.FC = () => {
   const router = useRouter();
   const { studentId } = useParams<{ studentId: string }>();
   const {
+    students,
     selectedStudent,
     selectStudent,
     handleUpdateStudent,
@@ -88,9 +90,12 @@ const StudentDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (studentId && selectStudent && !selectedStudent) {
-      selectStudent(studentId as string);
+      const student = students.find((s: { id: string }) => s.id === studentId);
+      if (student) {
+        selectStudent(student);
+      }
     }
-  }, [studentId, selectStudent, selectedStudent]);
+  }, [studentId, selectStudent, selectedStudent, students]);
 
   useEffect(() => {
     if (selectedStudent) {
@@ -134,12 +139,13 @@ const StudentDetailsPage: React.FC = () => {
     console.log("Submitting update:", data);
 
     try {
-      await handleUpdateStudent(data.id, {
+      await handleUpdateStudent({
+        ...selectedStudent,
         fullName: data.fullName,
         phone: data.phone,
         email: data.email,
         avatarUrl: data.avatarUrl || "",
-      });
+      } as Student);
 
       toast.success("Student updated successfully!");
       router.push("/student-management");

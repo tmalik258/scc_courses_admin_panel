@@ -1,4 +1,8 @@
-import { Lessons, Course as PrismaCourse, Resources } from "@/lib/generated/prisma";
+import {
+  Lessons,
+  Course as PrismaCourse,
+  Resources,
+} from "@/lib/generated/prisma";
 
 export interface Course {
   id: string;
@@ -30,7 +34,8 @@ export interface CourseFormData {
   isPublished?: boolean;
 }
 
-export interface CourseWithRelations extends PrismaCourse {
+export interface CourseWithRelations extends Omit<PrismaCourse, "price"> {
+  price: number | null;
   category: { id: string; name: string; color: string | null };
   instructor: { id: string; fullName: string | null };
   modules: {
@@ -45,7 +50,6 @@ export interface CourseWithRelationsResponse {
   success: boolean;
   course: CourseWithRelations;
 }
-
 
 export interface CourseData {
   courses: CourseWithRelations[];

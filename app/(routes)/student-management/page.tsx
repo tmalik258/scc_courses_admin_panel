@@ -8,10 +8,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { LumaSpin } from "@/components/luma-spin";
 import { useRouter } from "next/navigation";
+import { Pagination } from "@/components/pagination";
 
 const StudentManagementPage: React.FC = () => {
-  const { students, refreshStudents, handleDeleteStudent, loading } =
-    useStudentData();
+  const {
+    students,
+    refreshStudents,
+    handleDeleteStudent,
+    loading,
+    page,
+    setPage,
+    totalPages,
+  } = useStudentData();
+
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
@@ -36,6 +45,12 @@ const StudentManagementPage: React.FC = () => {
   const handleDelete = (studentId: string) => {
     handleDeleteStudent(studentId);
   };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const currentPage = page;
 
   const breadcrumbItems = [
     { label: "Dashboard", href: "/dashboard" },
@@ -79,33 +94,13 @@ const StudentManagementPage: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center space-x-1">
-                    <span>Student ID</span>
-                    <div className="flex flex-col">
-                      <button className="text-gray-400 hover:text-gray-600">
-                        ▲
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        ▼
-                      </button>
-                    </div>
-                  </div>
+                  Student ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Profile
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center space-x-1">
-                    <span>Name</span>
-                    <div className="flex flex-col">
-                      <button className="text-gray-400 hover:text-gray-600">
-                        ▲
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        ▼
-                      </button>
-                    </div>
-                  </div>
+                  Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Phone Number
@@ -119,72 +114,59 @@ const StudentManagementPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStudents.map((student) => {
-                console.log(
-                  "Avatar URL for",
-                  student.fullName,
-                  "=>",
-                  student.avatarUrl
-                );
-                return (
-                  <tr key={student.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{student.id}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Avatar className="h-10 w-10 overflow-hidden">
-                        {student.avatarUrl ? (
-                          <AvatarImage
-                            src={student.avatarUrl}
-                            alt={student.fullName || "Avatar"}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : null}
-
-                        <AvatarFallback className="bg-gray-200">
-                          {student.fullName
-                            ?.split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {student.fullName}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {student.phone}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {student.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEdit(student.id)}
-                          className="p-2 text-sky-600 hover:bg-sky-50 rounded-lg"
-                          title="Edit student"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(student.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                          title="Delete student"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredStudents.map((student) => (
+                <tr key={student.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{student.id}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Avatar className="h-10 w-10 overflow-hidden">
+                      {student.avatarUrl && (
+                        <AvatarImage
+                          src={student.avatarUrl}
+                          alt={student.fullName || "Avatar"}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                      <AvatarFallback className="bg-gray-200">
+                        {student.fullName
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {student.fullName}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{student.phone}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{student.email}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEdit(student.id)}
+                        className="p-2 text-sky-600 hover:bg-sky-50 rounded-lg"
+                        title="Edit student"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(student.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        title="Delete student"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -196,6 +178,14 @@ const StudentManagementPage: React.FC = () => {
           <div className="text-gray-400">Try adjusting your search</div>
         </div>
       )}
+
+      <div className="mt-6">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </div>
     </div>
   );
 };

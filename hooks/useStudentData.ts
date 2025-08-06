@@ -1,158 +1,91 @@
-import { useCallback, useState } from "react";
-import {
-  fetchStudents,
-  fetchStudentById,
-  deleteStudent,
-  updateStudent,
-} from "@/actions/student-data";
+import { fetchStudents } from "@/actions/student-data";
+import { Student } from "@/types/student";
 import { fetchImage } from "@/utils/supabase/fetchImage";
-
-interface Course {
-  id: string;
-  title: string;
-  category: string;
-}
-
-interface Purchase {
-  course: Course;
-  createdAt: Date;
-}
-
-interface Student {
-  id: string;
-  fullName?: string;
-  phone?: string;
-  email?: string;
-  avatarUrl?: string | null; // Allow null here to match fetchImage
-  bio?: string;
-  purchases: Purchase[];
-}
+import { useCallback, useEffect, useState } from "react";
 
 export function useStudentData() {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(8);
+  const [total, setTotal] = useState(0);
 
-  const refreshStudents = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await fetchStudents();
-      const studentsWithResolvedUrls = await Promise.all(
-        data.map(async (student: Student) => {
-          let resolvedAvatarUrl: string | null | undefined;
-          if (student.avatarUrl) {
-            try {
-              resolvedAvatarUrl = await fetchImage(student.avatarUrl);
-            } catch (err) {
-              console.error(`Error fetching image for ${student.id}:`, err);
-              resolvedAvatarUrl = null;
+  const refreshStudents = useCallback(
+    async (pageOverride?: number) => {
+      setLoading(true);
+      try {
+        const { students: fetchedStudents, total } = await fetchStudents(
+          pageOverride || page,
+          limit
+        );
+        const studentsWithResolvedUrls = await Promise.all(
+          fetchedStudents.map(async (student: Student) => {
+            let resolvedAvatarUrl: string | null | undefined;
+            if (student.avatarUrl) {
+              try {
+                resolvedAvatarUrl = await fetchImage(student.avatarUrl);
+              } catch (err) {
+                console.error(`Error fetching image for ${student.id}:`, err);
+                resolvedAvatarUrl = null;
+              }
             }
-          }
-          return { ...student, avatarUrl: resolvedAvatarUrl };
-        })
-      );
-      setStudents(studentsWithResolvedUrls);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-      } else {
-        setError(new Error("Unknown error"));
+            return { ...student, avatarUrl: resolvedAvatarUrl };
+          })
+        );
+        setStudents(studentsWithResolvedUrls);
+        setTotal(total);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error("Unknown error"));
+      } finally {
+        setLoading(false);
       }
-      console.log(`Error fetching students: ${err}`);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const selectStudent = async (studentId: string) => {
-    setLoading(true);
-    try {
-      const data = await fetchStudentById(studentId);
-      let resolvedAvatarUrl: string | null | undefined; // Updated type
-      if (data.avatarUrl) {
-        try {
-          resolvedAvatarUrl = await fetchImage(data.avatarUrl);
-        } catch (err) {
-          console.error(`Error fetching image for ${studentId}:`, err);
-          resolvedAvatarUrl = null;
-        }
-      }
-      setSelectedStudent({ ...data, avatarUrl: resolvedAvatarUrl });
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-      } else {
-        setError(new Error("Unknown error"));
-      }
-      console.log(`Error fetching student: ${err}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [page, limit]
+  );
 
   const handleDeleteStudent = async (studentId: string) => {
-    setLoading(true);
     try {
-      await deleteStudent(studentId);
-      await refreshStudents();
-      setSelectedStudent(null);
+      setStudents((prev) => prev.filter((student) => student.id !== studentId));
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-      } else {
-        setError(new Error("Unknown error"));
-      }
-      console.log(`Error deleting student: ${err}`);
-    } finally {
-      setLoading(false);
+      console.error("Failed to delete student:", err);
     }
   };
 
-  const handleUpdateStudent = async (
-    studentId: string,
-    data: {
-      fullName?: string;
-      phone?: string;
-      email?: string;
-      avatarUrl?: string;
-    }
-  ) => {
-    setLoading(true);
+  const handleUpdateStudent = async (updatedStudent: Student) => {
     try {
-      const updatedStudent = await updateStudent(studentId, data);
-      let resolvedAvatarUrl: string | null | undefined; // Updated type
-      if (updatedStudent.avatarUrl) {
-        try {
-          resolvedAvatarUrl = await fetchImage(updatedStudent.avatarUrl);
-        } catch (err) {
-          console.error(`Error fetching image for ${studentId}:`, err);
-          resolvedAvatarUrl = null;
-        }
-      }
-      setSelectedStudent({ ...updatedStudent, avatarUrl: resolvedAvatarUrl });
-      await refreshStudents();
+      setStudents((prev) =>
+        prev.map((student) =>
+          student.id === updatedStudent.id ? updatedStudent : student
+        )
+      );
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-      } else {
-        setError(new Error("Unknown error"));
-      }
-      console.log(`Error updating student: ${err}`);
-    } finally {
-      setLoading(false);
+      console.error("Failed to update student:", err);
     }
   };
+
+  const selectStudent = (student: Student) => {
+    setSelectedStudent(student);
+  };
+
+  useEffect(() => {
+    refreshStudents();
+  }, [page, refreshStudents]);
 
   return {
     students,
     selectedStudent,
     setSelectedStudent,
-    refreshStudents,
     selectStudent,
+    refreshStudents,
     handleDeleteStudent,
     handleUpdateStudent,
     loading,
     error,
+    page,
+    setPage,
+    total,
+    totalPages: Math.ceil(total / limit),
   };
 }
