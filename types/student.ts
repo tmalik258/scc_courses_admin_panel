@@ -3,7 +3,7 @@ export interface Student {
   fullName?: string;
   phone?: string;
   email?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   purchases: {
     course: {
       id: string;
@@ -33,10 +33,6 @@ export interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-/**
- * Data structure for rendering the student growth chart.
- * Example: { label: "Jan", value: 200 }
- */
 export interface ChartDataPoint {
   label: string;
   value: number;
