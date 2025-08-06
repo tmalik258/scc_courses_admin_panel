@@ -1,16 +1,21 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Edit, Trash2, ArrowUpDown } from "lucide-react"
-import type { CourseWithRelations } from "@/types/course"
+import type React from "react";
+import { Edit, Trash2, ArrowUpDown } from "lucide-react";
+import type { CourseWithRelations } from "@/types/course";
 
 interface CourseTableProps {
-  courses: CourseWithRelations[]
-  onEdit: (course: CourseWithRelations) => void
-  onDelete: (courseId: string) => void
+  courses: CourseWithRelations[];
+  onEdit: (course: CourseWithRelations) => void;
+  onDelete: (courseId: string) => void;
+  deletingIds: Set<string>;
 }
 
-export const CourseTable: React.FC<CourseTableProps> = ({ courses, onEdit, onDelete }) => {
+export const CourseTable: React.FC<CourseTableProps> = ({
+  courses,
+  onEdit,
+  onDelete,
+}) => {
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -47,7 +52,9 @@ export const CourseTable: React.FC<CourseTableProps> = ({ courses, onEdit, onDel
             {courses.map((course) => (
               <tr key={course.id} className="hover:bg-gray-50">
                 <td className="px-3 sm:px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900 max-w-xs truncate">{course.title}</div>
+                  <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
+                    {course.title}
+                  </div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -55,13 +62,17 @@ export const CourseTable: React.FC<CourseTableProps> = ({ courses, onEdit, onDel
                   </span>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                  <div className="text-sm text-gray-900">{course.instructor?.fullName}</div>
+                  <div className="text-sm text-gray-900">
+                    {course.instructor?.fullName}
+                  </div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                   <div className="text-sm text-gray-900">{course.title}</div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">₹{course.price?.toString()}</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    ₹{course.price?.toString()}
+                  </div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                   <div className="text-sm text-gray-900">{course.title}</div>
@@ -90,5 +101,5 @@ export const CourseTable: React.FC<CourseTableProps> = ({ courses, onEdit, onDel
         </table>
       </div>
     </div>
-  )
-}
+  );
+};

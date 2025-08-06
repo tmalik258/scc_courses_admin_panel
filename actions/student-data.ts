@@ -30,7 +30,15 @@ export async function deleteStudent(studentId: string) {
   }
 }
 
-export async function updateStudent(studentId: string, data: { name?: string; phone?: string; email?: string }) {
+export async function updateStudent(
+  studentId: string,
+  data: {
+    fullName?: string;
+    phone?: string;
+    email?: string;
+    avatarUrl?: string;
+  }
+) {
   try {
     const res = await axios.patch(`/api/students/${studentId}`, data);
     return res.data;

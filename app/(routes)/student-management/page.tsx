@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useStudentData } from "@/hooks/useStudentData";
 import { Search, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { LumaSpin } from "@/components/luma-spin";
 import { useRouter } from "next/navigation";
@@ -119,52 +119,72 @@ const StudentManagementPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{student.id}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-gray-200">
-                        {student.fullName
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {student.fullName}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{student.phone}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{student.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(student.id)}
-                        className="p-2 text-sky-600 hover:bg-sky-50 rounded-lg"
-                        title="Edit student"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(student.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        title="Delete student"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filteredStudents.map((student) => {
+                console.log(
+                  "Avatar URL for",
+                  student.fullName,
+                  "=>",
+                  student.avatarUrl
+                );
+                return (
+                  <tr key={student.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{student.id}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Avatar className="h-10 w-10 overflow-hidden">
+                        {student.avatarUrl ? (
+                          <AvatarImage
+                            src={student.avatarUrl}
+                            alt={student.fullName || "Avatar"}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
+
+                        <AvatarFallback className="bg-gray-200">
+                          {student.fullName
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {student.fullName}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {student.phone}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {student.email}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(student.id)}
+                          className="p-2 text-sky-600 hover:bg-sky-50 rounded-lg"
+                          title="Edit student"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(student.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          title="Delete student"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

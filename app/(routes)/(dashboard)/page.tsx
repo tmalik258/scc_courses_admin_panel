@@ -47,6 +47,7 @@ const DashboardPage: React.FC = () => {
             title="Purchased Course"
             value={(overview?.purchasedCourses ?? 0).toLocaleString()}
             icon={<ShoppingCart className="w-5 h-5 text-aqua-mist" />}
+            onClick={() => router.push("/course-management")}
           />
           <MetricCard
             title="Total Revenue"
@@ -54,6 +55,7 @@ const DashboardPage: React.FC = () => {
               minimumFractionDigits: 2,
             })}`}
             icon={<DollarSign className="w-5 h-5 text-aqua-mist" />}
+            onClick={() => router.push("/payment-management")}
           />
         </div>
       </div>

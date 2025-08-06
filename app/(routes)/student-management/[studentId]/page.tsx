@@ -27,6 +27,7 @@ import { DashedSpinner } from "@/components/dashed-spinner";
 import { FileWithPreview } from "@/hooks/use-file-upload";
 import { uploadImage } from "@/utils/supabase/uploadImage";
 import { fetchImage } from "@/utils/supabase/fetchImage";
+import { useRouter } from "next/navigation";
 
 // Zod schema for student form validation
 const studentSchema = z.object({
@@ -53,6 +54,7 @@ const studentSchema = z.object({
 type StudentFormValues = z.infer<typeof studentSchema>;
 
 const StudentDetailsPage: React.FC = () => {
+  const router = useRouter();
   const { studentId } = useParams<{ studentId: string }>();
   const {
     selectedStudent,
@@ -102,10 +104,7 @@ const StudentDetailsPage: React.FC = () => {
       });
 
       (async () => {
-        if (
-          selectedStudent?.avatarUrl &&
-          selectedStudent.avatarUrl !== null
-        ) {
+        if (selectedStudent?.avatarUrl && selectedStudent.avatarUrl !== null) {
           setDisplayImageUrl(await fetchImage(selectedStudent.avatarUrl));
         } else {
           setDisplayImageUrl(null);
@@ -126,12 +125,14 @@ const StudentDetailsPage: React.FC = () => {
   }, [selectedStudent, form]);
 
   useEffect(() => {
-    if(error) {
+    if (error) {
       toast.error(error.message);
     }
   }, [error]);
 
   const handleSave = async (data: StudentFormValues) => {
+    console.log("Submitting update:", data);
+
     try {
       await handleUpdateStudent(data.id, {
         fullName: data.fullName,
@@ -139,10 +140,12 @@ const StudentDetailsPage: React.FC = () => {
         email: data.email,
         avatarUrl: data.avatarUrl || "",
       });
+
       toast.success("Student updated successfully!");
-    } catch (error) {
+      router.push("/student-management");
+    } catch (err) {
+      console.error("Update error:", err);
       toast.error("Failed to update student. Please try again.");
-      console.error("Update error:", error);
     }
   };
 
@@ -182,43 +185,27 @@ const StudentDetailsPage: React.FC = () => {
   // Handle file upload to Supabase
   const handleFileUpload = useCallback(
     async (files: FileWithPreview[]) => {
-      if (files.length === 0) return;
-
-      const fileWithPreview = files[0];
-      const file = fileWithPreview.file;
-
+      if (!files.length) return;
+      const file = files[0].file;
       if (!(file instanceof File)) return;
 
       setIsUploading(true);
-
       try {
-        console.log("Starting upload for file:", file.name);
+        console.log("Starting upload:", file.name);
         const imageUrl = await uploadImage(file);
+        if (!imageUrl) throw new Error("No URL returned");
+        console.log("Upload URL:", imageUrl);
 
-        if (imageUrl) {
-          console.log("Upload successful, URL:", imageUrl);
-          setUploadedImageUrl(imageUrl);
-
-          setDisplayImageUrl(await fetchImage(imageUrl));
-
-          // Update form data immediately with the uploaded URL
-          updateFormData({
-            avatarUrl: imageUrl,
-          });
-
-          toast.success("Profile uploaded successfully!");
-        } else {
-          console.error("Upload failed - no URL returned");
-          toast.error("Failed to upload thumbnail. Please try again.");
-        }
-      } catch (error) {
-        console.error("Upload error:", error);
-        toast.error("An error occurred while uploading. Please try again.");
+        setDisplayImageUrl(await fetchImage(imageUrl));
+        form.setValue("avatarUrl", imageUrl, { shouldValidate: true }); // ✅ Important line
+      } catch (err) {
+        console.error("Upload error:", err);
+        toast.error("Failed to upload image. Please try again.");
       } finally {
         setIsUploading(false);
       }
     },
-    [updateFormData]
+    [form]
   );
 
   // Handle file removal

@@ -18,9 +18,7 @@ export const uploadImage = async (file: File): Promise<string | null> => {
   }
 
   // Assuming the bucket is public
-  const { data } = supabase.storage
-    .from(bucketName)
-    .getPublicUrl(filePath);
+  const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
 
   return data.publicUrl;
 };

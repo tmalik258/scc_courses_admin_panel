@@ -14,6 +14,7 @@ const CoursesPage: React.FC = () => {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const { courses, refreshCourses } = useCourseData();
   const router = useRouter();
 
@@ -23,7 +24,6 @@ const CoursesPage: React.FC = () => {
     }
   }, [courses.length, refreshCourses]);
 
-  // Filter courses based on search
   const filteredCourses = courses.filter(
     (course) =>
       course.title.toLowerCase().includes(searchValue.toLowerCase()) ||
@@ -36,33 +36,42 @@ const CoursesPage: React.FC = () => {
       course.id.toLowerCase().includes(searchValue.toLowerCase())
   );
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredCourses.length / entriesPerPage);
   const startIndex = (currentPage - 1) * entriesPerPage;
   const endIndex = startIndex + entriesPerPage;
   const currentCourses = filteredCourses.slice(startIndex, endIndex);
 
   const handleEdit = (course: CourseWithRelations) => {
-    router.push(`/course-management/${course.id}`);
+    router.push(`/course-management/edit/${course.id}`);
   };
 
   const handleDelete = async (courseId: string) => {
-    try {
-      const res = await fetch(`/api/courses/${courseId}`, {
-        method: "DELETE",
-      });
+    if (deletingIds.has(courseId)) return;
 
-      if (!res.ok) {
-        const data = await res.json();
+    setDeletingIds((prev) => new Set(prev).add(courseId));
+
+    try {
+      const delay = new Promise((resolve) => setTimeout(resolve, 500));
+      const res = fetch(`/api/courses/${courseId}`, { method: "DELETE" });
+      const [apiResponse] = await Promise.all([res, delay]);
+
+      if (!apiResponse.ok) {
+        const data = await apiResponse.json();
         throw new Error(data?.error || "Failed to delete course.");
       }
 
       setErrorMessage(null);
-      router.refresh(); // Reload data after deletion
+      refreshCourses();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Failed to delete course:", err.message);
       setErrorMessage(`Failed to delete course: ${err.message}`);
+    } finally {
+      setDeletingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(courseId);
+        return newSet;
+      });
     }
   };
 
@@ -72,8 +81,7 @@ const CoursesPage: React.FC = () => {
     }
   };
 
-  // Reset to first page when search changes
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchValue, entriesPerPage]);
 
@@ -104,6 +112,7 @@ const CoursesPage: React.FC = () => {
         courses={currentCourses}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        deletingIds={deletingIds}
       />
 
       <div className="mt-6">

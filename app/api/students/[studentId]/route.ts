@@ -9,7 +9,10 @@ export async function GET(
     const { studentId } = await params;
 
     if (!studentId) {
-      return NextResponse.json({ error: "Missing student ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing student ID" },
+        { status: 400 }
+      );
     }
 
     const student = await prisma.profile.findUnique({
@@ -30,7 +33,10 @@ export async function GET(
     return NextResponse.json(student);
   } catch (error) {
     console.error("Error fetching student:", error);
-    return NextResponse.json({ error: "Failed to fetch student" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch student" },
+      { status: 500 }
+    );
   }
 }
 
@@ -42,7 +48,10 @@ export async function DELETE(
     const { studentId } = await params;
 
     if (!studentId) {
-      return NextResponse.json({ error: "Missing student ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing student ID" },
+        { status: 400 }
+      );
     }
 
     const student = await prisma.profile.delete({
@@ -56,7 +65,10 @@ export async function DELETE(
     return NextResponse.json({ message: "Student deleted successfully" });
   } catch (error) {
     console.error("Error deleting student:", error);
-    return NextResponse.json({ error: "Failed to delete student" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete student" },
+      { status: 500 }
+    );
   }
 }
 
@@ -67,20 +79,30 @@ export async function PATCH(
   try {
     const { studentId } = await params;
     const body = await request.json();
-    const { name, phone, email, avatarUrl } = body;
+    const { fullName, phone, email, avatarUrl } = body;
 
     if (!studentId) {
-      return NextResponse.json({ error: "Missing student ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing student ID" },
+        { status: 400 }
+      );
     }
 
     const updatedStudent = await prisma.profile.update({
       where: { id: studentId },
       data: {
-        fullName: name,
+        fullName,
         phone,
         email,
         avatarUrl,
         updatedAt: new Date(),
+      },
+      include: {
+        purchases: {
+          include: {
+            course: true,
+          },
+        },
       },
     });
 
@@ -91,6 +113,9 @@ export async function PATCH(
     return NextResponse.json(updatedStudent);
   } catch (error) {
     console.error("Error updating student:", error);
-    return NextResponse.json({ error: "Failed to update student" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update student" },
+      { status: 500 }
+    );
   }
 }

@@ -1,5 +1,11 @@
 import { useCallback, useState } from "react";
-import { fetchStudents, fetchStudentById, deleteStudent, updateStudent } from "@/actions/student-data";
+import {
+  fetchStudents,
+  fetchStudentById,
+  deleteStudent,
+  updateStudent,
+} from "@/actions/student-data";
+import { fetchImage } from "@/utils/supabase/fetchImage";
 
 interface Course {
   id: string;
@@ -14,11 +20,11 @@ interface Purchase {
 
 interface Student {
   id: string;
-  fullName?: string
-  phone?: string
-  email?: string
-  avatarUrl?: string
-  bio?: string
+  fullName?: string;
+  phone?: string;
+  email?: string;
+  avatarUrl?: string | null; // Allow null here to match fetchImage
+  bio?: string;
   purchases: Purchase[];
 }
 
@@ -32,7 +38,21 @@ export function useStudentData() {
     setLoading(true);
     try {
       const data = await fetchStudents();
-      setStudents(data);
+      const studentsWithResolvedUrls = await Promise.all(
+        data.map(async (student: Student) => {
+          let resolvedAvatarUrl: string | null | undefined;
+          if (student.avatarUrl) {
+            try {
+              resolvedAvatarUrl = await fetchImage(student.avatarUrl);
+            } catch (err) {
+              console.error(`Error fetching image for ${student.id}:`, err);
+              resolvedAvatarUrl = null;
+            }
+          }
+          return { ...student, avatarUrl: resolvedAvatarUrl };
+        })
+      );
+      setStudents(studentsWithResolvedUrls);
     } catch (err) {
       if (err instanceof Error) {
         setError(err);
@@ -49,7 +69,16 @@ export function useStudentData() {
     setLoading(true);
     try {
       const data = await fetchStudentById(studentId);
-      setSelectedStudent(data);
+      let resolvedAvatarUrl: string | null | undefined; // Updated type
+      if (data.avatarUrl) {
+        try {
+          resolvedAvatarUrl = await fetchImage(data.avatarUrl);
+        } catch (err) {
+          console.error(`Error fetching image for ${studentId}:`, err);
+          resolvedAvatarUrl = null;
+        }
+      }
+      setSelectedStudent({ ...data, avatarUrl: resolvedAvatarUrl });
     } catch (err) {
       if (err instanceof Error) {
         setError(err);
@@ -80,11 +109,28 @@ export function useStudentData() {
     }
   };
 
-  const handleUpdateStudent = async (studentId: string, data: { fullName?: string; phone?: string; email?: string, avatarUrl?: string }) => {
+  const handleUpdateStudent = async (
+    studentId: string,
+    data: {
+      fullName?: string;
+      phone?: string;
+      email?: string;
+      avatarUrl?: string;
+    }
+  ) => {
     setLoading(true);
     try {
       const updatedStudent = await updateStudent(studentId, data);
-      setSelectedStudent(updatedStudent);
+      let resolvedAvatarUrl: string | null | undefined; // Updated type
+      if (updatedStudent.avatarUrl) {
+        try {
+          resolvedAvatarUrl = await fetchImage(updatedStudent.avatarUrl);
+        } catch (err) {
+          console.error(`Error fetching image for ${studentId}:`, err);
+          resolvedAvatarUrl = null;
+        }
+      }
+      setSelectedStudent({ ...updatedStudent, avatarUrl: resolvedAvatarUrl });
       await refreshStudents();
     } catch (err) {
       if (err instanceof Error) {
@@ -98,5 +144,15 @@ export function useStudentData() {
     }
   };
 
-  return { students, selectedStudent, setSelectedStudent, refreshStudents, selectStudent, handleDeleteStudent, handleUpdateStudent, loading, error };
+  return {
+    students,
+    selectedStudent,
+    setSelectedStudent,
+    refreshStudents,
+    selectStudent,
+    handleDeleteStudent,
+    handleUpdateStudent,
+    loading,
+    error,
+  };
 }
