@@ -8,13 +8,14 @@ import { CourseTable } from "./_components/course-table";
 import { Pagination } from "@/components/pagination";
 import { useCourseData } from "@/hooks/useCourseData";
 import { useRouter } from "next/navigation";
+import { DashedSpinner } from "@/components/dashed-spinner";
 
 const CoursesPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { courses, refreshCourses } = useCourseData();
+  const { courses, loading, refreshCourses } = useCourseData();
   const router = useRouter();
 
   useEffect(() => {
@@ -100,11 +101,17 @@ const CoursesPage: React.FC = () => {
         </div>
       )}
 
-      <CourseTable
-        courses={currentCourses}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      {loading ? (
+        <div className="flex items-center justify-center">
+          <DashedSpinner size={24} />
+        </div>
+      ) : (
+        <CourseTable
+          courses={currentCourses}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
 
       <div className="mt-6">
         <Pagination
