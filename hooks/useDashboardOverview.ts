@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchDashboardOverview } from "@/actions/dashboard";
+import { fetchDashboardOverview } from "@/actions/dashboard-data";
 import { DashboardData } from "@/types/dashboard";
 
 export function useDashboardOverview() {

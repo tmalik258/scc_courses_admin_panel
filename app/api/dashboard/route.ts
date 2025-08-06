@@ -1,4 +1,3 @@
-// app/api/dashboard/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
@@ -15,14 +14,7 @@ import {
   PopularCourse,
 } from "@/types/dashboard";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const type = searchParams.get("type");
-
-  if (type !== "dashboard") {
-    return NextResponse.json({ error: "Invalid type" }, { status: 400 });
-  }
-
+export async function GET() {
   try {
     // Fetch total students
     const totalStudents = await prisma.profile.count({

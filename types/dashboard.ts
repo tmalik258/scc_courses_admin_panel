@@ -1,4 +1,3 @@
-// types/dashboard.ts
 export interface StudentGrowthPoint {
   month: string;
   value: number;

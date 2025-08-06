@@ -1,33 +1,33 @@
+import axios from "axios";
 import { DashboardData } from "@/types/dashboard";
 
 export async function fetchDashboardOverview(): Promise<DashboardData> {
   try {
-    console.log("[DASHBOARD] Fetching dashboard data");
-    const response = await fetch(
-      "http://localhost:3000/api/dashboard?type=dashboard"
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const data = await response.json();
-    console.log("[DASHBOARD] Fetch dashboard successful:", data);
+    const response = await axios.get("/api/dashboard");
 
-    // Ensure recentCourses is an array and handle undefined cases
-    const recentCourses = Array.isArray(data.data?.recentCourses)
-      ? data.data.recentCourses.slice(0, 5) // Limit to 5 items if needed
-      : [];
+    if (!response.data.data) {
+      console.error(
+        "[DASHBOARD] Response missing 'data' property:",
+        response.data
+      );
+      throw new Error("Invalid response format: missing 'data' property");
+    }
+
+    const { data } = response.data;
 
     return {
-      totalStudents: data.data?.totalStudents || 0,
-      totalCourses: data.data?.totalCourses || 0,
-      purchasedCourses: data.data?.purchasedCourses || 0,
-      totalRevenue: data.data?.totalRevenue || 0,
-      studentGrowth: Array.isArray(data.data?.studentGrowth)
-        ? data.data.studentGrowth
+      totalStudents: data.totalStudents || 0,
+      totalCourses: data.totalCourses || 0,
+      purchasedCourses: data.purchasedCourses || 0,
+      totalRevenue: data.totalRevenue || 0,
+      studentGrowth: Array.isArray(data.studentGrowth)
+        ? data.studentGrowth
         : [],
-      recentCourses,
-      popularCourses: Array.isArray(data.data?.popularCourses)
-        ? data.data.popularCourses
+      recentCourses: Array.isArray(data.recentCourses)
+        ? data.recentCourses.slice(0, 5)
+        : [],
+      popularCourses: Array.isArray(data.popularCourses)
+        ? data.popularCourses
         : [],
     };
   } catch (error) {
