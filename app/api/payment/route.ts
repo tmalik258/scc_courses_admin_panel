@@ -1,30 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const studentId = searchParams.get("studentId");
-    const courseId = searchParams.get("courseId");
-    const status = searchParams.get("status");
-    const paymentMethod = searchParams.get("paymentMethod");
-
     const payments = await prisma.invoice.findMany({
-      where: {
-        ...(studentId && {
-          studentName: {
-            contains: studentId,
-            mode: 'insensitive'
-          }
-        }),
-        ...(courseId && {
-          purchase: {
-            courseId
-          }
-        }),
-        ...(status && { status }),
-        ...(paymentMethod && { paymentMethod }),
-      },
       include: {
         purchase: {
           include: {

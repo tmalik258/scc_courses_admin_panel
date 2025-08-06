@@ -35,7 +35,7 @@ interface ApiPayment {
 
 const PaymentManagementPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Category");
+  const [selectedCategory, setSelectedCategory] = useState("Status");
   const [sortBy, setSortBy] = useState("Recently");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,22 +48,7 @@ const PaymentManagementPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        // Map selectedCategory to status for API (uppercase to match schema)
-        const status =
-          selectedCategory === "All Category"
-            ? undefined
-            : (selectedCategory.toUpperCase() as
-                | "SUCCESS"
-                | "FAILED"
-                | "PENDING");
-        const sortOrder = sortBy === "Oldest" ? "asc" : "desc";
-
-        const params = new URLSearchParams();
-        if (searchQuery) params.append("studentId", searchQuery);
-        if (status) params.append("status", status);
-        params.append("sortOrder", sortOrder);
-
-        const url = `/api/payment?${params.toString()}`; // Changed from /api/payments to /api/payment
+        const url = "/api/payment"; // No query parameters
         console.log("Fetching transactions from:", url);
         const response = await fetch(url);
         console.log("Response status:", response.status);
@@ -90,13 +75,7 @@ const PaymentManagementPage: React.FC = () => {
             | "pending",
         }));
 
-        const sortedData = transformedData.sort((a, b) => {
-          if (sortBy === "Amount High") return b.totalPayment - a.totalPayment;
-          if (sortBy === "Amount Low") return a.totalPayment - b.totalPayment;
-          return 0;
-        });
-
-        setTransactions(sortedData);
+        setTransactions(transformedData);
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "An error occurred";
@@ -108,15 +87,46 @@ const PaymentManagementPage: React.FC = () => {
     };
 
     fetchTransactions();
-  }, [searchQuery, selectedCategory, sortBy]);
+  }, []); // Empty dependency array since no filtering in API call
 
-  const filteredTransactions = transactions.filter(
-    (transaction) =>
-      transaction.studentName
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      transaction.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter and sort transactions on the frontend
+  const filteredTransactions = transactions
+    .filter((transaction) => {
+      // Search filter
+      const matchesSearch =
+        transaction.studentName
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        transaction.id.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Status filter
+      const matchesStatus =
+        selectedCategory === "Status" ||
+        transaction.status.toUpperCase() === selectedCategory;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortBy === "Recently") {
+        return (
+          new Date(b.date.split("/").reverse().join("-")).getTime() -
+          new Date(a.date.split("/").reverse().join("-")).getTime()
+        );
+      }
+      if (sortBy === "Oldest") {
+        return (
+          new Date(a.date.split("/").reverse().join("-")).getTime() -
+          new Date(b.date.split("/").reverse().join("-")).getTime()
+        );
+      }
+      if (sortBy === "Amount High") {
+        return b.totalPayment - a.totalPayment;
+      }
+      if (sortBy === "Amount Low") {
+        return a.totalPayment - b.totalPayment;
+      }
+      return 0;
+    });
 
   const handleView = (transactionId: string) => {
     router.push(`/payment-management/${transactionId}`);
@@ -170,7 +180,7 @@ const PaymentManagementPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
             All Transactions{" "}
-            <span className="text-sky-500">({transactions.length})</span>
+            <span className="text-sky-500">({filteredTransactions.length})</span>
           </h1>
         </div>
         <div className="flex items-center gap-4">
@@ -195,9 +205,9 @@ const PaymentManagementPage: React.FC = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
-                onClick={() => setSelectedCategory("All Category")}
+                onClick={() => setSelectedCategory("Status")}
               >
-                All Category
+                Status
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSelectedCategory("SUCCESS")}>
                 Success
