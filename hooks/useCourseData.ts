@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
-  getCourses,
   getCourseById,
   updateCourse,
   updateModule,
-  updateResource,
   deleteCourse,
   createCourse,
   createModule,
@@ -14,6 +12,7 @@ import {
   deleteResource,
   createResource,
 } from "@/actions/course-data";
+import { getAdminCourses } from "@/actions/get-admin-courses";
 import {
   CourseFormData,
   CourseWithRelations,
@@ -21,7 +20,7 @@ import {
 } from "@/types/course";
 import { Lessons } from "@/lib/generated/prisma";
 
-export const useCourseData = () => {
+export const useCourseData = (page: number, limit: number, search: string) => {
   const [courses, setCourses] = useState<CourseWithRelations[]>([]);
   const [selectedCourse, setSelectedCourse] =
     useState<CourseWithRelations | null>(null);
@@ -29,25 +28,30 @@ export const useCourseData = () => {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const isFetchingRef = useRef<string | null>(null);
 
   const refreshCourses = useCallback(async () => {
     setLoading(true);
     try {
-      const { courses } = await getCourses();
-      setCourses(courses);
+      const response = await getAdminCourses({ page, limit, search });
+      if (!response || !Array.isArray(response.courses)) {
+        throw new Error("Invalid course data format received");
+      }
+      setCourses(response.courses);
+      setTotalCount(response.totalCount || 0);
       setError(null);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-      } else {
-        setError(new Error("Unknown error"));
-      }
+      setError(err instanceof Error ? err : new Error("Unknown error"));
       console.error("Error fetching courses:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, limit, search]);
+
+  useEffect(() => {
+    refreshCourses();
+  }, [refreshCourses]);
 
   const selectCourse = useCallback(async (courseId: string) => {
     if (isFetchingRef.current === courseId) return;
@@ -58,11 +62,7 @@ export const useCourseData = () => {
       setSelectedCourse(course);
       setError(null);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-      } else {
-        setError(new Error("Unknown error"));
-      }
+      setError(err instanceof Error ? err : new Error("Unknown error"));
       console.error("Error fetching course:", err);
     } finally {
       setLoading(false);
@@ -75,16 +75,11 @@ export const useCourseData = () => {
       setIsCreating(true);
       try {
         const { course: newCourse } = await createCourse(data);
-        console.log("[useCourseData] New course created:", newCourse);
         await refreshCourses();
         setError(null);
         return newCourse;
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
+        setError(err instanceof Error ? err : new Error("Unknown error"));
         console.error("Error creating course:", err);
         throw err;
       } finally {
@@ -103,11 +98,7 @@ export const useCourseData = () => {
         await refreshCourses();
         setError(null);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
+        setError(err instanceof Error ? err : new Error("Unknown error"));
         console.error("Error updating course:", err);
         throw err;
       } finally {
@@ -126,11 +117,7 @@ export const useCourseData = () => {
         setSelectedCourse(null);
         setError(null);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
+        setError(err instanceof Error ? err : new Error("Unknown error"));
         console.error("Error deleting course:", err);
         throw err;
       } finally {
@@ -141,11 +128,13 @@ export const useCourseData = () => {
   );
 
   const handleCreateModule = useCallback(
-    async (courseId: string, data: { title: string; lessons: Partial<Lessons>[] }) => {
+    async (
+      courseId: string,
+      data: { title: string; lessons: Partial<Lessons>[] }
+    ) => {
       setIsCreating(true);
       try {
         const newModule = await createModule(courseId, data);
-        console.log("[useCourseData] New module created:", newModule);
         if (selectedCourse) {
           setSelectedCourse({
             ...selectedCourse,
@@ -156,11 +145,7 @@ export const useCourseData = () => {
         setError(null);
         return newModule;
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
+        setError(err instanceof Error ? err : new Error("Unknown error"));
         console.error("Error creating module:", err);
         throw err;
       } finally {
@@ -183,11 +168,7 @@ export const useCourseData = () => {
         await refreshCourses();
         setError(null);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
+        setError(err instanceof Error ? err : new Error("Unknown error"));
         console.error("Error updating module:", err);
         throw err;
       } finally {
@@ -196,7 +177,7 @@ export const useCourseData = () => {
     },
     [refreshCourses]
   );
-  
+
   const handleDeleteModule = useCallback(
     async (courseId: string, moduleId: string) => {
       setIsUpdating(true);
@@ -205,17 +186,15 @@ export const useCourseData = () => {
         if (selectedCourse) {
           setSelectedCourse({
             ...selectedCourse,
-            modules: selectedCourse.modules.filter(module => module.id !== moduleId),
+            modules: selectedCourse.modules.filter(
+              (module) => module.id !== moduleId
+            ),
           });
         }
         await refreshCourses();
         setError(null);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
+        setError(err instanceof Error ? err : new Error("Unknown error"));
         console.error("Error deleting module:", err);
         throw new Error("Failed to delete module", { cause: err });
       } finally {
@@ -230,7 +209,6 @@ export const useCourseData = () => {
       setIsCreating(true);
       try {
         const newResource = await createResource(courseId, data);
-        console.log("[useCourseData] New resource created:", newResource);
         if (selectedCourse) {
           setSelectedCourse({
             ...selectedCourse,
@@ -241,11 +219,7 @@ export const useCourseData = () => {
         setError(null);
         return newResource;
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
+        setError(err instanceof Error ? err : new Error("Unknown error"));
         console.error("Error creating resource:", err);
         throw err;
       } finally {
@@ -253,29 +227,6 @@ export const useCourseData = () => {
       }
     },
     [refreshCourses, selectedCourse]
-  );
-
-  const handleUpdateResource = useCallback(
-    async (courseId: string, resourceId: string, data: { name: string; url: string }) => {
-      setIsUpdating(true);
-      try {
-        const updatedCourse = await updateResource(courseId, resourceId, data);
-        setSelectedCourse(updatedCourse);
-        await refreshCourses();
-        setError(null);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
-        console.error("Error updating resource:", err);
-        throw err;
-      } finally {
-        setIsUpdating(false);
-      }
-    },
-    [refreshCourses]
   );
 
   const handleDeleteResource = useCallback(
@@ -286,17 +237,15 @@ export const useCourseData = () => {
         if (selectedCourse) {
           setSelectedCourse({
             ...selectedCourse,
-            resources: selectedCourse.resources.filter(resource => resource.id !== resourceId),
+            resources: selectedCourse.resources.filter(
+              (resource) => resource.id !== resourceId
+            ),
           });
         }
         await refreshCourses();
         setError(null);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error"));
-        }
+        setError(err instanceof Error ? err : new Error("Unknown error"));
         console.error("Error deleting resource:", err);
         throw new Error("Failed to delete resource", { cause: err });
       } finally {
@@ -308,6 +257,7 @@ export const useCourseData = () => {
 
   return {
     courses,
+    totalCount,
     selectedCourse,
     setSelectedCourse,
     refreshCourses,
@@ -319,7 +269,6 @@ export const useCourseData = () => {
     handleUpdateModule,
     handleDeleteModule,
     handleCreateResource,
-    handleUpdateResource,
     handleDeleteResource,
     loading,
     isCreating,

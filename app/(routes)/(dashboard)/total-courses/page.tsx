@@ -15,9 +15,10 @@ const CoursesPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
-  const { courses, totalCount, errorMessage } = useCourseData(
+  const { courses, totalCount } = useCourseData(
     currentPage,
-    entriesPerPage
+    entriesPerPage,
+    searchValue
   );
 
   const router = useRouter();
@@ -41,7 +42,6 @@ const CoursesPage: React.FC = () => {
         throw new Error(data?.error || "Failed to delete course.");
       }
 
-      // Refetch current page
       location.reload();
     } catch (err) {
       if (err instanceof Error) {
@@ -78,7 +78,7 @@ const CoursesPage: React.FC = () => {
         searchValue={searchValue}
         onSearchChange={(value) => {
           setSearchValue(value);
-          setCurrentPage(1); // reset to first page
+          setCurrentPage(1);
         }}
         entriesPerPage={entriesPerPage}
         onEntriesChange={(val) => {
@@ -87,11 +87,11 @@ const CoursesPage: React.FC = () => {
         }}
       />
 
-      {errorMessage && (
+      {/* {errorMessage && (
         <div className="text-red-600 bg-red-100 p-3 rounded mb-4">
           {errorMessage}
         </div>
-      )}
+      )} */}
 
       <CourseTable
         courses={courses}

@@ -19,16 +19,15 @@ const StudentManagementPage: React.FC = () => {
     page,
     setPage,
     totalPages,
+    limit,
   } = useStudentData();
 
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    if (students.length === 0) {
-      refreshStudents();
-    }
-  }, [refreshStudents, students.length]);
+    refreshStudents();
+  }, [refreshStudents, page, limit]);
 
   const filteredStudents = students.filter(
     (student) =>

@@ -1,177 +1,90 @@
-import { NextResponse } from "next/server";
-import { Decimal } from "@prisma/client/runtime/library";
+// ✅ get-admin-courses.ts
+"use server";
+
+import { Prisma } from "@/lib/generated/prisma";
 import prisma from "@/lib/prisma";
-import { CreateCourseFormData } from "@/types/course";
 
-// UUID validation helper
-function isValidUUID(uuid: string): boolean {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
-}
+export async function getAdminCourses({
+  search = "",
+  page = 1,
+  limit = 10,
+}: {
+  search?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const skip = (page - 1) * limit;
 
-// GET: Fetch all popular courses
-export async function GET() {
-  try {
-    const courses = await prisma.course.findMany({
+  const isUUID = /^[0-9a-fA-F-]{36}$/.test(search);
+
+  const where: Prisma.CourseWhereInput | undefined = search
+    ? {
+        OR: [
+          {
+            title: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            category: {
+              name: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            instructor: {
+              fullName: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+          ...(isUUID ? [{ id: search }] : []),
+        ],
+      }
+    : undefined;
+
+  const [courses, totalCount] = await Promise.all([
+    prisma.course.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
       include: {
         category: {
-          select: { id: true, name: true, color: true },
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+        instructor: {
+          select: {
+            id: true,
+            fullName: true,
+          },
         },
         modules: {
           include: {
             lessons: true,
           },
         },
-        instructor: {
-          select: { id: true, fullName: true },
-        },
         resources: true,
       },
-      orderBy: { updatedAt: "desc" },
-    });
+    }),
+    prisma.course.count({ where }),
+  ]);
 
-    return NextResponse.json({ courses }, { status: 200 });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    const errorCode =
-      typeof error === "object" && error && "code" in error
-        ? error.code
-        : undefined;
+  const serializedCourses = courses.map((course) => ({
+    ...course,
+    price: course.price ? course.price.toNumber() : null,
+  }));
 
-    console.error("GET /api/courses error:", {
-      message: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined,
-      code: errorCode,
-    });
-
-    console.log("Database URL:", process.env.DATABASE_URL);
-    return NextResponse.json(
-      { error: "Failed to fetch courses" },
-      { status: 500 }
-    );
-  }
-}
-
-// POST: Create a new popular course
-export async function POST(req: Request) {
-  try {
-    const body: CreateCourseFormData = await req.json();
-    const {
-      title,
-      description,
-      categoryId,
-      price,
-      instructorId,
-      thumbnailUrl,
-    } = body;
-
-    if (!title || !instructorId || !categoryId) {
-      return NextResponse.json(
-        {
-          error:
-            "Missing required fields: title, instructor, and category are required.",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!isValidUUID(instructorId) || !isValidUUID(categoryId)) {
-      return NextResponse.json(
-        { error: "Invalid instructor or category ID format." },
-        { status: 400 }
-      );
-    }
-
-    const instructor = await prisma.profile.findFirst({
-      where: { id: instructorId, role: "INSTRUCTOR" },
-    });
-
-    if (!instructor) {
-      return NextResponse.json(
-        { error: "Instructor not found or invalid role." },
-        { status: 404 }
-      );
-    }
-
-    const categoryExists = await prisma.category.findUnique({
-      where: { id: categoryId },
-    });
-
-    if (!categoryExists) {
-      return NextResponse.json(
-        { error: "Category not found." },
-        { status: 404 }
-      );
-    }
-
-    const createdCourse = await prisma.course.create({
-      data: {
-        title,
-        description: description || null,
-        instructorId,
-        categoryId,
-        price: price ? new Decimal(price) : 0,
-        thumbnailUrl: thumbnailUrl || null,
-      },
-    });
-
-    return NextResponse.json(
-      { success: true, course: createdCourse },
-      { status: 201 }
-    );
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    const errorCode =
-      typeof error === "object" && error && "code" in error
-        ? error.code
-        : undefined;
-
-    console.error("POST /api/courses error:", {
-      message: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined,
-      code: errorCode,
-    });
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE: Remove a popular course
-export async function DELETE(req: Request) {
-  try {
-    const { id: courseId } = await req.json();
-
-    if (!isValidUUID(courseId)) {
-      return NextResponse.json(
-        { error: "Invalid course ID format. Must be a valid UUID." },
-        { status: 400 }
-      );
-    }
-
-    const course = await prisma.course.findUnique({ where: { id: courseId } });
-
-    if (!course) {
-      return NextResponse.json({ error: "Course not found." }, { status: 404 });
-    }
-
-    await prisma.resources.deleteMany({ where: { course_id: courseId } });
-    await prisma.lessons.deleteMany({
-      where: { modules: { courseId: courseId } },
-    });
-    await prisma.module.deleteMany({ where: { courseId: courseId } });
-    await prisma.course.delete({ where: { id: courseId } });
-
-    return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    console.error("Error deleting course:", error);
-    return NextResponse.json(
-      { error: "Failed to delete course" },
-      { status: 500 }
-    );
-  }
+  return {
+    courses: serializedCourses,
+    totalCount,
+  };
 }
