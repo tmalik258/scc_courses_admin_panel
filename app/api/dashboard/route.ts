@@ -129,20 +129,20 @@ export async function GET() {
     };
 
     return NextResponse.json({ data: response });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    console.error("Error fetching dashboard data:", {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-      error,
-    });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error fetching dashboard data:", {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      });
+    } else {
+      console.error("Unknown error:", error);
+    }
 
     return NextResponse.json(
       { error: "Failed to fetch dashboard data" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

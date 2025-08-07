@@ -5,7 +5,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { CoursesHeader } from "./_components/course-header";
 import { CourseTable } from "./_components/course-table";
 import { Pagination } from "@/components/pagination";
-import { useAdminCourses } from "@/hooks/useAdminCourses";
+import { useCourseData } from "@/hooks/useCourseData";
 import { useRouter } from "next/navigation";
 import { CourseWithRelations } from "@/types/course";
 
@@ -15,8 +15,7 @@ const CoursesPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
-  const { courses, totalCount, errorMessage } = useAdminCourses(
-    searchValue,
+  const { courses, totalCount, errorMessage } = useCourseData(
     currentPage,
     entriesPerPage
   );
