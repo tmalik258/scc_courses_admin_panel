@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Plus, Search, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,8 @@ const CourseManagementPage: React.FC = () => {
   const router = useRouter();
   const page = 1;
   const limit = 6;
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("All Category");
   const [sortBy, setSortBy] = useState("Recently");
@@ -38,17 +38,7 @@ const CourseManagementPage: React.FC = () => {
     refreshCourses,
     loading,
     error,
-  } = useCourseData(page, limit, debouncedSearch);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery]);
+  } = useCourseData(page, limit);
 
   useEffect(() => {
     if (courses.length === 0 && !loading && !error) {
@@ -56,25 +46,50 @@ const CourseManagementPage: React.FC = () => {
     }
   }, [courses.length, refreshCourses, loading, error]);
 
-  const filteredCourses = courses.filter((course) => {
-    const matchesTab =
-      activeTab === "all" ||
-      (activeTab === "published" ? course.isPublished : !course.isPublished);
-    const matchesCategory =
-      selectedCategory === "All Category" ||
-      course.category.name === selectedCategory;
-    return matchesTab && matchesCategory;
-  });
+  const displayedCourses = useMemo(() => {
+    let filtered = [...courses];
 
-  const sortedCourses = [...filteredCourses].sort((a, b) => {
-    if (sortBy === "Recently")
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    if (sortBy === "Oldest")
-      return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-    if (sortBy === "A-Z") return a.title.localeCompare(b.title);
-    if (sortBy === "Z-A") return b.title.localeCompare(a.title);
-    return 0;
-  });
+    // Filter by tab
+    filtered = filtered.filter((course) => {
+      if (activeTab === "published") return course.isPublished;
+      if (activeTab === "draft") return !course.isPublished;
+      return true;
+    });
+
+    // Filter by category
+    if (selectedCategory !== "All Category") {
+      filtered = filtered.filter(
+        (course) => course.category.name === selectedCategory
+      );
+    }
+
+    // Search
+    if (searchQuery) {
+      const lower = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (course) =>
+          course.title.toLowerCase().includes(lower) ||
+          course.category.name.toLowerCase().includes(lower)
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      if (sortBy === "Recently")
+        return (
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+      if (sortBy === "Oldest")
+        return (
+          new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+        );
+      if (sortBy === "A-Z") return a.title.localeCompare(b.title);
+      if (sortBy === "Z-A") return b.title.localeCompare(a.title);
+      return 0;
+    });
+
+    return filtered;
+  }, [courses, activeTab, selectedCategory, searchQuery, sortBy]);
 
   const handleEdit = (courseId: string) => {
     startTransition(() => {
@@ -157,36 +172,19 @@ const CourseManagementPage: React.FC = () => {
 
       <div className="mb-6">
         <div className="flex space-x-8 border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`pb-3 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "all"
-                ? "border-sky-500 text-sky-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setActiveTab("published")}
-            className={`pb-3 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "published"
-                ? "border-sky-500 text-sky-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Published
-          </button>
-          <button
-            onClick={() => setActiveTab("draft")}
-            className={`pb-3 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "draft"
-                ? "border-sky-500 text-sky-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Draft
-          </button>
+          {["all", "published", "draft"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+                activeTab === tab
+                  ? "border-sky-500 text-sky-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab[0].toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -241,25 +239,18 @@ const CourseManagementPage: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setSortBy("Recently")}>
-                Recently
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy("Oldest")}>
-                Oldest
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy("A-Z")}>
-                A-Z
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy("Z-A")}>
-                Z-A
-              </DropdownMenuItem>
+              {["Recently", "Oldest", "A-Z", "Z-A"].map((sort) => (
+                <DropdownMenuItem key={sort} onClick={() => setSortBy(sort)}>
+                  {sort}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedCourses.map((course) => (
+        {displayedCourses.map((course) => (
           <CourseCard
             key={course.id}
             course={course}
@@ -269,7 +260,7 @@ const CourseManagementPage: React.FC = () => {
         ))}
       </div>
 
-      {sortedCourses.length === 0 && (
+      {displayedCourses.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-2">No courses found</div>
           <div className="text-gray-400">
