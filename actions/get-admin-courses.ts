@@ -2,94 +2,63 @@
 
 import { Prisma } from "@/lib/generated/prisma";
 import prisma from "@/lib/prisma";
-import { CourseWithRelations } from "@/types/course"; // Make sure this type includes category, instructor, modules, etc.
-
-type GetAdminCoursesResponse = {
-  courses: CourseWithRelations[];
-  totalCount: number;
-};
+import { CourseWithRelations } from "@/types/course";
 
 export async function getAdminCourses({
-  search = "",
-  page = 1,
-  limit = 10,
+  page,
+  limit,
+  search,
 }: {
-  search?: string;
-  page?: number;
-  limit?: number;
-}): Promise<GetAdminCoursesResponse> {
-  const skip = (page - 1) * limit;
+  page: number;
+  limit: number;
+  search: string;
+}): Promise<{ courses: CourseWithRelations[]; totalCount: number }> {
+  try {
+    const skip = (page - 1) * limit;
+    const isUUID = /^[0-9a-fA-F-]{36}$/.test(search);
 
-  const isUUID = /^[0-9a-fA-F-]{36}$/.test(search);
-
-  const where: Prisma.CourseWhereInput | undefined = search
-    ? {
-        OR: [
-          {
-            title: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            category: {
-              name: {
-                contains: search,
-                mode: "insensitive",
+    const where: Prisma.CourseWhereInput = search
+      ? {
+          OR: [
+            { title: { contains: search, mode: "insensitive" } },
+            { category: { name: { contains: search, mode: "insensitive" } } },
+            {
+              instructor: {
+                fullName: { contains: search, mode: "insensitive" },
               },
             },
-          },
-          {
-            instructor: {
-              fullName: {
-                contains: search,
-                mode: "insensitive",
-              },
-            },
-          },
-          ...(isUUID ? [{ id: search }] : []),
-        ],
-      }
-    : undefined;
+            ...(isUUID ? [{ id: search }] : []),
+          ],
+        }
+      : {};
 
-  const [courses, totalCount] = await Promise.all([
-    prisma.course.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: { createdAt: "desc" },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-          },
+    const [courses, totalCount] = await Promise.all([
+      prisma.course.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          category: { select: { id: true, name: true, color: true } },
+          instructor: { select: { id: true, fullName: true } },
+          modules: { include: { lessons: true } },
+          resources: true,
         },
-        instructor: {
-          select: {
-            id: true,
-            fullName: true,
-          },
-        },
-        modules: {
-          include: {
-            lessons: true,
-          },
-        },
-        resources: true,
-      },
-    }),
-    prisma.course.count({ where }),
-  ]);
+      }),
+      prisma.course.count({ where }),
+    ]);
 
-  const serializedCourses = courses.map((course) => ({
-    ...course,
-    price: course.price ? course.price.toNumber() : null,
-  })) as CourseWithRelations[]; // Type cast
+    const serializedCourses = courses.map((course) => ({
+      ...course,
+      price: course.price ? Number(course.price) : null,
+    }));
 
-  return {
-    courses: serializedCourses,
-    totalCount,
-  };
+    return { courses: serializedCourses as CourseWithRelations[], totalCount };
+  } catch (error) {
+    console.error("Error in getAdminCourses:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw new Error("Failed to fetch courses", { cause: error });
+  }
 }

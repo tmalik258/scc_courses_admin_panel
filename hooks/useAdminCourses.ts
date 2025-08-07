@@ -1,47 +1,48 @@
-// hooks/useAdminCourses.ts
-import { useState, useEffect } from "react";
-import { CourseWithRelations } from "@/types/course";
-import { getAdminCourses } from "@/actions/get-admin-courses";
+// hooks/use-admin-courses.ts
+"use client";
 
-export const useAdminCourses = (
-  searchValue: string,
-  currentPage: number,
-  entriesPerPage: number
-) => {
+import { useCallback, useEffect, useState } from "react";
+import { getCourses } from "@/actions/course-data";
+import { CourseWithRelations } from "@/types/course";
+
+export function useAdminCourses({
+  page = 1,
+  limit = 10,
+  search = "",
+}: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
   const [courses, setCourses] = useState<CourseWithRelations[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchCourses = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { courses, totalCount } = await getCourses({ page, limit, search });
+      setCourses(courses);
+      setTotalCount(totalCount);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to fetch courses:", err);
+      setError(err instanceof Error ? err : new Error("Unknown error"));
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit, search]);
 
   useEffect(() => {
-    async function fetchCourses() {
-      setLoading(true);
-      try {
-        const { courses, totalCount } = await getAdminCourses({
-          search: searchValue,
-          page: currentPage,
-          limit: entriesPerPage,
-        });
-
-        setCourses(courses);
-        setTotalCount(totalCount);
-        setErrorMessage(null);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        setErrorMessage("Failed to load courses.");
-        console.error("Fetch error:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchCourses();
-  }, [searchValue, currentPage, entriesPerPage]);
+  }, [fetchCourses]);
 
   return {
     courses,
     totalCount,
     loading,
-    errorMessage,
+    error,
+    refreshCourses: fetchCourses,
   };
-};
+}

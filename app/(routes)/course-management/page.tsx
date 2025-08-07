@@ -2,11 +2,7 @@
 
 import type React from "react";
 import { useEffect, useState, useTransition } from "react";
-import {
-  Plus,
-  Search,
-  ChevronDown,
-} from "lucide-react";
+import { Plus, Search, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,34 +16,54 @@ import { useRouter } from "next/navigation";
 import { useCourseData } from "@/hooks/useCourseData";
 import { LumaSpin } from "@/components/luma-spin";
 import { DashedSpinner } from "@/components/dashed-spinner";
+import { Pagination } from "@/components/pagination";
 import CourseCard from "./_components/course-card";
 
 const CourseManagementPage: React.FC = () => {
   const router = useRouter();
-  const { courses, refreshCourses, loading, error } = useCourseData();
-  const [activeTab, setActiveTab] = useState("all");
+  const page = 1;
+  const limit = 6;
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("All Category");
   const [sortBy, setSortBy] = useState("Recently");
   const [isPending, startTransition] = useTransition();
 
+  const {
+    courses,
+    currentPage,
+    totalPages,
+    handlePageChange,
+    refreshCourses,
+    loading,
+    error,
+  } = useCourseData(page, limit, debouncedSearch);
+
   useEffect(() => {
-    if (courses.length === 0) {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (courses.length === 0 && !loading && !error) {
       refreshCourses();
     }
-  }, [courses.length, refreshCourses]);
+  }, [courses.length, refreshCourses, loading, error]);
 
   const filteredCourses = courses.filter((course) => {
-    const matchesSearch = course.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
     const matchesTab =
       activeTab === "all" ||
       (activeTab === "published" ? course.isPublished : !course.isPublished);
     const matchesCategory =
       selectedCategory === "All Category" ||
       course.category.name === selectedCategory;
-    return matchesSearch && matchesTab && matchesCategory;
+    return matchesTab && matchesCategory;
   });
 
   const sortedCourses = [...filteredCourses].sort((a, b) => {
@@ -61,8 +77,9 @@ const CourseManagementPage: React.FC = () => {
   });
 
   const handleEdit = (courseId: string) => {
-    console.log("Edit course:", courseId);
-    router.push(`/course-management/edit/${courseId}`);
+    startTransition(() => {
+      router.push(`/course-management/edit/${courseId}`);
+    });
   };
 
   const handleDelete = async (courseId: string) => {
@@ -76,7 +93,7 @@ const CourseManagementPage: React.FC = () => {
       });
 
       if (response.ok) {
-        window.location.reload();
+        refreshCourses();
       } else {
         const errorData = await response.json();
         console.error(
@@ -120,7 +137,6 @@ const CourseManagementPage: React.FC = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <Breadcrumb items={breadcrumbItems} />
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">
           Course Management
@@ -139,7 +155,6 @@ const CourseManagementPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Tabs */}
       <div className="mb-6">
         <div className="flex space-x-8 border-b border-gray-200">
           <button
@@ -175,7 +190,6 @@ const CourseManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Search and Filters */}
       <div className="flex items-center justify-between mb-8">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -244,7 +258,6 @@ const CourseManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedCourses.map((course) => (
           <CourseCard
@@ -264,6 +277,14 @@ const CourseManagementPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <div className="mt-6">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </div>
     </div>
   );
 };
