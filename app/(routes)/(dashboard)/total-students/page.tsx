@@ -9,19 +9,40 @@ import { Pagination } from "@/components/pagination";
 import { useStudentData } from "@/hooks/useStudentData";
 import { useRouter } from "next/navigation";
 import { DashedSpinner } from "@/components/dashed-spinner";
+import { toast } from "sonner";
 
 const StudentsPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const { students, loading, refreshStudents } = useStudentData();
+  const {
+    students,
+    page,
+    totalPages,
+    loading,
+    refreshStudents,
+    setPage,
+    limit,
+    setLimit,
+    error,
+    handleDeleteStudent, // Use the hook's delete function
+  } = useStudentData(3); // Initialize with 10 entries per page
   const router = useRouter();
 
   useEffect(() => {
-    if (students.length === 0) {
-      refreshStudents();
+    refreshStudents();
+  }, [refreshStudents, page, limit]);
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching students:", error.message);
+      toast.error("Failed to fetch students. Please try again.");
     }
-  }, [refreshStudents, students.length]);
+  }, [error]);
+
+  // Sync entriesPerPage with limit
+  const handleEntriesChange = (newEntries: number) => {
+    setLimit(newEntries);
+    setPage(1); // Reset to first page when changing entries per page
+  };
 
   // Filter students based on search
   const filteredStudents = students.filter(
@@ -32,25 +53,8 @@ const StudentsPage: React.FC = () => {
       student.phone?.includes(searchValue)
   );
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredStudents.length / entriesPerPage);
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const endIndex = startIndex + entriesPerPage;
-  const currentStudents = filteredStudents.slice(startIndex, endIndex);
-
   const handleEdit = (student: Student) => {
     router.push(`/student-management/${student.id}`);
-  };
-
-  const handleDelete = (studentId: string) => {
-    console.log("Delete student:", studentId);
-    // In real app, this would show confirmation dialog and delete student
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
   };
 
   const breadcrumbItems = [
@@ -62,31 +66,33 @@ const StudentsPage: React.FC = () => {
     <div>
       <Breadcrumb items={breadcrumbItems} />
 
-      <StudentsHeader
-        totalStudents={filteredStudents.length}
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        entriesPerPage={entriesPerPage}
-        onEntriesChange={setEntriesPerPage}
-      />
-
-      {loading ? (
-        <div className="flex items-center justify-center">
-          <DashedSpinner size={24} />
-        </div>
-      ) : (
-        <StudentTable
-          students={currentStudents}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+      <div className="flex flex-col min-h-[calc(100vh-10rem)]">
+        <StudentsHeader
+          totalStudents={filteredStudents.length}
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          entriesPerPage={limit}
+          onEntriesChange={handleEntriesChange}
         />
-      )}
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
+        <div className="flex-1">
+          {loading ? (
+            <div className="flex items-center justify-center">
+              <DashedSpinner size={24} />
+            </div>
+          ) : (
+            <StudentTable
+              students={filteredStudents}
+              onEdit={handleEdit}
+              onDelete={handleDeleteStudent} // Use hook's delete function
+            />
+          )}
+        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      </div>
     </div>
   );
 };
