@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState } from "react";
@@ -8,6 +7,7 @@ import { CourseTable } from "./_components/course-table";
 import { Pagination } from "@/components/pagination";
 import { useAdminCourses } from "@/hooks/useAdminCourses";
 import { useRouter } from "next/navigation";
+import { CourseWithRelations } from "@/types/course";
 
 const CoursesPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
@@ -25,7 +25,7 @@ const CoursesPage: React.FC = () => {
 
   const totalPages = Math.ceil(totalCount / entriesPerPage);
 
-  const handleEdit = (course: any) => {
+  const handleEdit = (course: CourseWithRelations) => {
     router.push(`/course-management/edit/${course.id}`);
   };
 
@@ -44,8 +44,12 @@ const CoursesPage: React.FC = () => {
 
       // Refetch current page
       location.reload();
-    } catch (err: any) {
-      console.error("Failed to delete course:", err.message);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Failed to delete course:", err.message);
+      } else {
+        console.error("Failed to delete course:", err);
+      }
     } finally {
       setDeletingIds((prev) => {
         const newSet = new Set(prev);
