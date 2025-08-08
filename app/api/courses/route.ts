@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@/lib/generated/prisma";
 import prisma from "@/lib/prisma";
 
 export async function GET(req: Request) {
@@ -7,30 +6,12 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const searchParams = url.searchParams;
     const page = Number(searchParams.get("page") || "1");
-    const limit = Number(searchParams.get("limit") || "6");
-    const search = searchParams.get("search") || "";
+    const limit = Number(searchParams.get("limit") || "10");
 
     const skip = (page - 1) * limit;
-    const isUUID = /^[0-9a-fA-F-]{36}$/.test(search);
-
-    const where: Prisma.CourseWhereInput = search
-      ? {
-          OR: [
-            { title: { contains: search, mode: "insensitive" } },
-            { category: { name: { contains: search, mode: "insensitive" } } },
-            {
-              instructor: {
-                fullName: { contains: search, mode: "insensitive" },
-              },
-            },
-            ...(isUUID ? [{ id: search }] : []),
-          ],
-        }
-      : {};
 
     const [courses, totalCount] = await Promise.all([
       prisma.course.findMany({
-        where,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -41,7 +22,7 @@ export async function GET(req: Request) {
           resources: true,
         },
       }),
-      prisma.course.count({ where }),
+      prisma.course.count(),
     ]);
 
     const serializedCourses = courses.map((course) => ({

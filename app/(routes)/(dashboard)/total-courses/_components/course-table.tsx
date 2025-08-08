@@ -8,7 +8,6 @@ interface CourseTableProps {
   courses: CourseWithRelations[];
   onEdit: (course: CourseWithRelations) => void;
   onDelete: (courseId: string) => void;
-  deletingIds: Set<string>;
 }
 
 export const CourseTable: React.FC<CourseTableProps> = ({

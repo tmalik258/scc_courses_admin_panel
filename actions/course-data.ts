@@ -3,70 +3,31 @@
 import axios from "axios";
 import {
   CourseFormData,
+  CoursesWithRelationsResponse,
   CourseWithRelations,
   CourseWithRelationsResponse,
   CreateCourseFormData,
 } from "@/types/course";
 import { Lessons, Resources } from "@/lib/generated/prisma";
-import { Prisma } from "@/lib/generated/prisma";
-import prisma from "@/lib/prisma";
 
-export async function getAdminCourses({
-  page,
-  limit,
-  search,
-}: {
-  page: number;
-  limit: number;
-  search: string;
-}): Promise<{ courses: CourseWithRelations[]; totalCount: number }> {
+export async function getCourses(page = 1, limit = 10): Promise<CoursesWithRelationsResponse> {
   try {
-    const skip = (page - 1) * limit;
-    const isUUID = /^[0-9a-fA-F-]{36}$/.test(search);
-
-    const where: Prisma.CourseWhereInput = search
-      ? {
-          OR: [
-            { title: { contains: search, mode: "insensitive" } },
-            { category: { name: { contains: search, mode: "insensitive" } } },
-            {
-              instructor: {
-                fullName: { contains: search, mode: "insensitive" },
-              },
-            },
-            ...(isUUID ? [{ id: search }] : []),
-          ],
-        }
-      : {};
-
-    const [courses, totalCount] = await Promise.all([
-      prisma.course.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          category: { select: { id: true, name: true, color: true } },
-          instructor: { select: { id: true, fullName: true } },
-          modules: { include: { lessons: true } },
-          resources: true,
-        },
-      }),
-      prisma.course.count({ where }),
-    ]);
-
-    const serializedCourses = courses.map((course) => ({
-      ...course,
-      price: course.price ? Number(course.price) : null,
-    }));
-
-    return { courses: serializedCourses as CourseWithRelations[], totalCount };
+    const response = await axios.get(`/api/courses?page=${page}&limit=${limit}`);
+    return response.data;
   } catch (error) {
-    console.error("Error in getAdminCourses:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-    throw new Error("Failed to fetch courses", { cause: error });
+    if (error instanceof axios.AxiosError) {
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data.error || "Validation failed";
+        console.error('Error fetching courses:', errorMessage);
+        throw new Error(errorMessage, { cause: error });
+      }
+    }
+    if (error instanceof Error) {
+      console.error('Error fetching courses:', error.message);
+    } else {
+      console.error('Error fetching courses:', error);
+    }
+    throw new Error('Failed to fetch courses', { cause: error });
   }
 }
 

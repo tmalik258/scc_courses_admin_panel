@@ -72,13 +72,6 @@ const EditCoursePage: React.FC = () => {
     router.push("/course-management");
   }, [router]);
 
-  // const getButtonText = useCallback(() => {
-  //   if (currentStep === 3) {
-  //     return isUpdating ? "Publishing..." : "Save & Publish";
-  //   }
-  //   return isUpdating ? "Saving..." : "Continue";
-  // }, [currentStep, isUpdating]);
-
   const renderCurrentStep = useCallback(() => {
     switch (currentStep) {
       case 1:

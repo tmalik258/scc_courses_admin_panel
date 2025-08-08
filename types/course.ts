@@ -51,6 +51,12 @@ export interface CourseWithRelationsResponse {
   course: CourseWithRelations;
 }
 
+export interface CoursesWithRelationsResponse {
+  success: boolean;
+  total: number;
+  courses: CourseWithRelations[];
+}
+
 export interface CourseData {
   courses: CourseWithRelations[];
   loading: boolean;

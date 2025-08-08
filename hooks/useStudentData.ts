@@ -3,12 +3,12 @@ import { Student } from "@/types/student";
 import { fetchImage } from "@/utils/supabase/fetchImage";
 import { useCallback, useState } from "react";
 
-export function useStudentData(initialLimit: number = 10) {
+export function useStudentData(initialLimit: number = 10, initialPage: number = 1) {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(0);
   const [limit, setLimit] = useState(initialLimit);
 

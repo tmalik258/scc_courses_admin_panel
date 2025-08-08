@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
-  getAdminCourses,
+  getCourses,
   getCourseById,
   updateCourse,
   updateModule,
@@ -12,6 +12,7 @@ import {
   deleteModule,
   deleteResource,
   createResource,
+  updateResource,
 } from "@/actions/course-data";
 import {
   CourseFormData,
@@ -21,31 +22,31 @@ import {
 import { Lessons } from "@/lib/generated/prisma";
 
 export const useCourseData = (
-  initialPage: number = 1,
-  limit: number = 6,
-  search: string = ""
+  initialLimit: number = 10,
+  initialPage: number = 1
 ) => {
   const [courses, setCourses] = useState<CourseWithRelations[]>([]);
   const [selectedCourse, setSelectedCourse] =
     useState<CourseWithRelations | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(initialPage);
+  const [page, setPage] = useState<number>(initialPage);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [limit, setLimit] = useState(initialLimit);
   const isFetchingRef = useRef<string | null>(null);
 
   const refreshCourses = useCallback(
-    async (page: number = currentPage) => {
+    async () => {
       setLoading(true);
       try {
-        const response = await getAdminCourses({ page, limit, search });
-        setCourses(response.courses);
-        setTotalCount(response.totalCount);
-        setTotalPages(Math.ceil(response.totalCount / limit));
-        setCurrentPage(page);
+        const {courses, total} = await getCourses(page, limit);
+        setCourses(courses);
+        setTotalCount(total);
+        setTotalPages(Math.ceil(total / limit));
+        setPage(page);
         setError(null);
       } catch (err) {
         const error =
@@ -60,19 +61,7 @@ export const useCourseData = (
         setLoading(false);
       }
     },
-    [currentPage, limit, search]
-  );
-
-  useEffect(() => {
-    refreshCourses(initialPage);
-  }, [refreshCourses, initialPage]);
-
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setCurrentPage(page);
-      refreshCourses(page);
-    },
-    [refreshCourses]
+    [limit, page]
   );
 
   const selectCourse = useCallback(async (courseId: string) => {
@@ -103,7 +92,7 @@ export const useCourseData = (
       setIsCreating(true);
       try {
         const { course: newCourse } = await createCourse(data);
-        await refreshCourses(currentPage);
+        await refreshCourses();
         setError(null);
         return newCourse;
       } catch (err) {
@@ -119,7 +108,7 @@ export const useCourseData = (
         setIsCreating(false);
       }
     },
-    [refreshCourses, currentPage]
+    [refreshCourses]
   );
 
   const handleUpdateCourse = useCallback(
@@ -128,7 +117,7 @@ export const useCourseData = (
       try {
         const updatedCourse = await updateCourse(courseId, data);
         setSelectedCourse(updatedCourse);
-        await refreshCourses(currentPage);
+        await refreshCourses();
         setError(null);
         return updatedCourse;
       } catch (err) {
@@ -144,7 +133,7 @@ export const useCourseData = (
         setIsUpdating(false);
       }
     },
-    [refreshCourses, currentPage]
+    [refreshCourses]
   );
 
   const handleDeleteCourse = useCallback(
@@ -152,7 +141,7 @@ export const useCourseData = (
       setLoading(true);
       try {
         await deleteCourse(courseId);
-        await refreshCourses(currentPage);
+        await refreshCourses();
         setSelectedCourse(null);
         setError(null);
       } catch (err) {
@@ -168,7 +157,7 @@ export const useCourseData = (
         setLoading(false);
       }
     },
-    [refreshCourses, currentPage]
+    [refreshCourses]
   );
 
   const handleCreateModule = useCallback(
@@ -185,7 +174,7 @@ export const useCourseData = (
             modules: [...selectedCourse.modules, newModule],
           });
         }
-        await refreshCourses(currentPage);
+        await refreshCourses();
         setError(null);
         return newModule;
       } catch (err) {
@@ -201,7 +190,7 @@ export const useCourseData = (
         setIsCreating(false);
       }
     },
-    [refreshCourses, currentPage, selectedCourse]
+    [refreshCourses, selectedCourse]
   );
 
   const handleUpdateModule = useCallback(
@@ -214,7 +203,7 @@ export const useCourseData = (
       try {
         const updatedCourse = await updateModule(courseId, moduleId, data);
         setSelectedCourse(updatedCourse);
-        await refreshCourses(currentPage);
+        await refreshCourses();
         setError(null);
         return updatedCourse;
       } catch (err) {
@@ -230,7 +219,7 @@ export const useCourseData = (
         setIsUpdating(false);
       }
     },
-    [refreshCourses, currentPage]
+    [refreshCourses]
   );
 
   const handleDeleteModule = useCallback(
@@ -246,7 +235,7 @@ export const useCourseData = (
             ),
           });
         }
-        await refreshCourses(currentPage);
+        await refreshCourses();
         setError(null);
       } catch (err) {
         const error =
@@ -261,7 +250,7 @@ export const useCourseData = (
         setIsUpdating(false);
       }
     },
-    [refreshCourses, currentPage, selectedCourse]
+    [refreshCourses, selectedCourse]
   );
 
   const handleCreateResource = useCallback(
@@ -275,7 +264,7 @@ export const useCourseData = (
             resources: [...selectedCourse.resources, newResource],
           });
         }
-        await refreshCourses(currentPage);
+        await refreshCourses();
         setError(null);
         return newResource;
       } catch (err) {
@@ -291,7 +280,30 @@ export const useCourseData = (
         setIsCreating(false);
       }
     },
-    [refreshCourses, currentPage, selectedCourse]
+    [refreshCourses, selectedCourse]
+  );
+
+  const handleUpdateResource = useCallback(
+    async (courseId: string, resourceId: string, data: { name: string; url: string }) => {
+      setIsUpdating(true);
+      try {
+        const updatedCourse = await updateResource(courseId, resourceId, data);
+        setSelectedCourse(updatedCourse);
+        await refreshCourses();
+        setError(null);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err);
+        } else {
+          setError(new Error("Unknown error"));
+        }
+        console.error("Error updating resource:", err);
+        throw err;
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [refreshCourses]
   );
 
   const handleDeleteResource = useCallback(
@@ -307,7 +319,7 @@ export const useCourseData = (
             ),
           });
         }
-        await refreshCourses(currentPage);
+        await refreshCourses();
         setError(null);
       } catch (err) {
         const error =
@@ -322,15 +334,11 @@ export const useCourseData = (
         setIsUpdating(false);
       }
     },
-    [refreshCourses, currentPage, selectedCourse]
+    [refreshCourses, selectedCourse]
   );
 
   return {
     courses,
-    totalCount,
-    currentPage,
-    totalPages,
-    handlePageChange,
     selectedCourse,
     setSelectedCourse,
     refreshCourses,
@@ -342,10 +350,17 @@ export const useCourseData = (
     handleUpdateModule,
     handleDeleteModule,
     handleCreateResource,
+    handleUpdateResource,
     handleDeleteResource,
     loading,
     isCreating,
     isUpdating,
     error,
+    page,
+    setPage,
+    totalCount,
+    totalPages,
+    limit,
+    setLimit,
   };
 };
