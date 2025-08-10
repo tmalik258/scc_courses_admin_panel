@@ -2,11 +2,14 @@ import { createClient } from "./client";
 
 const supabase = createClient();
 
-export const uploadImage = async (file: File): Promise<string | null> => {
+export const uploadImage = async (file: File, bucketName: string = "courses-resources", folderName: string | null = null): Promise<string | null> => {
+
   const fileExt = file.name.split(".").pop();
   const fileName = `${Date.now()}.${fileExt}`;
-  const filePath = `images/${fileName}`;
-  const bucketName = "courses-resources";
+  let filePath = `images/${folderName}/${fileName}`;
+  if (folderName === null) {
+    filePath = `images/${fileName}`;
+  }
 
   const { error } = await supabase.storage
     .from(bucketName)

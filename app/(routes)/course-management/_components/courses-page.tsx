@@ -62,7 +62,7 @@ const CourseManagementPage = () => {
   }, [error]);
 
   const displayedCourses = useMemo(() => {
-    let filtered = [...courses];
+    let filtered = [...(courses ?? [])];
 
     // Filter by tab
     filtered = filtered.filter((course) => {
@@ -137,7 +137,7 @@ const CourseManagementPage = () => {
           onClick={handleRedirectToCreate}
         >
           {isPending ? (
-            <DashedSpinner className="mr-2" />
+            <DashedSpinner invert={true} className="mr-2" />
           ) : (
             <Plus className="w-4 h-4 mr-2" />
           )}
@@ -193,7 +193,7 @@ const CourseManagementPage = () => {
               >
                 All Category
               </DropdownMenuItem>
-              {[...new Set(courses.map((course) => course.category.name))].map(
+              {[...new Set((courses ?? []).map((course) => course.category.name))].map(
                 (category) => (
                   <DropdownMenuItem
                     key={category}

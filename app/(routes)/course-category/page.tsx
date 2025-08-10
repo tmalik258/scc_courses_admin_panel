@@ -15,12 +15,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { Category } from "@/lib/generated/prisma";
-import { categoryStyles } from "@/lib/categoryStyles";
 import { useCategoryData } from "@/hooks/useCategoryData";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { DashedSpinner } from "@/components/dashed-spinner";
 import { fetchImage } from "@/utils/supabase/fetchImage";
+import { Pagination } from "@/components/pagination";
+import { randomColorGenerator } from "@/utils/category";
 
 export default function CourseCategoryPage() {
   const router = useRouter();
@@ -34,14 +35,9 @@ export default function CourseCategoryPage() {
     page,
     setPage,
     totalPages,
-    totalCount,
     limit,
-    setLimit,
   } = useCategoryData(10, 1);
   const [searchTerm, setSearchTerm] = useState<string>("");
-
-  const placeholderImage =
-    "https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=76&q=80";
 
   useEffect(() => {
     refreshCategories();
@@ -70,7 +66,7 @@ export default function CourseCategoryPage() {
     if (icon && icon !== null && isValidImageSrc(icon)) {
       return await fetchImage(icon);
     } else {
-      return placeholderImage;
+      return null;
     }
   };
 
@@ -78,23 +74,18 @@ export default function CourseCategoryPage() {
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
-  const getCategoryStyle = (name: string) => {
-    return (
-      categoryStyles.find((c) => c.name === name) || {
-        bgColor: "bg-gray-100",
-        textColor: "text-gray-600",
-      }
-    );
-  };
-
   const CategoryIcon = ({
     icon,
+    name,
     alt,
   }: {
     icon: string | null;
+    name: string;
     alt: string;
   }) => {
     const [src, setSrc] = useState<string | null>(null);
+    const initials =
+      name[0].toUpperCase();
 
     useEffect(() => {
       let isMounted = true;
@@ -108,7 +99,7 @@ export default function CourseCategoryPage() {
 
     return (
       <div className="w-full h-full rounded-full border-1 border-gray-300">
-        {src && (
+        {src ? (
           <Image
             src={src}
             alt={alt}
@@ -116,6 +107,10 @@ export default function CourseCategoryPage() {
             height={32}
             className="rounded-full w-full h-full object-cover"
           />
+        ) : (
+          <div className="w-full h-full rounded-full bg-gray-300 flex justify-center items-center">
+            {initials}
+          </div>
         )}
       </div>
     );
@@ -179,7 +174,7 @@ export default function CourseCategoryPage() {
               </TableRow>
             ) : (
               sortedCategories.map((category: Category) => {
-                const { bgColor, textColor } = getCategoryStyle(category.name);
+                const color = randomColorGenerator();
                 return (
                   <TableRow key={category.id}>
                     <TableCell className="font-mono text-sm text-gray-600">
@@ -189,12 +184,13 @@ export default function CourseCategoryPage() {
                       <div className="h-8 w-8">
                         <CategoryIcon
                           icon={category.icon}
+                          name={category.name}
                           alt={category.name}
                         />
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`${bgColor} ${textColor} font-medium`}>
+                      <Badge className={`${color} font-medium`}>
                         {category.name}
                       </Badge>
                     </TableCell>
@@ -227,9 +223,9 @@ export default function CourseCategoryPage() {
                           variant="outline"
                           size="icon"
                           className="w-8 h-8 border-red-200 text-red-600 hover:bg-red-50 bg-transparent cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                          disabled={deleting}
+                          disabled={isDeleting}
                         >
-                          {deleting ? (
+                          {isDeleting ? (
                             <DashedSpinner />
                           ) : (
                             <Trash2 className="w-4 h-4" />
@@ -244,6 +240,11 @@ export default function CourseCategoryPage() {
           </TableBody>
         </Table>
       </div>
+      <Pagination
+        currentPage={page}
+        onPageChange={setPage}
+        totalPages={totalPages}
+      />
     </div>
   );
 }

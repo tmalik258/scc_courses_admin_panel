@@ -34,10 +34,10 @@ export const useCategoryData = (
   const [limit, setLimit] = useState(initialLimit);
 
   const refreshCategories = useCallback(
-    async () => {
+    async (course = false) => {
       setLoading(true);
       try {
-        const { data: categories, total } = await getAllCategories(page, limit);
+        const { data: categories, total } = await getAllCategories(page, limit, course);
         setCategories(categories);
         setTotalCount(total);
         setTotalPages(Math.ceil(total / limit));

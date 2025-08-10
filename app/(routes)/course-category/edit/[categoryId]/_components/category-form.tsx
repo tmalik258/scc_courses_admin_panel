@@ -102,7 +102,7 @@ export default function CategoryForm({
 
       try {
         console.log("Starting upload for file:", file.name);
-        const imageUrl = await uploadImage(file);
+        const imageUrl = await uploadImage(file, "category-icons");
 
         if (imageUrl) {
           console.log("Upload successful, URL:", imageUrl);

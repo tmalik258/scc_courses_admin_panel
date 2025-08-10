@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { DashedSpinner } from "@/components/dashed-spinner";
 import { useCourseData } from "@/hooks/useCourseData";
+import { uploadImage } from "@/utils/supabase/uploadImage";
 import CourseDetailsForm from "./_components/course-details-form";
 
 const INITIAL_FORM_DATA: CreateCourseFormData = {
@@ -22,10 +23,13 @@ const INITIAL_FORM_DATA: CreateCourseFormData = {
 
 const AddCoursePage: React.FC = () => {
   const router = useRouter();
-  const { handleCreateCourse, isCreating: isSubmitting } = useCourseData();
+  const { handleCreateCourse, handleUpdateCourse, isCreating: isSubmitting } = useCourseData();
   const [formData, setFormData] = useState<CreateCourseFormData>(INITIAL_FORM_DATA);
   const [canProceed, setCanProceed] = useState(false);
   const [currentStep] = useState(1); // Always start at step 1
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
 
   const updateFormData = useCallback((data: Partial<CreateCourseFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -55,15 +59,37 @@ const AddCoursePage: React.FC = () => {
     }
 
     try {
-      const newCourse = await handleCreateCourse(formData);
+      // First create the course without thumbnail
+      const courseDataWithoutThumbnail = { ...formData, thumbnailUrl: "" };
+      const newCourse = await handleCreateCourse(courseDataWithoutThumbnail);
       console.log("[AddCoursePage] New course created:", newCourse);
+      
+      // If there's a selected image file, upload it using the course ID as folder name
+      if (selectedImageFile) {
+        try {
+          setIsUploadingImage(true);
+          console.log("Uploading thumbnail for course:", newCourse.id);
+          const imageUrl = await uploadImage(selectedImageFile, "courses-resources", newCourse.id);
+          
+          if (imageUrl) {
+            // Update the course with the thumbnail URL
+            await handleUpdateCourse(newCourse.id, { thumbnailUrl: imageUrl });
+            console.log("Thumbnail uploaded successfully:", imageUrl);
+          } else {
+            console.warn("Failed to upload thumbnail, but course was created successfully");
+          }
+        } finally {
+          setIsUploadingImage(false);
+        }
+      }
+      
       toast.success("Course saved successfully!");
       router.push(`/course-management/edit/${newCourse.id}?step=2`);
     } catch (err) {
       console.error("Error creating course:", err);
       toast.error("Something went wrong while saving the course.");
     }
-  }, [formData, router, validateFormData, handleCreateCourse]);
+  }, [formData, router, validateFormData, handleCreateCourse, handleUpdateCourse, selectedImageFile]);
 
   const breadcrumbItems = [
     { label: "Course Management", href: "/course-management" },
@@ -156,6 +182,12 @@ const AddCoursePage: React.FC = () => {
           formData={formData}
           updateFormData={updateFormData}
           setCanProceed={setCanProceed}
+          onImageUpload={async (file: File) => {
+            setSelectedImageFile(file);
+            return null; // Don't upload yet, just store the file
+          }}
+          isUploadingImage={isUploadingImage}
+          setIsUploadingImage={setIsUploadingImage}
         />
       </div>
       {/* Navigation Footer */}

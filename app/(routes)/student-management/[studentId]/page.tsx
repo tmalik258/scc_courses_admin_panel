@@ -198,7 +198,8 @@ const StudentDetailsPage: React.FC = () => {
       setIsUploading(true);
       try {
         console.log("Starting upload:", file.name);
-        const imageUrl = await uploadImage(file);
+        const imageUrl = await uploadImage(file, "profiles", `student/${form.getValues("id")}`);
+
         if (!imageUrl) throw new Error("No URL returned");
         console.log("Upload URL:", imageUrl);
 

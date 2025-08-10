@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import {
   BookOpen,
   DollarSign,
+  FolderKanban,
   LayoutDashboard,
   Search,
   Users,
@@ -62,6 +63,11 @@ const Header = () => {
       label: "Course Management",
       icon: BookOpen,
       href: "/course-management",
+    },
+    {
+      label: "Course Category",
+      href: "/course-category",
+      icon: FolderKanban,
     },
     {
       id: "instructor-management",

@@ -8,6 +8,7 @@ import { uploadFile } from "@/utils/supabase/uploadFile";
 
 interface FileUploadFieldProps {
   value?: string;
+  folderName: string;
   onChange: (fileUrl: string | undefined) => void;
   label?: string;
   disabled?: boolean;
@@ -15,6 +16,7 @@ interface FileUploadFieldProps {
 
 export const FileUploadField: React.FC<FileUploadFieldProps> = ({
   value,
+  folderName,
   onChange,
   label,
   disabled = false,
@@ -32,7 +34,7 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
     try {
       setIsUploading(true);
       toast.info("Uploading file...");
-      const url = await uploadFile(file);
+      const url = await uploadFile(file, folderName);
       onChange(url);
       toast.success("File uploaded successfully!");
       setFile(null);

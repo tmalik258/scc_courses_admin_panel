@@ -3,7 +3,7 @@ import { DashboardData } from "@/types/dashboard";
 
 export async function fetchDashboardOverview(): Promise<DashboardData> {
   try {
-    const response = await axios.get("/api/dashboard");
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_SITE_URL}/api/dashboard`);
 
     if (!response.data.data) {
       console.error(

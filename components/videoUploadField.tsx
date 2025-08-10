@@ -46,7 +46,7 @@ export const VideoUploadField: React.FC<VideoUploadFieldProps> = ({
       setIsUploading(true);
       toast.info("Uploading video... This may take a moment");
 
-      const videoUrl = await uploadVideo(videoFile);
+      const videoUrl = await uploadVideo(videoFile, "general");
       if (videoUrl) {
         onChange(videoUrl);
         toast.success("Video uploaded successfully");

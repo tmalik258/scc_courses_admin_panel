@@ -25,7 +25,7 @@ const Sidebar = ({ onNavigate }: { onNavigate: (path: string) => void }) => {
       icon: BookOpen,
     },
     {
-      label: "Course Category", // ✅ New item added here
+      label: "Course Category",
       href: "/course-category",
       icon: FolderKanban,
     },

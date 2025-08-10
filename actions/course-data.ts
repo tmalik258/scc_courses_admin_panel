@@ -12,7 +12,7 @@ import { Lessons, Resources } from "@/lib/generated/prisma";
 
 export async function getCourses(page = 1, limit = 10): Promise<CoursesWithRelationsResponse> {
   try {
-    const response = await axios.get(`/api/courses?page=${page}&limit=${limit}`);
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_SITE_URL}/api/courses?page=${page}&limit=${limit}`);
     return response.data;
   } catch (error) {
     if (error instanceof axios.AxiosError) {
@@ -36,7 +36,7 @@ export async function getCourseById(
 ): Promise<CourseWithRelations> {
   try {
     const response = await axios.get<CourseWithRelations>(
-      `/api/courses/${courseId}`
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/courses/${courseId}`
     );
     return response.data;
   } catch (error) {
@@ -54,7 +54,7 @@ export async function createCourse(
 ): Promise<CourseWithRelationsResponse> {
   try {
     const response = await axios.post<CourseWithRelationsResponse>(
-      "/api/courses",
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/courses`,
       {
         ...data,
         isPublished: false,
@@ -77,7 +77,7 @@ export async function updateCourse(
 ): Promise<CourseWithRelations> {
   try {
     const response = await axios.put<CourseWithRelations>(
-      `/api/courses/${courseId}`,
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/courses/${courseId}`,
       data
     );
     return response.data;
@@ -93,7 +93,7 @@ export async function updateCourse(
 
 export async function deleteCourse(courseId: string): Promise<void> {
   try {
-    await axios.delete(`/api/courses/${courseId}`);
+    await axios.delete(`${process.env.NEXT_PUBLIC_SITE_URL}/api/courses/${courseId}`);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorMessage =
@@ -110,7 +110,7 @@ export async function createModule(
 ): Promise<CourseWithRelations["modules"][0]> {
   try {
     const response = await axios.post<CourseWithRelations["modules"][0]>(
-      `/api/courses/${courseId}/modules`,
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/courses/${courseId}/modules`,
       data
     );
     return response.data;
@@ -131,7 +131,7 @@ export async function updateModule(
 ): Promise<CourseWithRelations> {
   try {
     const response = await axios.put<CourseWithRelations>(
-      `/api/courses/${courseId}/modules/${moduleId}`,
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/courses/${courseId}/modules/${moduleId}`,
       data
     );
     return response.data;
@@ -150,7 +150,7 @@ export async function deleteModule(
   moduleId: string
 ): Promise<void> {
   try {
-    await axios.delete(`/api/courses/${courseId}/modules/${moduleId}`);
+    await axios.delete(`${process.env.NEXT_PUBLIC_SITE_URL}/api/courses/${courseId}/modules/${moduleId}`);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorMessage =
@@ -167,7 +167,7 @@ export async function createResource(
 ): Promise<Resources> {
   try {
     const response = await axios.post<Resources>(
-      `/api/courses/${courseId}/resources`,
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/courses/${courseId}/resources`,
       data
     );
     return response.data;
@@ -188,7 +188,7 @@ export async function updateResource(
 ): Promise<CourseWithRelations> {
   try {
     const response = await axios.put<CourseWithRelations>(
-      `/api/courses/${courseId}/resources/${resourceId}`,
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/courses/${courseId}/resources/${resourceId}`,
       data
     );
     return response.data;

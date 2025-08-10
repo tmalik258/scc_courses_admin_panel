@@ -173,7 +173,7 @@ const InstructorDetailsPage: React.FC = () => {
 
       try {
         console.log("Starting upload for file:", file.name);
-        const imageUrl = await uploadImage(file);
+        const imageUrl = await uploadImage(file, "profiles", `instructor/${form.getValues("id")}`);
 
         if (imageUrl) {
           console.log("Upload successful, URL:", imageUrl);
@@ -198,7 +198,7 @@ const InstructorDetailsPage: React.FC = () => {
         setIsUploading(false);
       }
     },
-    [updateFormData]
+    [form, updateFormData]
   );
 
   // Handle file removal

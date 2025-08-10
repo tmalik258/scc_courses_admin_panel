@@ -145,7 +145,7 @@ const CourseDetailsStep: React.FC<CourseDetailsStepProps> = ({ onNext }) => {
 
       setIsUploading(true);
       try {
-        const imageUrl = await uploadImage(file);
+        const imageUrl = await uploadImage(file, "courses-resources", courseId);
         if (imageUrl) {
           setUploadedImageUrl(imageUrl);
           setDisplayImageUrl(await fetchImage(imageUrl));

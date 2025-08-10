@@ -37,10 +37,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      {
-        success: true,
-        data: category,
-      },
+      category,
       { status: 201 }
     );
   } catch (error) {
@@ -68,7 +65,12 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const isCourse = searchParams.get("course") === "true";
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const skip = (page - 1) * limit;
   try {
     const categories = await prisma.category.findMany({
       where: {
@@ -86,12 +88,20 @@ export async function GET() {
       orderBy: {
         name: 'asc',
       },
+      ...(isCourse ? {} : { skip, take: limit }),
+    });
+
+    const total = await prisma.category.count({
+      where: {
+        isActive: true,
+      },
     });
 
     return NextResponse.json(
       {
         success: true,
         data: categories,
+        total,
       },
       { status: 200 }
     );

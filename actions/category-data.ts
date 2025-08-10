@@ -2,9 +2,9 @@ import { Category } from "@/lib/generated/prisma";
 import { CategoriesResponse, CategoryResponse } from "@/types/category";
 import axios from "axios";
 
-export async function getAllCategories(page = 1, limit = 10): Promise<CategoriesResponse> {
+export async function getAllCategories(page = 1, limit = 10, course = false): Promise<CategoriesResponse> {
   try {
-    const response = await axios.get<CategoriesResponse>(`/api/categories?page=${page}&limit=${limit}`);
+    const response = await axios.get<CategoriesResponse>(`${process.env.NEXT_PUBLIC_SITE_URL}/api/categories${course ? `?course=${course}` : `?page=${page}&limit=${limit}`}`);
     return response.data;
   } catch (err: unknown) {
     if (err instanceof Error) {
@@ -19,7 +19,7 @@ export async function getAllCategories(page = 1, limit = 10): Promise<Categories
 
 export async function getCategoryById(id: string): Promise<CategoryResponse> {
   try {
-    const response = await axios.get<CategoryResponse>(`/api/categories/${id}`);
+    const response = await axios.get<CategoryResponse>(`${process.env.NEXT_PUBLIC_SITE_URL}/api/categories/${id}`);
     return response.data;
   } catch (err: unknown) {
     if (err instanceof Error) {
@@ -34,7 +34,7 @@ export async function getCategoryById(id: string): Promise<CategoryResponse> {
 
 export async function createCategory(data: Partial<Category>): Promise<CategoryResponse> {
   try {
-    const response = await axios.post("/api/categories", data);
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_SITE_URL}/api/categories`, data);
     return response.data;
   } catch (err: unknown) {
     if (err instanceof Error) {
@@ -52,7 +52,7 @@ export async function updateCategory(
   data: Partial<Category>
 ): Promise<CategoryResponse> {
   try {
-    const response = await axios.put(`/api/categories/${id}`, data);
+    const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/api/categories/${id}`, data);
     return response.data;
   } catch (err: unknown) {
     if (err instanceof Error) {
@@ -67,7 +67,7 @@ export async function updateCategory(
 
 export async function deleteCategory(id: string): Promise<void> {
   try {
-    await axios.delete(`/api/categories/${id}`);
+    await axios.delete(`${process.env.NEXT_PUBLIC_SITE_URL}/api/categories/${id}`);
   } catch (err: unknown) {
     if (err instanceof Error) {
       console.error("Error deleting category:", err.message);

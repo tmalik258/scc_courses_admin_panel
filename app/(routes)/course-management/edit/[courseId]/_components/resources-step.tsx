@@ -219,6 +219,7 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({ onPrev }) => {
                       <FormLabel>Resource File</FormLabel>
                       <FormControl>
                         <FileUploadField
+                          folderName={selectedCourse?.id || courseId || ""}
                           value={field.value}
                           onChange={(url) => field.onChange(url)}
                           disabled={isUpdating || isCreating}

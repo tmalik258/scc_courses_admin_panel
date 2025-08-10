@@ -2,7 +2,7 @@ import { createClient } from "./client";
 
 const supabase = createClient();
 
-export const uploadVideo = async (file: File): Promise<string | null> => {
+export const uploadVideo = async (file: File, folderName: string): Promise<string | null> => {
   // Validate file type
   const allowedTypes = [
     "video/mp4",
@@ -25,7 +25,7 @@ export const uploadVideo = async (file: File): Promise<string | null> => {
 
   const fileExt = file.name.split(".").pop();
   const fileName = `${Date.now()}.${fileExt}`;
-  const filePath = `videos/${fileName}`;
+  const filePath = `videos/${folderName}/${fileName}`;
   const bucketName = "courses-resources";
 
   // Upload with progress tracking

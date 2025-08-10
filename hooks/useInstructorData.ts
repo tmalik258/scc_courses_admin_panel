@@ -16,10 +16,10 @@ export function useInstructorData(
   const [limit, setLimit] = useState(initialLimit);
 
   const refreshInstructors = useCallback(
-    async () => {
+    async (course = false) => {
       setLoading(true);
       try {
-        const { instructors, total } = await fetchInstructors(page, limit);
+        const { instructors, total } = await fetchInstructors(page, limit, course);
         setInstructors(instructors);
         setTotalCount(total);
         setTotalPages(Math.ceil(total / limit));

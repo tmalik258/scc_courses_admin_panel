@@ -27,7 +27,6 @@ import type { CreateCourseFormData } from "@/types/course";
 import { useCategoryData } from "@/hooks/useCategoryData";
 import { DashedSpinner } from "@/components/dashed-spinner";
 import { useInstructorData } from "@/hooks/useInstructorData";
-import { uploadImage } from "@/utils/supabase/uploadImage";
 import { CheckCircleIcon } from "lucide-react";
 import { type FileWithPreview } from "@/hooks/use-file-upload";
 import { toast } from "sonner";
@@ -39,6 +38,9 @@ interface CourseDetailsFormProps {
   formData: CreateCourseFormData;
   updateFormData: (data: Partial<CreateCourseFormData>) => void;
   setCanProceed: (canProceed: boolean) => void;
+  onImageUpload?: (file: File) => Promise<string | null>;
+  isUploadingImage: boolean;
+  setIsUploadingImage: (isUploadingImage: boolean) => void;
 }
 
 const courseDetailsSchema = z.object({
@@ -64,11 +66,14 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
   formData,
   updateFormData,
   setCanProceed,
+  onImageUpload,
+  isUploadingImage,
+  setIsUploadingImage,
 }) => {
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(
     formData.thumbnailUrl || null
   );
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const {
     categories,
@@ -96,14 +101,14 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
   });
 
   useEffect(() => {
-    if (instructors.length === 0) {
-      refreshInstructors();
+    if ((instructors ?? []).length === 0) {
+      refreshInstructors(true);
     }
   }, [instructors, refreshInstructors]);
 
   useEffect(() => {
-    if (categories.length === 0) {
-      refreshCategories();
+    if ((categories ?? []).length === 0) {
+      refreshCategories(true);
     }
   }, [categories, refreshCategories]);
 
@@ -118,9 +123,10 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
     });
   }, [form, formData]);
 
-  // Handle file upload to Supabase
+  // Handle file selection (store file temporarily, don't upload yet)
   const handleFileUpload = useCallback(
     async (files: FileWithPreview[]) => {
+      setIsUploadingImage(true);
       if (files.length === 0) return;
 
       const fileWithPreview = files[0];
@@ -128,37 +134,39 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
 
       if (!(file instanceof File)) return;
 
-      setIsUploading(true);
+      console.log("File selected:", file.name);
+      setSelectedFile(file);
 
-      try {
-        console.log("Starting upload for file:", file.name);
-        const imageUrl = await uploadImage(file);
+      // Create a temporary preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setUploadedImageUrl(previewUrl);
 
-        if (imageUrl) {
-          console.log("Upload successful, URL:", imageUrl);
-          setUploadedImageUrl(imageUrl);
-          updateFormData({ thumbnailUrl: imageUrl });
-          toast.success("Thumbnail uploaded successfully!");
-        } else {
-          console.error("Upload failed - no URL returned");
-          toast.error("Failed to upload thumbnail. Please try again.");
-        }
-      } catch (error) {
-        console.error("Upload error:", error);
-        toast.error("An error occurred while uploading. Please try again.");
-      } finally {
-        setIsUploading(false);
+      // Call the parent's onImageUpload callback if provided
+      if (onImageUpload) {
+        await onImageUpload(file);
       }
+
+      toast.success(
+        "Thumbnail selected! It will be uploaded when you save the course."
+      );
+
+      setIsUploadingImage(false);
     },
-    [updateFormData]
+    [onImageUpload, setIsUploadingImage]
   );
 
   // Handle file removal
   const handleFileRemove = useCallback(() => {
     console.log("Removing thumbnail");
+    setSelectedFile(null);
     setUploadedImageUrl(null);
     updateFormData({ thumbnailUrl: "" });
-  }, [updateFormData]);
+
+    // Clean up preview URL if it exists
+    if (uploadedImageUrl && uploadedImageUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(uploadedImageUrl);
+    }
+  }, [updateFormData, uploadedImageUrl]);
 
   // Validate form and update parent formData
   useEffect(() => {
@@ -313,7 +321,7 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
                     </FormControl>
                     <SelectContent>
                       {!instructorsLoading &&
-                        instructors.map((instructor) => (
+                        instructors?.map((instructor) => (
                           <SelectItem key={instructor.id} value={instructor.id}>
                             {instructor.fullName}
                           </SelectItem>
@@ -339,13 +347,13 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
               <ImageUploadWrapper
                 onFilesAdded={handleFileUpload}
                 onFileRemove={handleFileRemove}
-                isUploading={isUploading}
+                isUploading={isUploadingImage}
                 uploadedImageUrl={uploadedImageUrl}
                 maxSizeMB={2}
               />
 
               {/* Upload Status Overlay */}
-              {isUploading && (
+              {isUploadingImage && (
                 <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl z-10">
                   <div className="flex flex-col items-center gap-2">
                     <DashedSpinner />
@@ -356,10 +364,12 @@ const CourseDetailsForm: React.FC<CourseDetailsFormProps> = ({
             </div>
 
             {/* Success Message */}
-            {uploadedImageUrl && !isUploading && (
+            {uploadedImageUrl && !isUploadingImage && (
               <div className="mt-2 text-sm text-green-600 flex items-center gap-2">
                 <CheckCircleIcon className="w-4 h-4" />
-                Thumbnail uploaded successfully!
+                {selectedFile
+                  ? "Thumbnail selected! Will upload when course is saved."
+                  : "Thumbnail uploaded successfully!"}
               </div>
             )}
 
