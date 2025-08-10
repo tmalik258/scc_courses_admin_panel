@@ -9,11 +9,11 @@ import { DashedSpinner } from "@/components/dashed-spinner";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-export default function CreateCategoryPage() {
+const CreateCategoryPage = () => {
   const router = useRouter();
   const {
     handleCreateCategory,
-    creating,
+    isCreating,
     error,
   } = useCategoryData();
 
@@ -47,9 +47,9 @@ export default function CreateCategoryPage() {
               type="submit"
               form="category-form"
               className="px-6 bg-blue-500 hover:bg-blue-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={creating}
+              disabled={isCreating}
             >
-              {creating ? <><DashedSpinner invert={true} /> Creating</> : "Create"}
+              {isCreating ? <><DashedSpinner invert={true} /> Creating</> : "Create"}
             </Button>
           </div>
         </div>
@@ -60,3 +60,5 @@ export default function CreateCategoryPage() {
     </div>
   );
 }
+
+export default CreateCategoryPage;

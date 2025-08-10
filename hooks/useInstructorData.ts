@@ -2,28 +2,41 @@ import { useCallback, useState } from "react";
 import { fetchInstructors, fetchInstructorById, deleteInstructor, updateInstructor } from "@/actions/instructor-data";
 import { Instructor } from "@/types/instructor";
 
-export function useInstructorData() {
+export function useInstructorData(
+  initialLimit: number = 10,
+  initialPage: number = 1
+) {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
+  const [page, setPage] = useState<number>(initialPage);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [limit, setLimit] = useState(initialLimit);
 
-  const refreshInstructors = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await fetchInstructors();
-      setInstructors(data);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-      } else {
-        setError(new Error("Unknown error"));
+  const refreshInstructors = useCallback(
+    async () => {
+      setLoading(true);
+      try {
+        const { instructors, total } = await fetchInstructors(page, limit);
+        setInstructors(instructors);
+        setTotalCount(total);
+        setTotalPages(Math.ceil(total / limit));
+        setPage(page);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err);
+        } else {
+          setError(new Error("Unknown error"));
+        }
+        console.log(`Error fetching instructors: ${err}`);
+      } finally {
+        setLoading(false);
       }
-      console.log(`Error fetching instructors: ${err}`);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [limit, page]
+  );
 
   const selectInstructor = async (instructorId: string) => {
     setLoading(true);
@@ -82,5 +95,21 @@ export function useInstructorData() {
     }
   };
 
-  return { instructors, selectedInstructor, setSelectedInstructor, refreshInstructors, selectInstructor, handleDeleteInstructor, handleUpdateInstructor, loading, error };
+  return {
+    instructors,
+    selectedInstructor,
+    setSelectedInstructor,
+    page,
+    setPage,
+    totalPages,
+    totalCount,
+    limit,
+    setLimit,
+    refreshInstructors,
+    selectInstructor,
+    handleDeleteInstructor,
+    handleUpdateInstructor,
+    loading,
+    error,
+  };
 }

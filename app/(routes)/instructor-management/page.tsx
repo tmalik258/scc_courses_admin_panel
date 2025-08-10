@@ -8,19 +8,48 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useInstructorData } from "@/hooks/useInstructorData";
 import { LumaSpin } from "@/components/luma-spin";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Pagination } from "@/components/pagination";
+import { toast } from "sonner";
 
 const InstructorManagementPage: React.FC = () => {
-  const { instructors, refreshInstructors, handleDeleteInstructor, loading } =
-    useInstructorData();
   const [searchQuery, setSearchQuery] = useState("");
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get initial page from URL or default to 1
+  const initialPage = parseInt(searchParams.get("page") || "1", 10);
+  const {
+    instructors,
+    refreshInstructors,
+    handleDeleteInstructor,
+    loading,
+    page,
+    setPage,
+    totalPages,
+    limit,
+    error,
+  } = useInstructorData(10, initialPage); // Initialize with 10 entries per page
+
+  // Update URL when page changes
+  useEffect(() => {
+    if (typeof window === "undefined") return; // Skip during SSR
+    const currentParams = new URLSearchParams(searchParams.toString());
+    currentParams.set("page", page.toString());
+    router.push(`?${currentParams.toString()}`, { scroll: false });
+  }, [page, router, searchParams]);
 
   useEffect(() => {
-    if (instructors.length === 0) {
-      refreshInstructors();
+    refreshInstructors();
+  }, [refreshInstructors, page, limit]);
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error occurred:", error.message);
+      toast.error("Error: " + error.message);
     }
-  }, [instructors, refreshInstructors]);
+  }, [error]);
 
   const filteredInstructors = instructors.filter(
     (instructor) =>
@@ -192,6 +221,12 @@ const InstructorManagementPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      <Pagination
+        totalPages={totalPages}
+        currentPage={page}
+        onPageChange={setPage}
+      />
 
       {filteredInstructors.length === 0 && (
         <div className="text-center py-12">

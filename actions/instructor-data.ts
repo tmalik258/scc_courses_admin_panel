@@ -1,8 +1,8 @@
 import axios from "axios";
 
-export async function fetchInstructors() {
+export async function fetchInstructors(page = 1, limit = 10) {
   try {
-    const res = await axios.get("/api/instructors");
+    const res = await axios.get(`/api/instructors?page=${page}&limit=${limit}`);
     return res.data;
   } catch (error) {
     console.error("Error fetching instructors:", error);

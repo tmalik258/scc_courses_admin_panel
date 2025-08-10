@@ -18,7 +18,7 @@ export default function EditCategoryPage() {
     selectCategory,
     handleUpdateCategory,
     loading,
-    updating,
+    isUpdating,
     error,
   } = useCategoryData();
 
@@ -74,9 +74,9 @@ export default function EditCategoryPage() {
               type="submit"
               form="category-form"
               className="px-6 bg-blue-500 hover:bg-blue-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={updating}
+              disabled={isUpdating}
             >
-              {updating ? <><DashedSpinner invert={true} /> Updating</> : "Update"}
+              {isUpdating ? <><DashedSpinner invert={true} /> Updating</> : "Update"}
             </Button>
           </div>
         </div>

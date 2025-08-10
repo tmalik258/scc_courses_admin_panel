@@ -8,6 +8,7 @@ export interface CategoryResponse {
 export interface CategoriesResponse {
   success: boolean;
   data: Category[];
+  total: number;
   error?: string;
 }
 

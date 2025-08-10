@@ -24,23 +24,28 @@ import { fetchImage } from "@/utils/supabase/fetchImage";
 
 export default function CourseCategoryPage() {
   const router = useRouter();
+
   const {
     categories,
     loading,
-    deleting,
+    isDeleting,
     refreshCategories,
     handleDeleteCategory,
-  } = useCategoryData();
+    page,
+    setPage,
+    totalPages,
+    totalCount,
+    limit,
+    setLimit,
+  } = useCategoryData(10, 1);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const placeholderImage =
     "https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=76&q=80";
 
   useEffect(() => {
-    if (categories.length === 0) {
-      refreshCategories();
-    }
-  }, [categories.length, refreshCategories]);
+    refreshCategories();
+  }, [refreshCategories, page, limit]);
 
   const handleDelete = async (id: string) => {
     try {

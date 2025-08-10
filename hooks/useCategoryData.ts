@@ -14,35 +14,50 @@ import { formSchema } from "@/form-schemas/category";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-export const useCategoryData = () => {
+export const useCategoryData = (
+  initialLimit: number = 10,
+  initialPage: number = 1
+) => {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
+  const [page, setPage] = useState<number>(initialPage);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
-  const [creating, setCreating] = useState<boolean>(false);
-  const [deleting, setDeleting] = useState<boolean>(false);
-  const [updating, setUpdating] = useState<boolean>(false);
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [limit, setLimit] = useState(initialLimit);
 
-  const refreshCategories = useCallback(async () => {
-    try {
+  const refreshCategories = useCallback(
+    async () => {
       setLoading(true);
-      const { data: categories } = await getAllCategories();
-      setCategories(categories);
-      setError(null);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-      } else {
-        setError(new Error("Unknown error"));
+      try {
+        const { data: categories, total } = await getAllCategories(page, limit);
+        setCategories(categories);
+        setTotalCount(total);
+        setTotalPages(Math.ceil(total / limit));
+        setPage(page);
+        setError(null);
+      } catch (err) {
+        const error =
+          err instanceof Error ? err : new Error("Failed to fetch categories");
+        console.error("Error in refreshCategories:", {
+          message: error.message,
+          cause: error.cause,
+        });
+        setError(error);
+        throw error;
+      } finally {
+        setLoading(false);
       }
-      console.error("Error fetching categories:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [limit, page]
+  );
 
   const selectCategory = useCallback(async (categoryId: string) => {
     try {
@@ -67,7 +82,8 @@ export const useCategoryData = () => {
       values: z.infer<typeof formSchema>,
     ) => {
       try {
-        setCreating(true);
+        setIsCreating(true);
+
 
         await createCategory(values);
 
@@ -85,7 +101,7 @@ export const useCategoryData = () => {
         console.error("Error updating category:", err);
         return false;
       } finally {
-        setCreating(false);
+        setIsCreating(false);
       }
     },
     [router]
@@ -94,7 +110,7 @@ export const useCategoryData = () => {
   const handleDeleteCategory = useCallback(
     async (categoryId: string) => {
       try {
-        setDeleting(true);
+        setIsDeleting(true);  
         await deleteCategory(categoryId);
         await refreshCategories();
         setSelectedCategory(null);
@@ -107,7 +123,7 @@ export const useCategoryData = () => {
         }
         console.error("Error deleting category:", err);
       } finally {
-        setDeleting(false);
+        setIsDeleting(false);
       }
     },
     [refreshCategories]
@@ -119,7 +135,7 @@ export const useCategoryData = () => {
       values: z.infer<typeof formSchema>,
     ) => {
       try {
-        setUpdating(true);
+        setIsUpdating(true);
         const { data } = await updateCategory(categoryId, {
           ...values
         });
@@ -138,7 +154,7 @@ export const useCategoryData = () => {
         console.error("Error updating category:", err);
         return false;
       } finally {
-        setUpdating(false);
+        setIsUpdating(false);
       }
     },
     []
@@ -147,15 +163,21 @@ export const useCategoryData = () => {
   return {
     categories,
     selectedCategory,
+    page,
+    setPage,
+    totalPages,
+    totalCount,
+    limit,
+    setLimit,
+    loading,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    error,
+    refreshCategories,
     selectCategory,
     handleCreateCategory,
-    handleDeleteCategory,
     handleUpdateCategory,
-    refreshCategories,
-    loading,
-    creating,
-    deleting,
-    updating,
-    error,
+    handleDeleteCategory,
   };
 };

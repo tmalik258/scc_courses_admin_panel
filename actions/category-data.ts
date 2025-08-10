@@ -2,9 +2,9 @@ import { Category } from "@/lib/generated/prisma";
 import { CategoriesResponse, CategoryResponse } from "@/types/category";
 import axios from "axios";
 
-export async function getAllCategories(): Promise<CategoriesResponse> {
+export async function getAllCategories(page = 1, limit = 10): Promise<CategoriesResponse> {
   try {
-    const response = await axios.get<CategoriesResponse>("/api/categories");
+    const response = await axios.get<CategoriesResponse>(`/api/categories?page=${page}&limit=${limit}`);
     return response.data;
   } catch (err: unknown) {
     if (err instanceof Error) {
