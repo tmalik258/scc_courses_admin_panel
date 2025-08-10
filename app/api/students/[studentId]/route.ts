@@ -1,12 +1,27 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+type ParamsType = { studentId: string };
+
+function isPromise(value: unknown): value is Promise<ParamsType> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "then" in value &&
+    typeof (value as { then: unknown }).then === "function"
+  );
+}
+
+async function unwrapParams(params: ParamsType | Promise<ParamsType>) {
+  return isPromise(params) ? await params : params;
+}
+
 export async function GET(
   request: Request,
-  { params }: { params: { studentId: string } }
+  { params }: { params: Promise<ParamsType> }
 ) {
   try {
-    const { studentId } = params;
+    const { studentId } = await unwrapParams(params);
 
     if (!studentId) {
       return NextResponse.json(
@@ -17,13 +32,7 @@ export async function GET(
 
     const student = await prisma.profile.findUnique({
       where: { id: studentId, role: "STUDENT" },
-      include: {
-        purchases: {
-          include: {
-            course: true,
-          },
-        },
-      },
+      include: { purchases: { include: { course: true } } },
     });
 
     if (!student) {
@@ -42,10 +51,10 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ studentId: string }> }
+  { params }: { params: Promise<ParamsType> }
 ) {
   try {
-    const { studentId } = await params;
+    const { studentId } = await unwrapParams(params);
 
     if (!studentId) {
       return NextResponse.json(
@@ -74,10 +83,10 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ studentId: string }> }
+  { params }: { params: Promise<ParamsType> }
 ) {
   try {
-    const { studentId } = await params;
+    const { studentId } = await unwrapParams(params);
     const body = await request.json();
     const { fullName, phone, email, avatarUrl } = body;
 
@@ -97,13 +106,7 @@ export async function PATCH(
         avatarUrl,
         updatedAt: new Date(),
       },
-      include: {
-        purchases: {
-          include: {
-            course: true,
-          },
-        },
-      },
+      include: { purchases: { include: { course: true } } },
     });
 
     if (!updatedStudent) {
