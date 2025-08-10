@@ -16,7 +16,6 @@ const StudentsPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get initial page from URL or default to 1
   const initialPage = parseInt(searchParams.get("page") || "1", 10);
   const {
     students,
@@ -28,11 +27,10 @@ const StudentsPage: React.FC = () => {
     totalPages,
     limit,
     error,
-  } = useStudentData(3, initialPage);
+  } = useStudentData(8, initialPage);
 
-  // Update URL when page changes
   useEffect(() => {
-    if (typeof window === "undefined") return; // Skip during SSR
+    if (typeof window === "undefined") return;
     const currentParams = new URLSearchParams(searchParams.toString());
     currentParams.set("page", page.toString());
     router.push(`?${currentParams.toString()}`, { scroll: false });
@@ -129,8 +127,17 @@ const StudentsPage: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} rowSpan={6}>
-                    <DashedSpinner size={24} />
+                  <td colSpan={6} style={{ height: 150 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        height: "100%",
+                      }}
+                    >
+                      <DashedSpinner size={24} />
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -197,7 +204,7 @@ const StudentsPage: React.FC = () => {
         </div>
       </div>
 
-      {filteredStudents.length === 0 && (
+      {!loading && filteredStudents.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-2">No students found</div>
           <div className="text-gray-400">Try adjusting your search</div>
