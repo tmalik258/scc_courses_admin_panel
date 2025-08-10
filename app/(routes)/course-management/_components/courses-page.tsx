@@ -42,12 +42,15 @@ const CourseManagementPage = () => {
     error,
   } = useCourseData(10, initialPage);
 
-  // Update URL when page changes
+  // Update URL when page changes (only if different from current URL)
   useEffect(() => {
     if (typeof window === "undefined") return; // Skip during SSR
-    const currentParams = new URLSearchParams(searchParams.toString());
-    currentParams.set("page", page.toString());
-    router.push(`?${currentParams.toString()}`, { scroll: false });
+    const currentPage = parseInt(searchParams.get("page") || "1", 10);
+    if (currentPage !== page) {
+      const currentParams = new URLSearchParams(searchParams.toString());
+      currentParams.set("page", page.toString());
+      router.replace(`?${currentParams.toString()}`, { scroll: false });
+    }
   }, [page, router, searchParams]);
 
   useEffect(() => {

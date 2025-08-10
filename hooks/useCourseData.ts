@@ -38,32 +38,29 @@ export const useCourseData = (
   const [limit, setLimit] = useState(initialLimit);
   const isFetchingRef = useRef<string | null>(null);
 
-  const refreshCourses = useCallback(
-    async () => {
-      setLoading(true);
-      try {
-        const { courses, total } = await getCourses(page, limit);
-        console.log("Refreshed courses:", courses);
-        setCourses(courses);
-        setTotalCount(total);
-        setTotalPages(Math.ceil(total / limit));
-        setPage(page);
-        setError(null);
-      } catch (err) {
-        const error =
-          err instanceof Error ? err : new Error("Failed to fetch courses");
-        console.error("Error in refreshCourses:", {
-          message: error.message,
-          cause: error.cause,
-        });
-        setError(error);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [limit, page]
-  );
+  const refreshCourses = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { courses, total } = await getCourses(page, limit);
+      console.log("Refreshed courses:", courses);
+      setCourses(courses);
+      setTotalCount(total);
+      setTotalPages(Math.ceil(total / limit));
+      setPage(page);
+      setError(null);
+    } catch (err) {
+      const error =
+        err instanceof Error ? err : new Error("Failed to fetch courses");
+      console.error("Error in refreshCourses:", {
+        message: error.message,
+        cause: error.cause,
+      });
+      setError(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [limit, page]);
 
   const selectCourse = useCallback(async (courseId: string) => {
     if (isFetchingRef.current === courseId) return;
@@ -285,7 +282,11 @@ export const useCourseData = (
   );
 
   const handleUpdateResource = useCallback(
-    async (courseId: string, resourceId: string, data: { name: string; url: string }) => {
+    async (
+      courseId: string,
+      resourceId: string,
+      data: { name: string; url: string }
+    ) => {
       setIsUpdating(true);
       try {
         const updatedCourse = await updateResource(courseId, resourceId, data);

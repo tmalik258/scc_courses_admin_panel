@@ -1,6 +1,5 @@
-"use server";
-
 import axios from "axios";
+
 import {
   CourseFormData,
   CoursesWithRelationsResponse,
