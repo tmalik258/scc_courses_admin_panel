@@ -30,8 +30,6 @@ export async function GET(req: Request) {
       price: course.price ? Number(course.price) : null,
     }));
 
-    console.log("Serialized Courses:", serializedCourses);
-
     return NextResponse.json({
       courses: serializedCourses,
       total: totalCount,
