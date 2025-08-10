@@ -28,7 +28,7 @@ const StudentsPage: React.FC = () => {
     totalPages,
     limit,
     error,
-  } = useStudentData(10, initialPage);
+  } = useStudentData(3, initialPage);
 
   // Update URL when page changes
   useEffect(() => {

@@ -42,7 +42,8 @@ export const useCourseData = (
     async () => {
       setLoading(true);
       try {
-        const {courses, total} = await getCourses(page, limit);
+        const { courses, total } = await getCourses(page, limit);
+        console.log("Refreshed courses:", courses);
         setCourses(courses);
         setTotalCount(total);
         setTotalPages(Math.ceil(total / limit));

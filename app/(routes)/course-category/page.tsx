@@ -36,7 +36,7 @@ export default function CourseCategoryPage() {
     setPage,
     totalPages,
     limit,
-  } = useCategoryData(10, 1);
+  } = useCategoryData(3, 1);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {

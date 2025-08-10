@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       courses: serializedCourses,
-      totalCount,
+      total: totalCount,
     });
   } catch (error) {
     console.error("Error in GET /api/courses:", {

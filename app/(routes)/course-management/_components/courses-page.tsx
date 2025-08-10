@@ -228,7 +228,7 @@ const CourseManagementPage = () => {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-full min-h-[calc(100vh-10rem)]">
+        <div className="flex items-center justify-center h-full min-h-[calc(100vh-20rem)]">
           <DashedSpinner size={24} />
         </div>
       ) : (
@@ -244,7 +244,7 @@ const CourseManagementPage = () => {
         </div>
       )}
 
-      {displayedCourses.length === 0 && (
+      {displayedCourses.length === 0 && !loading && (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-2">No courses found</div>
           <div className="text-gray-400">
