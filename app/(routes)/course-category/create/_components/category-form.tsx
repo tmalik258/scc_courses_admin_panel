@@ -69,7 +69,7 @@ export default function CategoryForm({ onSubmit }: CategoryFormProps) {
           console.log("Upload successful, URL:", imageUrl);
           setUploadedImageUrl(imageUrl);
 
-          setDisplayImageUrl(await fetchImage(imageUrl));
+          setDisplayImageUrl(await fetchImage(imageUrl, "category-icons"));
 
           // Update the form field with the uploaded image URL
           form.setValue("icon", imageUrl);

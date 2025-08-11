@@ -110,7 +110,8 @@ const StudentDetailsPage: React.FC = () => {
 
       (async () => {
         if (selectedStudent?.avatarUrl && selectedStudent.avatarUrl !== null) {
-          setDisplayImageUrl(await fetchImage(selectedStudent.avatarUrl));
+          setDisplayImageUrl(await fetchImage(selectedStudent.avatarUrl, "profiles"));
+
         } else {
           setDisplayImageUrl(null);
         }
@@ -203,7 +204,7 @@ const StudentDetailsPage: React.FC = () => {
         if (!imageUrl) throw new Error("No URL returned");
         console.log("Upload URL:", imageUrl);
 
-        setDisplayImageUrl(await fetchImage(imageUrl));
+        setDisplayImageUrl(await fetchImage(imageUrl, "profiles"));
         form.setValue("avatarUrl", imageUrl, { shouldValidate: true }); // ✅ Important line
       } catch (err) {
         console.error("Upload error:", err);

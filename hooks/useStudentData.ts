@@ -25,7 +25,7 @@ export function useStudentData(initialLimit: number = 10, initialPage: number = 
           let resolvedAvatarUrl: string | null | undefined;
           if (student.avatarUrl) {
             try {
-              resolvedAvatarUrl = await fetchImage(student.avatarUrl);
+              resolvedAvatarUrl = await fetchImage(student.avatarUrl, "profiles");
             } catch (err) {
               console.error(`Error fetching image for ${student.id}:`, err);
               resolvedAvatarUrl = null;

@@ -75,7 +75,7 @@ export default function CategoryList() {
 
   const setIcon = async (icon: string | null) => {
     if (icon && icon !== null && isValidImageSrc(icon)) {
-      return await fetchImage(icon);
+      return await fetchImage(icon, "category-icons");
     } else {
       return null;
     }

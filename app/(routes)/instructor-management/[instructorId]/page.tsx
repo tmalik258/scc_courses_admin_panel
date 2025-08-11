@@ -104,7 +104,8 @@ const InstructorDetailsPage: React.FC = () => {
           selectedInstructor?.avatarUrl &&
           selectedInstructor.avatarUrl !== null
         ) {
-          setDisplayImageUrl(await fetchImage(selectedInstructor.avatarUrl));
+          setDisplayImageUrl(await fetchImage(selectedInstructor.avatarUrl, "profiles"));
+
         } else {
           setDisplayImageUrl(null);
         }
@@ -179,7 +180,7 @@ const InstructorDetailsPage: React.FC = () => {
           console.log("Upload successful, URL:", imageUrl);
           setUploadedImageUrl(imageUrl);
 
-          setDisplayImageUrl(await fetchImage(imageUrl));
+          setDisplayImageUrl(await fetchImage(imageUrl, "profiles"));
 
           // Update form data immediately with the uploaded URL
           updateFormData({

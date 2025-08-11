@@ -57,7 +57,8 @@ export default function CategoryForm({
   useEffect(() => {
     (async () => {
       if (category?.icon && category.icon !== null) {
-        setDisplayImageUrl(await fetchImage(category.icon));
+        setDisplayImageUrl(await fetchImage(category.icon, "category-icons"));
+
       } else {
         setDisplayImageUrl(null);
       }
@@ -108,7 +109,7 @@ export default function CategoryForm({
           console.log("Upload successful, URL:", imageUrl);
           setUploadedImageUrl(imageUrl);
 
-          setDisplayImageUrl(await fetchImage(imageUrl));
+          setDisplayImageUrl(await fetchImage(imageUrl, "category-icons"));
 
           // Update the form field with the uploaded image URL
           form.setValue("icon", imageUrl);
