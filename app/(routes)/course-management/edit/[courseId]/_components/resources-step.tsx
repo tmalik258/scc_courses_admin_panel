@@ -29,7 +29,11 @@ const resourceSchema = z.object({
       z.object({
         id: z.string().optional(),
         name: z.string().min(1, "Resource title is required"),
-        url: z.string().url("Invalid URL").min(1, "Resource URL is required").or(z.literal("")),
+        url: z
+          .string()
+          .url("Invalid URL")
+          .min(1, "Resource URL is required")
+          .or(z.literal("")),
       })
     )
     .min(1, "At least one resource is required"),
@@ -43,7 +47,16 @@ interface ResourcesStepProps {
 
 const ResourcesStep: React.FC<ResourcesStepProps> = ({ onPrev }) => {
   const { courseId } = useParams<{ courseId: string }>();
-  const { selectCourse, selectedCourse, isCreating, isUpdating, handleCreateResource, handleUpdateResource, handleDeleteResource, handleUpdateCourse } = useCourseData();
+  const {
+    selectCourse,
+    selectedCourse,
+    isCreating,
+    isUpdating,
+    handleCreateResource,
+    handleUpdateResource,
+    handleDeleteResource,
+    handleUpdateCourse,
+  } = useCourseData();
   const [expandedResource, setExpandedResource] = useState<number | null>(0);
   const router = useRouter();
 
@@ -57,7 +70,7 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({ onPrev }) => {
     resolver: zodResolver(resourceSchema),
     defaultValues: {
       resources: selectedCourse?.resources?.length
-        ? selectedCourse.resources.map(resource => ({
+        ? selectedCourse.resources.map((resource) => ({
             id: resource.id || undefined,
             name: resource.name || "",
             url: resource.url || "",
@@ -74,7 +87,7 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({ onPrev }) => {
 
   useEffect(() => {
     const resources = selectedCourse?.resources?.length
-      ? selectedCourse.resources.map(resource => ({
+      ? selectedCourse.resources.map((resource) => ({
           id: resource.id || undefined,
           name: resource.name || "",
           url: resource.url || "",
@@ -85,66 +98,87 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({ onPrev }) => {
     else setExpandedResource(null);
   }, [form, selectedCourse]);
 
-  const handleSaveResource = useCallback(async (resourceIndex: number) => {
-    const resourceData = form.getValues(`resources.${resourceIndex}`);
-    if (!courseId) return;
+  const handleSaveResource = useCallback(
+    async (resourceIndex: number) => {
+      const resourceData = form.getValues(`resources.${resourceIndex}`);
+      if (!courseId) return;
 
-    try {
-      if (resourceData.id) {
-        await handleUpdateResource(courseId, resourceData.id, {
-          name: resourceData.name,
-          url: resourceData.url,
-        });
-        toast.success(`Resource ${resourceIndex + 1} updated successfully!`);
-      } else {
-        const newResource = await handleCreateResource(courseId, {
-          name: resourceData.name,
-          url: resourceData.url || "", // Ensure url is not undefined
-        });
-        if (newResource?.id) {
-          form.setValue(`resources.${resourceIndex}.id`, newResource.id, { shouldValidate: true });
-          toast.success(`Resource ${resourceIndex + 1} created successfully!`);
+      try {
+        if (resourceData.id) {
+          await handleUpdateResource(courseId, resourceData.id, {
+            name: resourceData.name,
+            url: resourceData.url,
+          });
+          toast.success(`Resource ${resourceIndex + 1} updated successfully!`);
+        } else {
+          const newResource = await handleCreateResource(courseId, {
+            name: resourceData.name,
+            url: resourceData.url || "", // Ensure url is not undefined
+          });
+          if (newResource?.id) {
+            form.setValue(`resources.${resourceIndex}.id`, newResource.id, {
+              shouldValidate: true,
+            });
+            toast.success(
+              `Resource ${resourceIndex + 1} created successfully!`
+            );
+          }
+        }
+      } catch (err) {
+        if (err instanceof Error) {
+          console.error(
+            `Error saving resource ${resourceIndex + 1}:`,
+            err.message
+          );
+          toast.error(
+            `Failed to save resource ${resourceIndex + 1}: ${err.message}`
+          );
+        } else {
+          console.error(`Error saving resource ${resourceIndex + 1}:`, err);
+          toast.error(`Failed to save resource ${resourceIndex + 1}.`);
         }
       }
-    } catch (err) {
-      if (err instanceof Error) {
-        console.error(`Error saving resource ${resourceIndex + 1}:`, err.message);
-        toast.error(`Failed to save resource ${resourceIndex + 1}: ${err.message}`);
-      } else {
-        console.error(`Error saving resource ${resourceIndex + 1}:`, err);
-        toast.error(`Failed to save resource ${resourceIndex + 1}.`);
-      }
-    }
-  }, [courseId, form, handleUpdateResource, handleCreateResource]);
+    },
+    [courseId, form, handleUpdateResource, handleCreateResource]
+  );
 
   const addResource = useCallback(() => {
     append({ id: undefined, name: "", url: "" });
     setExpandedResource(fields.length);
   }, [append, fields]);
 
-  const deleteResource = useCallback(async (resourceIndex: number) => {
-    const resourceData = form.getValues(`resources.${resourceIndex}`);
-    if (resourceData.id && courseId) {
-      try {
-        await handleDeleteResource(courseId, resourceData.id);
-        remove(resourceIndex);
-        toast.success(`Resource ${resourceIndex + 1} deleted successfully!`);
-      } catch (err) {
-        if (err instanceof Error) {
-          console.error(`Error deleting resource ${resourceIndex + 1}:`, err.message);
-        } else {
-          console.error(`Error deleting resource ${resourceIndex + 1}:`, err);
+  const deleteResource = useCallback(
+    async (resourceIndex: number) => {
+      const resourceData = form.getValues(`resources.${resourceIndex}`);
+      if (resourceData.id && courseId) {
+        try {
+          await handleDeleteResource(courseId, resourceData.id);
+          remove(resourceIndex);
+          toast.success(`Resource ${resourceIndex + 1} deleted successfully!`);
+        } catch (err) {
+          if (err instanceof Error) {
+            console.error(
+              `Error deleting resource ${resourceIndex + 1}:`,
+              err.message
+            );
+          } else {
+            console.error(`Error deleting resource ${resourceIndex + 1}:`, err);
+          }
+          toast.error(`Failed to delete resource ${resourceIndex + 1}.`);
         }
-        toast.error(`Failed to delete resource ${resourceIndex + 1}.`);
+      } else {
+        remove(resourceIndex);
       }
-    } else {
-      remove(resourceIndex);
-    }
-    if (expandedResource === resourceIndex) setExpandedResource(null);
-    else if (expandedResource !== null && expandedResource >= fields.length - 1) {
-      setExpandedResource(fields.length - 2 >= 0 ? fields.length - 2 : null);
-    }
-  }, [courseId, form, handleDeleteResource, remove, expandedResource, fields]);
+      if (expandedResource === resourceIndex) setExpandedResource(null);
+      else if (
+        expandedResource !== null &&
+        expandedResource >= fields.length - 1
+      ) {
+        setExpandedResource(fields.length - 2 >= 0 ? fields.length - 2 : null);
+      }
+    },
+    [courseId, form, handleDeleteResource, remove, expandedResource, fields]
+  );
 
   const handlePublish = useCallback(async () => {
     if (!courseId) return;
@@ -171,7 +205,10 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({ onPrev }) => {
       <Form {...form}>
         <div className="space-y-6">
           {fields.map((field, index) => (
-            <div key={field.id} className="border border-gray-200 rounded-lg p-4">
+            <div
+              key={field.id}
+              className="border border-gray-200 rounded-lg p-4"
+            >
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-medium">Resource {index + 1}</h4>
                 <div className="space-x-2">
@@ -256,12 +293,22 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({ onPrev }) => {
               disabled={isUpdating || isCreating || !form.formState.isValid}
               className="bg-green-600 hover:bg-green-700 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isUpdating || isCreating ? <DashedSpinner invert={true} /> : null}
+              {isUpdating || isCreating ? (
+                <DashedSpinner invert={true} />
+              ) : null}
               {selectedCourse?.isPublished ? "Save & Continue" : "Publish"}
             </Button>
           </div>
         </div>
       </Form>
+      {process.env.NODE_ENV === "development" && (
+        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+          <h3 className="font-semibold mb-2">Debug Info:</h3>
+          <pre className="text-xs overflow-auto">
+            {JSON.stringify(form.getValues(), null, 2)}
+          </pre>
+        </div>
+      )}
     </FormProvider>
   );
 };

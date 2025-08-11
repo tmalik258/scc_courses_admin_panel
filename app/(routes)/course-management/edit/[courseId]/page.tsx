@@ -112,7 +112,7 @@ const EditCoursePage: React.FC = () => {
 
   return (
     <Suspense fallback={<div className="flex items-center justify-center h-full"><LumaSpin /></div>}>
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6 px-2 md:w-[calc(100vw-20rem)]">
         <Breadcrumb
           items={[
             { label: "Course Management", href: "/course-management" },

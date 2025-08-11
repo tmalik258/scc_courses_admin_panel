@@ -211,10 +211,6 @@ const CourseLessonsStep: React.FC<CourseLessonsStepProps> = ({
             onToggle={() => handleToggle(index)}
             onDelete={() => deleteModule(index)}
             onSave={() => handleSaveModule(index)}
-            onNext={async () => {
-              const ok = await handleSaveModule(index);
-              if (ok) onNext();
-            }}
           />
         ))}
         <div className="flex justify-between">

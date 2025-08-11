@@ -32,7 +32,6 @@ interface ModuleSectionProps {
   onToggle: () => void;
   onDelete: () => void;
   onSave: () => Promise<boolean>; // updated to return boolean
-  onNext?: () => Promise<void>; // optional new callback
 }
 
 const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
@@ -45,7 +44,6 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
     onToggle,
     onDelete,
     onSave,
-    onNext,
   }) => {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [tempTitle, setTempTitle] = useState("");
@@ -192,8 +190,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = React.memo(
                   size="sm"
                   onClick={async (e) => {
                     e.stopPropagation();
-                    const ok = await onSave();
-                    if (ok && onNext) await onNext();
+                    await onSave();
                   }}
                   disabled={isUpdating || isCreating}
                   className="bg-sky-500 hover:bg-sky-600 text-white"
