@@ -5,9 +5,9 @@ export interface Student {
   email?: string;
   avatarUrl?: string | null;
   purchases: {
-    createdAt: any;
+    createdAt: Date | null;
     course: {
-      category: any;
+      category: string;
       id: string;
       title: string;
     };

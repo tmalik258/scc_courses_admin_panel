@@ -69,9 +69,7 @@ const StudentDetailsPage: React.FC = () => {
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [displayImageUrl, setDisplayImageUrl] = useState<string | null>(
-    selectedStudent?.avatarUrl || null
-  );
+  const [displayImageUrl, setDisplayImageUrl] = useState<string | null>(null);
   const [courses, setCourses] = useState<
     Array<{ id: string; title: string; category: string; status: string }>
   >([]);
@@ -90,35 +88,39 @@ const StudentDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (studentId && selectStudent && !selectedStudent) {
-      const student = students.find((s: { id: string }) => s.id === studentId);
+      const student = students.find((s) => s.id === studentId);
       if (student) {
         selectStudent(student);
       }
     }
-  }, [studentId, selectStudent, selectedStudent, students]);
+  }, [studentId, selectStudent, students]);
 
   useEffect(() => {
     if (selectedStudent) {
-      console.log("Selected student courses:", selectedStudent.purchases);
-      form.reset({
+      const newFormValues = {
         id: selectedStudent.id,
         fullName: selectedStudent.fullName || "",
         phone: selectedStudent.phone || "",
         email: selectedStudent.email || "",
         avatarUrl: selectedStudent.avatarUrl || "",
-      });
-
+      };
+      if (JSON.stringify(form.getValues()) !== JSON.stringify(newFormValues)) {
+        form.reset(newFormValues);
+      }
       (async () => {
-        if (selectedStudent?.avatarUrl && selectedStudent.avatarUrl !== null) {
-          setDisplayImageUrl(await fetchImage(selectedStudent.avatarUrl, "profiles"));
-
+        if (selectedStudent.avatarUrl) {
+          const newImageUrl = await fetchImage(
+            selectedStudent.avatarUrl,
+            "profiles"
+          );
+          setDisplayImageUrl((prev) =>
+            prev !== newImageUrl ? newImageUrl : prev
+          );
         } else {
           setDisplayImageUrl(null);
         }
       })();
       setUploadedImageUrl(selectedStudent.avatarUrl || null);
-
-      // Map purchases to courses
       const studentCourses =
         selectedStudent.purchases?.map((p) => ({
           id: p.course.id,
@@ -126,9 +128,13 @@ const StudentDetailsPage: React.FC = () => {
           category: p.course.category,
           status: p.createdAt ? "completed" : "ongoing",
         })) || [];
-      setCourses(studentCourses);
+      setCourses((prev) =>
+        JSON.stringify(prev) !== JSON.stringify(studentCourses)
+          ? studentCourses
+          : prev
+      );
     }
-  }, [selectedStudent, form]);
+  }, [selectedStudent]);
 
   useEffect(() => {
     if (error) {
@@ -137,22 +143,25 @@ const StudentDetailsPage: React.FC = () => {
   }, [error]);
 
   const handleSave = async (data: StudentFormValues) => {
-    console.log("Submitting update:", data);
-
     try {
       await handleUpdateStudent({
         ...selectedStudent,
+        id: data.id,
         fullName: data.fullName,
         phone: data.phone,
         email: data.email,
-        avatarUrl: data.avatarUrl || "",
+        avatarUrl: data.avatarUrl || null,
+        purchases: selectedStudent?.purchases || [],
       } as Student);
-
       toast.success("Student updated successfully!");
       router.push("/student-management");
     } catch (err) {
       console.error("Update error:", err);
-      toast.error("Failed to update student. Please try again.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Failed to update student. Please try again."
+      );
     }
   };
 
@@ -161,7 +170,7 @@ const StudentDetailsPage: React.FC = () => {
       try {
         await handleDeleteStudent(form.getValues("id"));
         toast.success("Student deleted successfully!");
-        window.history.back();
+        router.push("/student-management");
       } catch (error) {
         toast.error("Failed to delete student. Please try again.");
         console.error("Delete error:", error);
@@ -177,7 +186,7 @@ const StudentDetailsPage: React.FC = () => {
   );
 
   const handleCancel = () => {
-    window.history.back();
+    router.push("/student-management");
   };
 
   const handleRemoveCourse = (courseId: string) => {
@@ -189,7 +198,6 @@ const StudentDetailsPage: React.FC = () => {
     }
   };
 
-  // Handle file upload to Supabase
   const handleFileUpload = useCallback(
     async (files: FileWithPreview[]) => {
       if (!files.length) return;
@@ -198,14 +206,14 @@ const StudentDetailsPage: React.FC = () => {
 
       setIsUploading(true);
       try {
-        console.log("Starting upload:", file.name);
-        const imageUrl = await uploadImage(file, "profiles", `student/${form.getValues("id")}`);
-
+        const imageUrl = await uploadImage(
+          file,
+          "profiles",
+          `student/${form.getValues("id")}`
+        );
         if (!imageUrl) throw new Error("No URL returned");
-        console.log("Upload URL:", imageUrl);
-
         setDisplayImageUrl(await fetchImage(imageUrl, "profiles"));
-        form.setValue("avatarUrl", imageUrl, { shouldValidate: true }); // ✅ Important line
+        form.setValue("avatarUrl", imageUrl, { shouldValidate: true });
       } catch (err) {
         console.error("Upload error:", err);
         toast.error("Failed to upload image. Please try again.");
@@ -216,13 +224,9 @@ const StudentDetailsPage: React.FC = () => {
     [form]
   );
 
-  // Handle file removal
   const handleFileRemove = useCallback(() => {
-    console.log("Removing thumbnail");
     setUploadedImageUrl(null);
-    updateFormData({
-      avatarUrl: "",
-    });
+    updateFormData({ avatarUrl: "" });
   }, [updateFormData]);
 
   const getStatusBadge = (status: string) => {
@@ -267,8 +271,6 @@ const StudentDetailsPage: React.FC = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <Breadcrumb items={breadcrumbItems} />
-
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">
           Student Details
@@ -296,13 +298,10 @@ const StudentDetailsPage: React.FC = () => {
           </Button>
         </div>
       </div>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSave)} className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Form Fields */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Student ID */}
               <FormField
                 control={form.control}
                 name="id"
@@ -316,8 +315,6 @@ const StudentDetailsPage: React.FC = () => {
                   </FormItem>
                 )}
               />
-
-              {/* Full Name */}
               <FormField
                 control={form.control}
                 name="fullName"
@@ -331,8 +328,6 @@ const StudentDetailsPage: React.FC = () => {
                   </FormItem>
                 )}
               />
-
-              {/* Phone Number */}
               <FormField
                 control={form.control}
                 name="phone"
@@ -346,8 +341,6 @@ const StudentDetailsPage: React.FC = () => {
                   </FormItem>
                 )}
               />
-
-              {/* Email */}
               <FormField
                 control={form.control}
                 name="email"
@@ -362,15 +355,11 @@ const StudentDetailsPage: React.FC = () => {
                 )}
               />
             </div>
-
-            {/* Right Column - Profile Upload */}
             <div className="lg:col-span-1">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Profile
                 </label>
-
-                {/* File Upload Component with custom handlers */}
                 <div className="relative">
                   <ImageUploadWrapper
                     onFilesAdded={handleFileUpload}
@@ -379,8 +368,6 @@ const StudentDetailsPage: React.FC = () => {
                     uploadedImageUrl={displayImageUrl}
                     maxSizeMB={2}
                   />
-
-                  {/* Upload Status Overlay */}
                   {isUploading && (
                     <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl z-10">
                       <div className="flex flex-col items-center gap-2">
@@ -392,16 +379,12 @@ const StudentDetailsPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Success Message */}
                 {uploadedImageUrl && !isUploading && (
                   <div className="mt-2 text-sm text-green-600 flex items-center gap-2">
                     <CheckCircleIcon className="w-4 h-4" />
                     Thumbnail uploaded successfully!
                   </div>
                 )}
-
-                {/* Debug info - remove in production */}
                 {process.env.NODE_ENV === "development" && (
                   <div className="mt-2 text-xs text-gray-500">
                     Current URL: {uploadedImageUrl || "None"}
@@ -412,8 +395,6 @@ const StudentDetailsPage: React.FC = () => {
           </div>
         </form>
       </Form>
-
-      {/* Course Enrolled Section */}
       <div className="mt-12">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
           Course Enrolled
@@ -483,7 +464,6 @@ const StudentDetailsPage: React.FC = () => {
             </table>
           </div>
         </div>
-
         {courses.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-500 text-lg mb-2">

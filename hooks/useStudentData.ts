@@ -1,12 +1,15 @@
 import { fetchStudents } from "@/actions/student-data";
 import { Student } from "@/types/student";
 import { fetchImage } from "@/utils/supabase/fetchImage";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export function useStudentData(initialLimit: number = 10, initialPage: number = 1) {
+export function useStudentData(
+  initialLimit: number = 10,
+  initialPage: number = 1
+) {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [page, setPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(0);
@@ -19,13 +22,15 @@ export function useStudentData(initialLimit: number = 10, initialPage: number = 
         page,
         limit
       );
-      // console.log("Received students:", fetchedStudents);
       const studentsWithResolvedUrls = await Promise.all(
         fetchedStudents.map(async (student: Student) => {
           let resolvedAvatarUrl: string | null | undefined;
           if (student.avatarUrl) {
             try {
-              resolvedAvatarUrl = await fetchImage(student.avatarUrl, "profiles");
+              resolvedAvatarUrl = await fetchImage(
+                student.avatarUrl,
+                "profiles"
+              );
             } catch (err) {
               console.error(`Error fetching image for ${student.id}:`, err);
               resolvedAvatarUrl = null;
@@ -34,8 +39,11 @@ export function useStudentData(initialLimit: number = 10, initialPage: number = 
           return { ...student, avatarUrl: resolvedAvatarUrl };
         })
       );
-      // console.log("Resolved avatar URLs:", studentsWithResolvedUrls);
-      setStudents(studentsWithResolvedUrls);
+      setStudents((prev) =>
+        JSON.stringify(prev) !== JSON.stringify(studentsWithResolvedUrls)
+          ? studentsWithResolvedUrls
+          : prev
+      );
       setTotalPages(Math.ceil(total / limit));
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Unknown error"));
@@ -44,30 +52,93 @@ export function useStudentData(initialLimit: number = 10, initialPage: number = 
     }
   }, [page, limit]);
 
-  const handleDeleteStudent = async (studentId: string) => {
-    try {
-      setStudents((prev) => prev.filter((student) => student.id !== studentId));
-      await refreshStudents(); // Refresh to ensure consistency with backend
-    } catch (err) {
-      console.error("Failed to delete student:", err);
-    }
-  };
+  const handleDeleteStudent = useCallback(
+    async (studentId: string) => {
+      try {
+        const response = await fetch(`/api/students/${studentId}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          let errorMessage = `Failed to delete student: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (jsonError) {
+            console.error("Error parsing error response:", jsonError);
+          }
+          throw new Error(errorMessage);
+        }
+        setStudents((prev) =>
+          prev.filter((student) => student.id !== studentId)
+        );
+        if (selectedStudent?.id === studentId) {
+          setSelectedStudent(null);
+        }
+      } catch (err) {
+        console.error("Failed to delete student:", err);
+        setError(
+          err instanceof Error ? err : new Error("Failed to delete student")
+        );
+        throw err;
+      }
+    },
+    [selectedStudent]
+  );
 
-  const handleUpdateStudent = async (updatedStudent: Student) => {
-    try {
-      setStudents((prev) =>
-        prev.map((student) =>
-          student.id === updatedStudent.id ? updatedStudent : student
-        )
-      );
-    } catch (err) {
-      console.error("Failed to update student:", err);
-    }
-  };
+  const handleUpdateStudent = useCallback(
+    async (updatedStudent: Student) => {
+      try {
+        const response = await fetch(`/api/students/${updatedStudent.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            id: updatedStudent.id,
+            fullName: updatedStudent.fullName,
+            phone: updatedStudent.phone,
+            email: updatedStudent.email,
+            avatarUrl: updatedStudent.avatarUrl || null,
+          }),
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) {
+          let errorMessage = `Failed to update student: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (jsonError) {
+            console.error("Error parsing error response:", jsonError);
+          }
+          throw new Error(errorMessage);
+        }
+        const updatedData = await response.json();
+        setStudents((prev) =>
+          prev.map((student) =>
+            student.id === updatedStudent.id
+              ? { ...student, ...updatedData }
+              : student
+          )
+        );
+        if (selectedStudent?.id === updatedStudent.id) {
+          setSelectedStudent(updatedData);
+        }
+        return updatedData;
+      } catch (err) {
+        console.error("Failed to update student:", err);
+        setError(
+          err instanceof Error ? err : new Error("Failed to update student")
+        );
+        throw err;
+      }
+    },
+    [selectedStudent]
+  );
 
-  const selectStudent = (student: Student) => {
-    setSelectedStudent(student);
-  };
+  const selectStudent = useCallback((student: Student) => {
+    setSelectedStudent((prev) => (prev?.id !== student.id ? student : prev));
+  }, []);
+
+  useEffect(() => {
+    refreshStudents();
+  }, [refreshStudents]);
 
   return {
     students,
